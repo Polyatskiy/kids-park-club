@@ -186,6 +186,4 @@ export async function updateItem(formData: FormData) {
       thumbnail_url,
     })
     .eq("id", id);
-
-  return { success: true };
 }

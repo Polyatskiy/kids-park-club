@@ -99,6 +99,72 @@ kids-platform/
 │
 └── styles/
     └── globals.css              — стили Tailwind
+
+            .env.example
+           .gitignore
+           KIDS-FUN-HUB_DEV_NOTES.md
+           README.md
+           app/admin/admin-actions.ts
+           app/admin/coloring/[id]/page.tsx
+           app/admin/coloring/new/page.tsx
+           app/admin/coloring/page.tsx
+           app/admin/coloring/upload-many.tsx
+           app/admin/coloring/upload-one.tsx
+           app/admin/page.tsx
+           app/audio-stories/[id]/page.tsx
+           app/audio-stories/page.tsx
+           app/auth/login/page.tsx
+           app/auth/register/page.tsx
+           app/books/[id]/page.tsx
+           app/books/page.tsx
+           app/coloring/[slug]/page.tsx
+           app/coloring/page.tsx
+           app/debug/page.tsx
+           app/games/page.tsx
+           app/games/puzzle/page.tsx
+           app/games/reaction/page.tsx
+           app/globals.css
+           app/layout.tsx
+           app/page.tsx
+           app/robots.txt
+           app/sitemap.ts
+           components/audio-card.tsx
+           components/book-card.tsx
+           components/coloring-browser.tsx
+           components/coloring-canvas.tsx
+           components/coloring-card.tsx
+           components/footer.tsx
+           components/game-card.tsx
+           components/navbar.tsx
+           components/section-card.tsx
+           components/ui/confirm-dialog.tsx
+           data/games.ts
+           lib/auth.ts
+           lib/coloring-sync.ts
+           lib/content-repository.ts
+           lib/supabaseClient.ts
+           lib/supabaseServer.ts
+           middleware.ts
+           next-env.d.ts
+           next.config.mjs
+           package-lock.json
+           package.json
+           postcss.config.mjs
+           public/icons/brush.svg
+           public/icons/close.svg
+           public/icons/download.svg
+           public/icons/eraser.svg
+           public/icons/fill.svg
+           public/icons/opacity.svg
+           public/icons/redo.svg
+           public/icons/trash.svg
+           public/icons/undo.svg
+           tailwind.config.ts
+           tsconfig.json
+           types/content.ts
+            ui/button.tsx
+           ui/card.tsx
+          ui/container.tsx
 📌 4. Supabase: База данных и Storage
 Таблицы:
 1. coloring — разукрашки

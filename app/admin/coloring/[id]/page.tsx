@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabaseClient";
+import { supabaseServer } from "@/lib/supabaseClient";
 import { updateItem } from "../../admin-actions";
 
 export default async function EditColoringPage({
@@ -6,7 +6,7 @@ export default async function EditColoringPage({
 }: {
   params: { id: string };
 }) {
-  const supabase = createClient();
+  const supabase = supabaseServer();
 
   const { data, error } = await supabase
     .from("coloring_items")
