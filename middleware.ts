@@ -13,14 +13,17 @@ export async function middleware(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return req.cookies.get(name)?.value;
+        // New, non-deprecated cookie interface for @supabase/ssr
+        getAll() {
+          return req.cookies.getAll().map((cookie) => ({
+            name: cookie.name,
+            value: cookie.value,
+          }));
         },
-        set(name: string, value: string, options: any) {
-          response.cookies.set(name, value, options);
-        },
-        remove(name: string, options: any) {
-          response.cookies.set(name, "", { ...options, maxAge: 0 });
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            response.cookies.set(name, value, options);
+          });
         },
       },
     }
