@@ -101,8 +101,6 @@ export async function uploadItem(formData: FormData) {
     console.error(dbError);
     throw new Error("Ошибка записи в базу данных.");
   }
-
-  return { success: true };
 }
 // =============================================
 // УДАЛЕНИЕ
