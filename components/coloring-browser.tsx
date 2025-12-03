@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseBrowser } from "@/lib/supabaseClient";
 
 type ColoringItem = {
   id: number;
@@ -19,10 +19,7 @@ export default function ColoringBrowser() {
   const [loading, setLoading] = useState(true);
 
   // Создаем клиент Supabase (браузер)
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = supabaseBrowser();
 
   // Загружаем раскраски
   useEffect(() => {

@@ -1,6 +1,6 @@
-import { createClient } from "@/lib/supabaseClient";
+import { supabaseServer } from "@/lib/supabaseClient";
 
-const supabase = createClient();
+const supabase = supabaseServer();
 
 // Утилита для auto-slug
 function slugify(str: string) {
@@ -36,6 +36,11 @@ export async function syncColoringItem({
   category,
   subCategory,
   image_url,
+}: {
+  title: string;
+  category: string;
+  subCategory?: string | null;
+  image_url: string;
 }) {
   const slug = await generateUniqueSlug(title);
 
@@ -50,7 +55,7 @@ export async function syncColoringItem({
   ]);
 
   if (error) throw error;
-  return data[0];
+  return (data ?? [])[0];
 }
 
 // Удаление по недоступному файлу
@@ -70,7 +75,7 @@ export async function fileExists(publicUrl: string) {
 export async function cleanupMissingFiles() {
   const { data } = await supabase.from("coloring").select("*");
 
-  for (const item of data) {
+  for (const item of data ?? []) {
     const ok = await fileExists(item.image_url);
     if (!ok) {
       console.log("File missing, removing:", item.title);
