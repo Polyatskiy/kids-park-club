@@ -19,15 +19,23 @@ export function supabaseBrowser() {
 ---------------------------------------- */
 export function supabaseServer(req?: any, res?: any) {
   return createServerClient(supabaseUrl, supabaseService, {
-    cookies: {
-      get(name: string) {
-        return req?.cookies?.[name] ?? undefined;
-      },
-      set(name: string, value: string, options: CookieOptions) {
-        if (res) res?.cookie?.(name, value, options);
-      },
-      remove(name: string, options: CookieOptions) {
-        if (res) res?.clearCookie?.(name, options);
+      cookies: {
+        getAll() {
+          if (!req?.cookies) return [];
+          return Object.entries(req.cookies).map(([name, value]) => ({
+            name,
+            value: typeof value === "string" ? value : String(value || ""),
+          }));
+        },
+      setAll(cookiesToSet) {
+        if (!res) return;
+        cookiesToSet.forEach(({ name, value, options }) => {
+          if (value === undefined || value === null) {
+            res?.clearCookie?.(name, options);
+          } else {
+            res?.cookie?.(name, value, options);
+          }
+        });
       },
     },
   });
