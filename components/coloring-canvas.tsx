@@ -7,6 +7,7 @@ import React, {
   useCallback,
 } from "react";
 import Link from "next/link";
+import { useNavigation } from "@/lib/useNavigation";
 
 /* ============================================================
     COLORING TOOLBAR COMPONENT
@@ -147,9 +148,9 @@ function ColoringToolbar({
     );
   }
 
-  // Mobile: horizontal bottom toolbar (unchanged)
+  // Mobile: horizontal bottom toolbar with safe area padding
   return (
-    <div className="bg-white border-t border-gray-300 flex-shrink-0 overflow-x-auto shadow-sm">
+    <div className="bg-white border-t border-gray-300 flex-shrink-0 overflow-x-auto shadow-sm mobile-toolbar-safe">
       <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 p-2 md:p-3 max-w-full">
         {/* Tools Row */}
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -273,6 +274,140 @@ function ConfirmModal({
         </div>
       </div>
     </div>
+  );
+}
+
+/* ============================================================
+    MOBILE MENU DRAWER - Navigation for mobile coloring pages
+    
+    Uses the same navigation items as the desktop Navbar:
+    - Home, Coloring, Games (always visible)
+    - Admin (only for admin user)
+    - Login/Logout (based on session state)
+============================================================ */
+function MobileMenu({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  // Use shared navigation hook - same logic as desktop Navbar
+  const { user, loading, links, handleLogout } = useNavigation();
+
+  // Handle logout and close menu
+  const onLogoutClick = async () => {
+    onClose();
+    await handleLogout();
+  };
+
+  return (
+    <>
+      {/* Overlay - dark backdrop */}
+      <div
+        className={`mobile-menu-overlay ${isOpen ? "open" : ""}`}
+        onClick={onClose}
+      />
+      
+      {/* Drawer - slides in from right */}
+      <div className={`mobile-menu-drawer ${isOpen ? "open" : ""}`}>
+        {/* Header with logo and close button */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <span className="font-bold text-lg text-gray-800">Kids Park Club</span>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Закрыть меню"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        {/* Navigation Links - large tap targets for mobile */}
+        <nav className="flex flex-col p-3 gap-1 flex-1">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={onClose}
+              className="flex items-center gap-3 px-4 py-4 rounded-xl hover:bg-gray-100 
+                         text-gray-700 font-medium transition-colors text-base"
+            >
+              {/* Icon based on link */}
+              <span className="w-6 h-6 flex items-center justify-center text-gray-500">
+                {link.href === "/" && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                  </svg>
+                )}
+                {link.href === "/coloring" && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 19l7-7 3 3-7 7-3-3z" />
+                    <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+                  </svg>
+                )}
+                {link.href === "/games" && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="2" y="6" width="20" height="12" rx="2" />
+                    <path d="M6 12h4M8 10v4M15 11h.01M18 13h.01" />
+                  </svg>
+                )}
+                {link.href === "/admin" && (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+                  </svg>
+                )}
+              </span>
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Auth section - Login/Logout at bottom */}
+        <div className="p-3 border-t border-gray-200">
+          {loading ? (
+            // Loading state - show placeholder
+            <div className="px-4 py-4 text-gray-400 text-center">Загрузка...</div>
+          ) : user ? (
+            // Logged in - show logout button
+            <button
+              onClick={onLogoutClick}
+              className="w-full flex items-center gap-3 px-4 py-4 rounded-xl 
+                         hover:bg-red-50 text-red-600 font-medium transition-colors text-base"
+            >
+              <span className="w-6 h-6 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                  <polyline points="16,17 21,12 16,7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </span>
+              Выйти
+            </button>
+          ) : (
+            // Not logged in - show login link
+            <Link
+              href="/auth/login"
+              onClick={onClose}
+              className="w-full flex items-center gap-3 px-4 py-4 rounded-xl 
+                         hover:bg-blue-50 text-blue-600 font-medium transition-colors text-base"
+            >
+              <span className="w-6 h-6 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
+                  <polyline points="10,17 15,12 10,7" />
+                  <line x1="15" y1="12" x2="3" y2="12" />
+                </svg>
+              </span>
+              Войти
+            </Link>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -563,6 +698,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [isMobile, setIsMobile] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false); /* Mobile navigation menu */
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -1191,14 +1327,22 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       EVENT HANDLERS - TOUCH
   ============================================================= */
 
+  /* Track if multitouch gesture is active to prevent accidental fill */
+  const isMultitouchRef = useRef(false);
+
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 1) {
+    /* ===== FIX: Prevent fill from triggering during two-finger gestures ===== */
+    if (e.touches.length >= 2) {
+      isMultitouchRef.current = true;
+    }
+
+    if (e.touches.length === 1 && !isMultitouchRef.current) {
       const t = e.touches[0];
       const coords = getCanvasCoords(t.clientX, t.clientY);
       if (!coords) return;
 
       if (tool === "fill") {
-        // Don't save undo here - it will be saved after floodFill() completes
+        saveUndo();
         floodFill(coords.x, coords.y, color);
       return;
     }
@@ -1266,7 +1410,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     }
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
     if (isDrawingRef.current) {
       commitStroke();
       isDrawingRef.current = false;
@@ -1275,6 +1419,11 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
 
     touchPanRef.current = null;
     lastTouchDist.current = null;
+
+    /* Reset multitouch flag when all fingers are lifted */
+    if (e.touches.length === 0) {
+      isMultitouchRef.current = false;
+    }
   };
 
   /* ============================================================
@@ -1539,6 +1688,9 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       ) : (
         /* MOBILE LAYOUT (< 900px) */
         <div className="flex flex-1 overflow-hidden flex-col" style={{ minHeight: 0 }}>
+          {/* MOBILE MENU */}
+          <MobileMenu isOpen={showMobileMenu} onClose={() => setShowMobileMenu(false)} />
+
           {/* CANVAS AREA - Mobile */}
           <div
             ref={containerRef}
@@ -1553,17 +1705,34 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
               overflow: "hidden"
             }}
           >
-            {closeHref && (
-              <Link
-                href={closeHref}
-                className="absolute top-2 left-2 z-40 flex items-center justify-center 
-                           w-9 h-9 rounded-full border border-gray-300 text-lg leading-none 
-                           hover:bg-gray-100 bg-white shadow-sm transition-all duration-150 hover:scale-105 active:scale-95"
-                aria-label="Закрыть"
+            {/* MOBILE TOP BAR - Close button (left) + Hamburger menu (right) */}
+            <div className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between p-2">
+              {/* Close button - LEFT */}
+              {closeHref && (
+                <Link
+                  href={closeHref}
+                  className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 
+                             bg-white shadow-md transition-all duration-150 hover:scale-105 active:scale-95"
+                  aria-label="Закрыть"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </Link>
+              )}
+              
+              {/* Hamburger menu button - RIGHT */}
+              <button
+                onClick={() => setShowMobileMenu(true)}
+                className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 
+                           bg-white shadow-md transition-all duration-150 hover:scale-105 active:scale-95"
+                aria-label="Меню"
               >
-                ×
-              </Link>
-            )}
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 12h18M3 6h18M3 18h18" />
+                </svg>
+              </button>
+            </div>
 
             {/* CANVAS WRAPPER - Mobile */}
             <div

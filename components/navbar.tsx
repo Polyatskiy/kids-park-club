@@ -2,49 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { supabaseBrowser } from "@/lib/supabaseClient";
-import { useEffect, useState } from "react";
+import { useNavigation } from "@/lib/useNavigation";
 
 export function Navbar() {
   const pathname = usePathname();
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const supabase = supabaseBrowser();
-
-    // 1. Загружаем юзера при первом рендере
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-      setLoading(false);
-    });
-
-    // 2. Реагируем на login / logout СРАЗУ
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleLogout = async () => {
-    const supabase = supabaseBrowser();
-    await supabase.auth.signOut();
-    window.location.href = "/";
-  };
-
-  const links = [
-    { href: "/", label: "Главная" },
-    { href: "/coloring", label: "Разукраски" },
-    { href: "/games", label: "Игры" },
-  ];
-
-  // Показывать админ только тебе
-  if (user?.email === "polyatskiy@gmail.com") {
-    links.push({ href: "/admin", label: "Админ" });
-  }
+  
+  // Use shared navigation hook
+  const { user, loading, links, handleLogout } = useNavigation();
 
   return (
     <nav className="p-4 bg-white shadow-sm sticky top-0 z-50">

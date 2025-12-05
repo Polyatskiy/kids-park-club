@@ -54,3 +54,84 @@ body.coloring-page-active footer {
 .canvas-scroll-container::-webkit-scrollbar-corner {
   background: #e5e5e5;
 }
+
+/* ============================================================
+   MOBILE COLORING PAGE - FULLSCREEN MODE
+============================================================ */
+
+/* Coloring page container - responsive height */
+.coloring-page-container {
+  height: calc(100vh - 64px); /* Desktop: account for navbar */
+}
+
+@media (max-width: 899px) {
+  .coloring-page-container {
+    height: 100vh !important; /* Mobile: full screen */
+    height: 100dvh !important; /* Dynamic viewport height for mobile browsers */
+  }
+}
+
+/* Hide navbar on mobile coloring pages */
+body.coloring-mobile-fullscreen nav {
+  display: none !important;
+}
+
+/* Make main content take full height on mobile */
+body.coloring-mobile-fullscreen main {
+  height: 100vh !important;
+  max-height: 100vh !important;
+}
+
+/* Mobile toolbar safe area for bottom navigation bar */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .mobile-toolbar-safe {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 8px) !important;
+  }
+}
+
+/* Mobile menu drawer */
+.mobile-menu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.mobile-menu-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.mobile-menu-drawer {
+  position: fixed;
+  top: 0;
+  right: -280px;
+  width: 280px;
+  height: 100vh;
+  background: white;
+  z-index: 101;
+  transition: right 0.3s ease;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-menu-drawer.open {
+  right: 0;
+}
+
+/* Hide canvas scrollbar on mobile */
+@media (max-width: 899px) {
+  .canvas-scroll-container::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+  .canvas-scroll-container {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
