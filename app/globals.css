@@ -13,3 +13,44 @@ body {
   background: #ffcf56;
   border-radius: 9999px;
 }
+
+/* Coloring page - hide all page scrolling */
+html.coloring-page-active,
+body.coloring-page-active {
+  overflow: hidden !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+}
+
+/* Hide scrollbar on html/body when on coloring page */
+html.coloring-page-active::-webkit-scrollbar,
+body.coloring-page-active::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+}
+
+/* Hide footer on coloring pages */
+body.coloring-page-active footer {
+  display: none !important;
+}
+
+/* Canvas container scrollbars - gray and thicker */
+.canvas-scroll-container::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+.canvas-scroll-container::-webkit-scrollbar-track {
+  background: #e5e5e5;
+  border-radius: 6px;
+}
+.canvas-scroll-container::-webkit-scrollbar-thumb {
+  background: #999;
+  border-radius: 6px;
+  border: 2px solid #e5e5e5;
+}
+.canvas-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: #777;
+}
+.canvas-scroll-container::-webkit-scrollbar-corner {
+  background: #e5e5e5;
+}

@@ -558,7 +558,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   const [brushSize, setBrushSize] = useState(40);
   const [zoom, setZoom] = useState(1);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
-  const [tool, setTool] = useState<"brush" | "eraser" | "fill">("brush");
+  const [tool, setTool] = useState<"brush" | "eraser" | "fill">("fill");
   const [showClearModal, setShowClearModal] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [isMobile, setIsMobile] = useState(false);
@@ -1362,6 +1362,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
         undoStack.current = [drawCtx.getImageData(0, 0, draw.width, draw.height)];
       }
 
+      setTool("fill");
       setImageLoaded(true);
     };
 
@@ -1436,7 +1437,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
             flexDirection: 'row',
             width: '100%',
             height: '100%',
-            alignItems: 'flex-start',
+            alignItems: 'stretch',
           }}
         >
           {/* CANVAS AREA - Desktop */}
@@ -1444,9 +1445,12 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
             ref={containerRef}
             className="relative bg-white"
             style={{
-              flex: '1',
-              flexGrow: '1',
+              flex: '1 1 0%',
               minWidth: 0,
+              minHeight: 0,
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
               touchAction: "none"
             }}
           >
@@ -1472,12 +1476,12 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
-              className="relative"
+              className="canvas-scroll-container"
               style={{
                 overflow: "auto",
-                flexGrow: 1,
+                flex: '1 1 0%',
                 width: "100%",
-                height: "calc(100vh - 0px)",
+                minHeight: 0,
                 position: "relative",
                 touchAction: "none"
               }}
@@ -1533,15 +1537,20 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
           />
         </div>
       ) : (
-        /* MOBILE LAYOUT (< 900px) - UNCHANGED */
-        <div className="flex flex-1 overflow-hidden flex-col">
+        /* MOBILE LAYOUT (< 900px) */
+        <div className="flex flex-1 overflow-hidden flex-col" style={{ minHeight: 0 }}>
           {/* CANVAS AREA - Mobile */}
           <div
             ref={containerRef}
-            className="flex-1 relative bg-white overflow-hidden"
+            className="relative bg-white"
             style={{
+              flex: '1 1 0%',
               width: "100%",
-              touchAction: "none"
+              minHeight: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              touchAction: "none",
+              overflow: "hidden"
             }}
           >
             {closeHref && (
@@ -1566,23 +1575,41 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
-              className="relative w-full h-full overflow-auto"
+              className="canvas-scroll-container"
               style={{
+                flex: '1 1 0%',
+                width: "100%",
+                minHeight: 0,
+                overflow: "auto",
                 touchAction: "none"
               }}
             >
+              {/* SCALE WRAPPER - Mobile */}
               <div
                 className="relative"
                 style={{
-                  transform: `translate(${translate.x}px, ${translate.y}px) scale(${zoom})`,
+                  display: "inline-block",
                   transformOrigin: "top left",
-                  width: `${canvasSize.width}px`,
-                  height: `${canvasSize.height}px`,
+                  minWidth: `${canvasSize.width * zoom}px`,
+                  minHeight: `${canvasSize.height * zoom}px`,
+                  width: `${canvasSize.width * zoom}px`,
+                  height: `${canvasSize.height * zoom}px`,
+                  position: "relative",
                 }}
               >
-                <canvas ref={baseCanvasRef} className="absolute top-0 left-0" />
-                <canvas ref={drawCanvasRef} className="absolute top-0 left-0" />
-                <canvas ref={tempCanvasRef} className="absolute top-0 left-0 pointer-events-none" />
+                <div
+                  style={{
+                    transform: `translate(${translate.x}px, ${translate.y}px) scale(${zoom})`,
+                    transformOrigin: "top left",
+                    width: `${canvasSize.width}px`,
+                    height: `${canvasSize.height}px`,
+                    position: "relative",
+                  }}
+                >
+                  <canvas ref={baseCanvasRef} className="absolute top-0 left-0" />
+                  <canvas ref={drawCanvasRef} className="absolute top-0 left-0" />
+                  <canvas ref={tempCanvasRef} className="absolute top-0 left-0 pointer-events-none" />
+                </div>
               </div>
             </div>
           </div>

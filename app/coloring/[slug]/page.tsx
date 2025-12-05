@@ -1,5 +1,4 @@
 import { supabaseServer } from "@/lib/supabaseClient";
-import { Container } from "@/ui/container";
 import ColoringCanvas from "@/components/coloring-canvas";
 import { notFound } from "next/navigation";
 
@@ -42,15 +41,8 @@ export default async function ColoringPage({ params }: Props) {
   }
 
   return (
-    <Container className="py-8">
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold">{item.title}</h1>
-        <p className="text-sm text-gray-600">
-          {item.category} • {item.subcategory}
-        </p>
-      </div>
-
+    <div className="flex flex-col w-full h-[calc(100vh-64px)] overflow-hidden">
       <ColoringCanvas src={imageUrl} closeHref="/coloring" />
-    </Container>
+    </div>
   );
 }
