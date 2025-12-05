@@ -301,6 +301,34 @@ function MobileMenu({
     await handleLogout();
   };
 
+  // Simple icon component for menu items
+  const MenuIcon = ({ href }: { href: string }) => {
+    if (href === "/") return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+      </svg>
+    );
+    if (href === "/coloring") return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M12 19l7-7 3 3-7 7-3-3z" />
+        <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+      </svg>
+    );
+    if (href === "/games") return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="2" y="6" width="20" height="12" rx="2" />
+        <path d="M6 12h4M8 10v4M15 11h.01M18 13h.01" />
+      </svg>
+    );
+    if (href === "/admin") return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+      </svg>
+    );
+    return null;
+  };
+
   return (
     <>
       {/* Overlay - dark backdrop */}
@@ -312,11 +340,21 @@ function MobileMenu({
       {/* Drawer - slides in from right */}
       <div className={`mobile-menu-drawer ${isOpen ? "open" : ""}`}>
         {/* Header with logo and close button */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <span className="font-bold text-lg text-gray-800">Kids Park Club</span>
+        <div style={{ padding: '16px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontWeight: 'bold', fontSize: '18px', color: '#1f2937' }}>Kids Park Club</span>
           <button
             onClick={onClose}
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+            style={{ 
+              width: '40px', 
+              height: '40px', 
+              borderRadius: '50%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer'
+            }}
             aria-label="Закрыть меню"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -325,60 +363,83 @@ function MobileMenu({
           </button>
         </div>
         
-        {/* Navigation Links - large tap targets for mobile */}
-        <nav className="flex flex-col p-3 gap-1 flex-1">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={onClose}
-              className="flex items-center gap-3 px-4 py-4 rounded-xl hover:bg-gray-100 
-                         text-gray-700 font-medium transition-colors text-base"
-            >
-              {/* Icon based on link */}
-              <span className="w-6 h-6 flex items-center justify-center text-gray-500">
-                {link.href === "/" && (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-                  </svg>
-                )}
-                {link.href === "/coloring" && (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 19l7-7 3 3-7 7-3-3z" />
-                    <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
-                  </svg>
-                )}
-                {link.href === "/games" && (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="2" y="6" width="20" height="12" rx="2" />
-                    <path d="M6 12h4M8 10v4M15 11h.01M18 13h.01" />
-                  </svg>
-                )}
-                {link.href === "/admin" && (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
-                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
-                  </svg>
-                )}
-              </span>
-              {link.label}
-            </Link>
-          ))}
-        </nav>
+        {/* Navigation Links - EXPLICIT RENDERING */}
+        <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {/* Always render base links explicitly + dynamic links from hook */}
+          {links && links.length > 0 ? (
+            links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={onClose}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  color: '#374151',
+                  fontWeight: '500',
+                  fontSize: '16px',
+                  textDecoration: 'none',
+                  background: 'transparent'
+                }}
+              >
+                <span style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
+                  <MenuIcon href={link.href} />
+                </span>
+                {link.label}
+              </Link>
+            ))
+          ) : (
+            /* Fallback: render hardcoded links if hook returns empty */
+            <>
+              <Link href="/" onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px', color: '#374151', fontWeight: '500', fontSize: '16px', textDecoration: 'none' }}>
+                <span style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
+                  <MenuIcon href="/" />
+                </span>
+                Главная
+              </Link>
+              <Link href="/coloring" onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px', color: '#374151', fontWeight: '500', fontSize: '16px', textDecoration: 'none' }}>
+                <span style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
+                  <MenuIcon href="/coloring" />
+                </span>
+                Разукраски
+              </Link>
+              <Link href="/games" onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px', color: '#374151', fontWeight: '500', fontSize: '16px', textDecoration: 'none' }}>
+                <span style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
+                  <MenuIcon href="/games" />
+                </span>
+                Игры
+              </Link>
+            </>
+          )}
+        </div>
 
         {/* Auth section - Login/Logout at bottom */}
-        <div className="p-3 border-t border-gray-200">
+        <div style={{ marginTop: 'auto', padding: '12px', borderTop: '1px solid #e5e7eb' }}>
           {loading ? (
-            // Loading state - show placeholder
-            <div className="px-4 py-4 text-gray-400 text-center">Загрузка...</div>
+            <div style={{ padding: '16px', color: '#9ca3af', textAlign: 'center' }}>Загрузка...</div>
           ) : user ? (
-            // Logged in - show logout button
             <button
               onClick={onLogoutClick}
-              className="w-full flex items-center gap-3 px-4 py-4 rounded-xl 
-                         hover:bg-red-50 text-red-600 font-medium transition-colors text-base"
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '16px',
+                borderRadius: '12px',
+                color: '#dc2626',
+                fontWeight: '500',
+                fontSize: '16px',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
             >
-              <span className="w-6 h-6 flex items-center justify-center">
+              <span style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
                   <polyline points="16,17 21,12 16,7" />
@@ -388,14 +449,22 @@ function MobileMenu({
               Выйти
             </button>
           ) : (
-            // Not logged in - show login link
             <Link
               href="/auth/login"
               onClick={onClose}
-              className="w-full flex items-center gap-3 px-4 py-4 rounded-xl 
-                         hover:bg-blue-50 text-blue-600 font-medium transition-colors text-base"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '16px',
+                borderRadius: '12px',
+                color: '#2563eb',
+                fontWeight: '500',
+                fontSize: '16px',
+                textDecoration: 'none'
+              }}
             >
-              <span className="w-6 h-6 flex items-center justify-center">
+              <span style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
                   <polyline points="10,17 15,12 10,7" />

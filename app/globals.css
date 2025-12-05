@@ -111,16 +111,25 @@ body.coloring-mobile-fullscreen main {
   right: -280px;
   width: 280px;
   height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
   background: white;
   z-index: 101;
   transition: right 0.3s ease;
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .mobile-menu-drawer.open {
   right: 0;
+}
+
+/* Navigation links section - scrollable if content overflows */
+.mobile-menu-drawer nav {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0; /* Important for flex children to shrink */
 }
 
 /* Hide canvas scrollbar on mobile */
