@@ -142,16 +142,55 @@ function ColoringToolbar({
     );
   }
 
-  // Mobile: compact 2-row bottom toolbar with safe area padding
+  // Mobile: State for open panel
+  const [openPanel, setOpenPanel] = useState<PanelType>(null);
+  
+  // Refs for positioning popovers
+  const zoomButtonRef = useRef<HTMLButtonElement>(null);
+  const brushButtonRef = useRef<HTMLButtonElement>(null);
+  const opacityButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Toggle panel (close if same, open if different)
+  const togglePanel = (panel: PanelType) => {
+    setOpenPanel(prev => prev === panel ? null : panel);
+  };
+
+  // Close all panels
+  const closeAllPanels = () => setOpenPanel(null);
+
+  // Mobile: compact 2-row bottom toolbar with popovers
   return (
     <div className="bg-white border-t border-gray-200 flex-shrink-0 shadow-lg mobile-toolbar-safe">
-      {/* Row 1: Tools, Actions, Zoom Slider */}
+      {/* Popovers (rendered above toolbar) */}
+      <ZoomPopover
+        isOpen={openPanel === "zoom"}
+        onClose={closeAllPanels}
+        zoom={zoom}
+        setZoom={setZoom}
+        buttonRef={zoomButtonRef}
+      />
+      <BrushPopover
+        isOpen={openPanel === "brush"}
+        onClose={closeAllPanels}
+        brushSize={brushSize}
+        setBrushSize={setBrushSize}
+        buttonRef={brushButtonRef}
+      />
+      <OpacityPopover
+        isOpen={openPanel === "opacity"}
+        onClose={closeAllPanels}
+        opacity={opacity}
+        setOpacity={setOpacity}
+        buttonRef={opacityButtonRef}
+      />
+
+      {/* Row 1: Tools, Actions, Settings Icons */}
       <div className="flex items-center justify-between px-2 py-1.5 gap-1 border-b border-gray-100">
-        {/* Tools */}
+        {/* Drawing Tools */}
         <div className="flex items-center gap-1">
-          <ToolButton icon="brush" active={tool === "brush"} onClick={() => setTool("brush")} compact />
-          <ToolButton icon="eraser" active={tool === "eraser"} onClick={() => setTool("eraser")} compact />
-          <ToolButton icon="fill" active={tool === "fill"} onClick={() => setTool("fill")} compact />
+          <ToolButton icon="brush" active={tool === "brush"} onClick={() => { setTool("brush"); closeAllPanels(); }} compact />
+          <ToolButton icon="eraser" active={tool === "eraser"} onClick={() => { setTool("eraser"); closeAllPanels(); }} compact />
+          <ToolButton icon="fill" active={tool === "fill"} onClick={() => { setTool("fill"); closeAllPanels(); }} compact />
         </div>
 
         {/* Divider */}
@@ -159,68 +198,47 @@ function ColoringToolbar({
 
         {/* Actions */}
         <div className="flex items-center gap-1">
-          <ActionButton type="undo" onClick={undo} compact />
-          <ActionButton type="trash" onClick={onClear} compact />
-          <ActionButton type="download" onClick={onDownload} compact />
+          <ActionButton type="undo" onClick={() => { undo(); closeAllPanels(); }} compact />
+          <ActionButton type="trash" onClick={() => { onClear(); closeAllPanels(); }} compact />
+          <ActionButton type="download" onClick={() => { onDownload(); closeAllPanels(); }} compact />
         </div>
 
         {/* Divider */}
         <div className="w-px h-6 bg-gray-200" />
 
-        {/* Zoom Slider */}
-        <ZoomSlider zoom={zoom} setZoom={setZoom} />
-      </div>
-
-      {/* Row 2: Brush Settings + Color Palette */}
-      <div className="flex items-center justify-between px-2 py-1.5 gap-2">
-        {/* Compact Brush Settings */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Thickness */}
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] text-gray-500 w-4">📏</span>
-            <input
-              type="range"
-              min={5}
-              max={120}
-              value={brushSize}
-              onChange={(e) => setBrushSize(Number(e.target.value))}
-              className="w-12 h-1 accent-blue-500"
-              style={{
-                WebkitAppearance: 'none',
-                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((brushSize - 5) / 115) * 100}%, #d1d5db ${((brushSize - 5) / 115) * 100}%, #d1d5db 100%)`,
-                borderRadius: '4px',
-              }}
-            />
-          </div>
-
-          {/* Opacity */}
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] text-gray-500 w-4">💧</span>
-            <input
-              type="range"
-              min={0.1}
-              max={1}
-              step={0.05}
-              value={opacity}
-              onChange={(e) => setOpacity(Number(e.target.value))}
-              className="w-10 h-1 accent-blue-500"
-              style={{
-                WebkitAppearance: 'none',
-                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((opacity - 0.1) / 0.9) * 100}%, #d1d5db ${((opacity - 0.1) / 0.9) * 100}%, #d1d5db 100%)`,
-                borderRadius: '4px',
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Compact Color Palette */}
-        <div className="flex-1 flex justify-end">
-          <CompactColorPalette
-            color={color}
-            setColor={handleColorSelect}
-            isMobile={isMobile}
+        {/* Settings Buttons (Zoom, Brush, Opacity) */}
+        <div className="flex items-center gap-1">
+          <SettingsButton
+            icon="🔍"
+            label="Zoom"
+            isActive={openPanel === "zoom"}
+            onClick={() => togglePanel("zoom")}
+            buttonRef={zoomButtonRef}
+          />
+          <SettingsButton
+            icon="📏"
+            label="Brush Size"
+            isActive={openPanel === "brush"}
+            onClick={() => togglePanel("brush")}
+            buttonRef={brushButtonRef}
+          />
+          <SettingsButton
+            icon="💧"
+            label="Opacity"
+            isActive={openPanel === "opacity"}
+            onClick={() => togglePanel("opacity")}
+            buttonRef={opacityButtonRef}
           />
         </div>
+      </div>
+
+      {/* Row 2: Color Palette only */}
+      <div className="flex items-center justify-center px-2 py-1.5">
+        <CompactColorPalette
+          color={color}
+          setColor={(c) => { handleColorSelect(c); closeAllPanels(); }}
+          isMobile={isMobile}
+        />
       </div>
     </div>
   );
@@ -559,42 +577,239 @@ function ZoomControls({ zoom, onZoomIn, onZoomOut }: {
 }
 
 /* ============================================================
-    COMPACT ZOOM SLIDER (Mobile only)
+    MOBILE SLIDER POPOVER COMPONENTS
+    - Each tool has its own popover with a slider
+    - Auto-positions to stay within viewport
+    - Closes when tapping outside
 ============================================================ */
-function ZoomSlider({ zoom, setZoom }: {
-  zoom: number;
-  setZoom: (z: number) => void;
+
+type PanelType = "zoom" | "brush" | "opacity" | null;
+
+// Generic Popover Container with auto-positioning
+function SliderPopover({ 
+  isOpen, 
+  onClose, 
+  title, 
+  buttonRef,
+  children 
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  buttonRef: React.RefObject<HTMLButtonElement | null>;
+  children: React.ReactNode;
 }) {
-  const handleZoomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.stopPropagation();
-    setZoom(Number(e.target.value));
-  };
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  // Calculate position when popover opens
+  useEffect(() => {
+    if (!isOpen || !buttonRef.current) return;
+
+    const button = buttonRef.current;
+    const rect = button.getBoundingClientRect();
+    const popoverWidth = 140; // Approximate width
+    const padding = 8;
+    const viewportWidth = window.innerWidth;
+
+    // Center above the button
+    let x = rect.left + rect.width / 2 - popoverWidth / 2;
+    const y = rect.top - 10; // 10px above button
+
+    // Boundary checks
+    if (x < padding) {
+      x = padding;
+    } else if (x + popoverWidth > viewportWidth - padding) {
+      x = viewportWidth - popoverWidth - padding;
+    }
+
+    setPosition({ x, y });
+  }, [isOpen, buttonRef]);
+
+  if (!isOpen) return null;
 
   return (
-    <div 
-      className="flex items-center gap-1.5 bg-gray-100 rounded-full px-2 py-1"
-      onPointerDown={(e) => e.stopPropagation()}
-      onTouchStart={(e) => e.stopPropagation()}
-    >
-      <span className="text-[10px] text-gray-500">🔍</span>
-      <input
-        type="range"
-        min={0.25}
-        max={3}
-        step={0.05}
-        value={zoom}
-        onChange={handleZoomChange}
-        onPointerDown={(e) => e.stopPropagation()}
-        onTouchStart={(e) => e.stopPropagation()}
-        className="w-14 h-1 accent-blue-500 cursor-pointer"
-        style={{ 
-          WebkitAppearance: 'none',
-          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((zoom - 0.25) / 2.75) * 100}%, #d1d5db ${((zoom - 0.25) / 2.75) * 100}%, #d1d5db 100%)`,
-          borderRadius: '4px',
-        }}
+    <>
+      {/* Backdrop to close popover */}
+      <div
+        className="fixed inset-0 z-40"
+        onClick={onClose}
+        onTouchStart={onClose}
       />
-      <span className="text-[10px] font-medium text-gray-600 min-w-[28px] text-right">{Math.round(zoom * 100)}%</span>
-    </div>
+      {/* Popover */}
+      <div
+        ref={popoverRef}
+        className="fixed z-50 bg-white rounded-xl shadow-xl border border-gray-200 p-3 animate-fade-in"
+        style={{
+          left: `${position.x}px`,
+          bottom: `calc(100vh - ${position.y}px)`,
+          minWidth: '140px',
+        }}
+        onClick={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 text-center">
+          {title}
+        </div>
+        {children}
+      </div>
+    </>
+  );
+}
+
+// Zoom Popover
+function ZoomPopover({ 
+  isOpen, 
+  onClose, 
+  zoom, 
+  setZoom,
+  buttonRef 
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  zoom: number;
+  setZoom: (z: number) => void;
+  buttonRef: React.RefObject<HTMLButtonElement | null>;
+}) {
+  return (
+    <SliderPopover isOpen={isOpen} onClose={onClose} title="Масштаб" buttonRef={buttonRef}>
+      <div className="flex flex-col items-center gap-2">
+        <input
+          type="range"
+          min={0.25}
+          max={3}
+          step={0.05}
+          value={zoom}
+          onChange={(e) => {
+            e.stopPropagation();
+            setZoom(Number(e.target.value));
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          className="w-full h-2 accent-blue-500 cursor-pointer"
+          style={{
+            WebkitAppearance: 'none',
+            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((zoom - 0.25) / 2.75) * 100}%, #e5e7eb ${((zoom - 0.25) / 2.75) * 100}%, #e5e7eb 100%)`,
+            borderRadius: '4px',
+          }}
+        />
+        <span className="text-sm font-medium text-gray-700">{Math.round(zoom * 100)}%</span>
+      </div>
+    </SliderPopover>
+  );
+}
+
+// Brush Size Popover
+function BrushPopover({ 
+  isOpen, 
+  onClose, 
+  brushSize, 
+  setBrushSize,
+  buttonRef 
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  brushSize: number;
+  setBrushSize: (s: number) => void;
+  buttonRef: React.RefObject<HTMLButtonElement | null>;
+}) {
+  return (
+    <SliderPopover isOpen={isOpen} onClose={onClose} title="Толщина" buttonRef={buttonRef}>
+      <div className="flex flex-col items-center gap-2">
+        <input
+          type="range"
+          min={5}
+          max={120}
+          value={brushSize}
+          onChange={(e) => {
+            e.stopPropagation();
+            setBrushSize(Number(e.target.value));
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          className="w-full h-2 accent-blue-500 cursor-pointer"
+          style={{
+            WebkitAppearance: 'none',
+            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((brushSize - 5) / 115) * 100}%, #e5e7eb ${((brushSize - 5) / 115) * 100}%, #e5e7eb 100%)`,
+            borderRadius: '4px',
+          }}
+        />
+        <span className="text-sm font-medium text-gray-700">{brushSize}px</span>
+      </div>
+    </SliderPopover>
+  );
+}
+
+// Opacity Popover
+function OpacityPopover({ 
+  isOpen, 
+  onClose, 
+  opacity, 
+  setOpacity,
+  buttonRef 
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  opacity: number;
+  setOpacity: (o: number) => void;
+  buttonRef: React.RefObject<HTMLButtonElement | null>;
+}) {
+  return (
+    <SliderPopover isOpen={isOpen} onClose={onClose} title="Прозрачность" buttonRef={buttonRef}>
+      <div className="flex flex-col items-center gap-2">
+        <input
+          type="range"
+          min={0.1}
+          max={1}
+          step={0.05}
+          value={opacity}
+          onChange={(e) => {
+            e.stopPropagation();
+            setOpacity(Number(e.target.value));
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          className="w-full h-2 accent-blue-500 cursor-pointer"
+          style={{
+            WebkitAppearance: 'none',
+            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((opacity - 0.1) / 0.9) * 100}%, #e5e7eb ${((opacity - 0.1) / 0.9) * 100}%, #e5e7eb 100%)`,
+            borderRadius: '4px',
+          }}
+        />
+        <span className="text-sm font-medium text-gray-700">{Math.round(opacity * 100)}%</span>
+      </div>
+    </SliderPopover>
+  );
+}
+
+// Settings Button (Zoom, Brush, Opacity triggers)
+function SettingsButton({ 
+  icon, 
+  label,
+  isActive, 
+  onClick,
+  buttonRef
+}: {
+  icon: string;
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+  buttonRef: React.RefObject<HTMLButtonElement>;
+}) {
+  return (
+    <button
+      ref={buttonRef as React.RefObject<HTMLButtonElement>}
+      onClick={onClick}
+      className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-150 hover:scale-105 active:scale-95 ${
+        isActive 
+          ? "bg-blue-500 text-white shadow-md" 
+          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+      }`}
+      aria-label={label}
+    >
+      <span className="text-xs">{icon}</span>
+    </button>
   );
 }
 

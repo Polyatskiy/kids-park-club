@@ -229,3 +229,53 @@ canvas {
 .mobile-toolbar-safe input[type="range"]:focus::-webkit-slider-thumb {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
 }
+
+/* ============================================================
+   MOBILE POPOVER ANIMATIONS
+============================================================ */
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in-up 0.15s ease-out forwards;
+}
+
+/* Popover slider styling */
+.animate-fade-in input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.animate-fade-in input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #3b82f6;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.animate-fade-in input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: #3b82f6;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
