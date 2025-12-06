@@ -536,6 +536,8 @@ function ZoomControls({ zoom, onZoomIn, onZoomOut }: {
 
 /* ============================================================
     COLOR SHADE POPUP
+    - Auto-positions to stay within viewport boundaries
+    - Shifts left/right if would overflow screen edges
 ============================================================ */
 function ColorShadePopup({ 
   baseColor, 
@@ -552,6 +554,41 @@ function ColorShadePopup({
   position: { x: number; y: number };
   currentColor: string;
 }) {
+  const popupRef = useRef<HTMLDivElement>(null);
+  const [adjustedPosition, setAdjustedPosition] = useState<{ x: number; y: number } | null>(null);
+
+  // Calculate popup position with boundary detection
+  useEffect(() => {
+    if (!popupRef.current) return;
+
+    const popup = popupRef.current;
+    const rect = popup.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const padding = 8; // Minimum distance from screen edges
+
+    // Start with centered position
+    let newX = position.x;
+
+    // Calculate popup width (it's centered, so check both sides)
+    const popupHalfWidth = rect.width / 2;
+
+    // Check left overflow
+    if (position.x - popupHalfWidth < padding) {
+      // Shift right: position popup so left edge is at padding
+      newX = popupHalfWidth + padding;
+    }
+    // Check right overflow
+    else if (position.x + popupHalfWidth > viewportWidth - padding) {
+      // Shift left: position popup so right edge is at viewport - padding
+      newX = viewportWidth - popupHalfWidth - padding;
+    }
+
+    // Calculate top position (above the button with small gap)
+    const newY = position.y - 50;
+
+    setAdjustedPosition({ x: newX, y: newY });
+  }, [position]);
+
   // Check if a shade is the currently selected color
   const isSelected = (shade: string) => {
     return currentColor.toLowerCase() === shade.toLowerCase();
@@ -567,6 +604,10 @@ function ColorShadePopup({
     return (r + g + b) / 3 > 200;
   };
 
+  // Use adjusted position if calculated, otherwise use initial centered position
+  const finalX = adjustedPosition?.x ?? position.x;
+  const finalY = adjustedPosition?.y ?? (position.y - 50);
+
   return (
     <>
       <div
@@ -574,11 +615,14 @@ function ColorShadePopup({
         onClick={onClose}
       />
       <div
-        className="fixed z-50 bg-white rounded-lg shadow-xl p-2 flex gap-1.5 border border-gray-200 transition-all duration-200"
+        ref={popupRef}
+        className="fixed z-50 bg-white rounded-lg shadow-xl p-2 flex gap-1.5 border border-gray-200"
         style={{
-          left: `${position.x}px`,
-          top: `${position.y - 50}px`,
+          left: `${finalX}px`,
+          top: `${finalY}px`,
           transform: 'translateX(-50%)',
+          // Smooth transition when position adjusts
+          transition: adjustedPosition ? 'none' : 'left 0.15s ease-out, top 0.15s ease-out',
         }}
         onClick={(e) => e.stopPropagation()}
       >
