@@ -14,12 +14,19 @@ body {
   border-radius: 9999px;
 }
 
-/* Coloring page - hide all page scrolling */
+/* Coloring page - hide all page scrolling and prevent bounce */
 html.coloring-page-active,
 body.coloring-page-active {
   overflow: hidden !important;
   height: 100vh !important;
+  height: 100dvh !important; /* Dynamic viewport for mobile browsers */
   max-height: 100vh !important;
+  max-height: 100dvh !important;
+  position: fixed !important; /* Prevent iOS safari bounce */
+  width: 100% !important;
+  touch-action: none; /* Prevent page-level touch gestures */
+  overscroll-behavior: none; /* Prevent overscroll/bounce effect */
+  -webkit-overflow-scrolling: auto; /* Disable momentum scrolling on body */
 }
 
 /* Hide scrollbar on html/body when on coloring page */
@@ -142,5 +149,39 @@ body.coloring-mobile-fullscreen main {
   .canvas-scroll-container {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+}
+
+/* ============================================================
+   CANVAS TOUCH INTERACTION FIXES
+============================================================ */
+
+/* Ensure canvas container captures all touch events */
+.canvas-scroll-container {
+  touch-action: none; /* Prevent browser handling of touch gestures */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none; /* Disable iOS callout */
+}
+
+/* Prevent text selection and context menu on canvas */
+canvas {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Mobile-specific canvas optimizations */
+@media (max-width: 899px) {
+  /* Ensure smooth pinch-zoom without page zoom */
+  .canvas-scroll-container {
+    touch-action: none;
+    overscroll-behavior: contain;
+  }
+  
+  /* Prevent double-tap zoom on canvas area */
+  .canvas-scroll-container * {
+    touch-action: manipulation;
   }
 }

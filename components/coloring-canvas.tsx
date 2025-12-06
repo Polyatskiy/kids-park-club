@@ -785,6 +785,12 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   const panStart = useRef({ x: 0, y: 0 });
   const touchPanRef = useRef<{ x: number; y: number } | null>(null);
   const lastTouchDist = useRef<number | null>(null);
+  
+  /* Touch gesture state - for detecting taps vs drags/pinches */
+  const touchStartTime = useRef<number>(0);
+  const touchStartPos = useRef<{ x: number; y: number } | null>(null);
+  const isTouchGesture = useRef(false); /* True if user is doing multitouch or dragging */
+  const hasMovedSignificantly = useRef(false); /* True if finger moved more than threshold */
 
   /* ============================================================
       UTILITY FUNCTIONS
@@ -998,8 +1004,12 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
 
   const floodFill = (startX: number, startY: number, fillColor: string) => {
     const base = baseCanvasRef.current;
-      const draw = drawCanvasRef.current;
+    const draw = drawCanvasRef.current;
     if (!base || !draw) return;
+    
+    // Save undo BEFORE the fill operation - this ensures undo restores pre-fill state
+    // This is the ONLY place saveUndo is called for fill operations
+    saveUndo();
 
     const w = draw.width;
     const h = draw.height;
@@ -1276,10 +1286,9 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     
     // Apply smoothed data to draw canvas
     drawCtx.putImageData(smoothedData, 0, 0);
-
-    // Save undo snapshot AFTER the fill is completed
-    // This ensures each fill operation is one independent undo action
-    saveUndo();
+    
+    // Note: saveUndo was already called at the START of floodFill
+    // This ensures undo restores the state BEFORE the fill
   };
 
   /* ============================================================
@@ -1300,7 +1309,8 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       if (!coords) return;
 
       if (tool === "fill") {
-    saveUndo();
+        // Note: saveUndo() is called inside floodFill() AFTER the fill completes
+        // This ensures ONE undo step per fill operation
         floodFill(coords.x, coords.y, color);
         return;
       }
@@ -1393,105 +1403,172 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   }, [zoom, animateZoom]);
 
   /* ============================================================
-      EVENT HANDLERS - TOUCH
+      EVENT HANDLERS - TOUCH (FIXED FOR MOBILE)
+      
+      Key fixes:
+      1. Fill tool only triggers on TAP (quick touch without movement)
+      2. Multitouch (2+ fingers) = pinch-zoom, never triggers fill/draw
+      3. Single finger drag = pan OR draw (depending on tool)
+      4. Proper gesture detection prevents accidental fills during zoom
   ============================================================= */
 
-  /* Track if multitouch gesture is active to prevent accidental fill */
-  const isMultitouchRef = useRef(false);
+  const TOUCH_TAP_THRESHOLD = 10; /* pixels - max movement to count as tap */
+  const TOUCH_TAP_TIMEOUT = 300; /* ms - max duration to count as tap */
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    /* ===== FIX: Prevent fill from triggering during two-finger gestures ===== */
+    e.preventDefault();
+    
+    /* Two or more fingers = pinch-zoom gesture */
     if (e.touches.length >= 2) {
-      isMultitouchRef.current = true;
-    }
-
-    if (e.touches.length === 1 && !isMultitouchRef.current) {
-      const t = e.touches[0];
-      const coords = getCanvasCoords(t.clientX, t.clientY);
-      if (!coords) return;
-
-      if (tool === "fill") {
-        saveUndo();
-        floodFill(coords.x, coords.y, color);
+      isTouchGesture.current = true;
+      isDrawingRef.current = false;
+      pointsRef.current = [];
+      
+      // Calculate initial pinch distance
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      lastTouchDist.current = Math.sqrt(dx * dx + dy * dy);
+      
+      // Calculate pinch center for panning
+      const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      touchPanRef.current = { x: centerX, y: centerY };
       return;
     }
 
+    /* Single finger touch */
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      
+      // Record touch start for tap detection
+      touchStartTime.current = Date.now();
+      touchStartPos.current = { x: t.clientX, y: t.clientY };
+      hasMovedSignificantly.current = false;
+      isTouchGesture.current = false;
+      
+      const coords = getCanvasCoords(t.clientX, t.clientY);
+      if (!coords) return;
+
+      // For brush/eraser: start drawing immediately
       if (tool === "brush" || tool === "eraser") {
-        // Don't save undo here - it will be saved after commitStroke()
         isDrawingRef.current = true;
         pointsRef.current = [];
         pointsRef.current.push(coords);
         drawSpline();
-
-        touchPanRef.current = { x: t.clientX, y: t.clientY };
       }
+      
+      // For fill: we'll handle it on touchEnd (tap detection)
+      // For all tools: prepare for potential panning
+      touchPanRef.current = { x: t.clientX, y: t.clientY };
     }
-
-    if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      lastTouchDist.current = Math.sqrt(dx * dx + dy * dy);
-      isDrawingRef.current = false;
-    }
-
-    e.preventDefault();
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     e.preventDefault();
 
-    if (e.touches.length === 1 && isDrawingRef.current && (tool === "brush" || tool === "eraser")) {
-      const t = e.touches[0];
-      const coords = getCanvasCoords(t.clientX, t.clientY);
-      if (coords) {
-        pointsRef.current.push(coords);
-        drawSpline();
-      }
-      return;
-    }
-
-    if (e.touches.length === 1 && !isDrawingRef.current) {
-      const t = e.touches[0];
-
-      if (touchPanRef.current) {
-        const dx = t.clientX - touchPanRef.current.x;
-        const dy = t.clientY - touchPanRef.current.y;
-
-        touchPanRef.current = { x: t.clientX, y: t.clientY };
-        setTranslate((tr) => ({ x: tr.x + dx, y: tr.y + dy }));
-      }
-      return;
-    }
-
+    /* Two-finger pinch-zoom and pan */
     if (e.touches.length === 2) {
+      isTouchGesture.current = true;
+      isDrawingRef.current = false;
+      
       const dx = e.touches[0].clientX - e.touches[1].clientX;
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      if (lastTouchDist.current) {
+      // Pinch zoom
+      if (lastTouchDist.current !== null) {
         const delta = dist - lastTouchDist.current;
-        let newScale = zoom + delta * 0.003;
-        newScale = Math.max(0.5, Math.min(3, newScale));
+        let newScale = zoom + delta * 0.005;
+        newScale = Math.max(0.5, Math.min(4, newScale));
         setZoom(newScale);
       }
-
       lastTouchDist.current = dist;
+
+      // Two-finger pan
+      const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      
+      if (touchPanRef.current) {
+        const panDx = centerX - touchPanRef.current.x;
+        const panDy = centerY - touchPanRef.current.y;
+        setTranslate((tr) => ({ x: tr.x + panDx, y: tr.y + panDy }));
+      }
+      touchPanRef.current = { x: centerX, y: centerY };
+      return;
+    }
+
+    /* Single finger movement */
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      
+      // Check if we've moved significantly (for tap detection)
+      if (touchStartPos.current) {
+        const moveDist = Math.sqrt(
+          Math.pow(t.clientX - touchStartPos.current.x, 2) +
+          Math.pow(t.clientY - touchStartPos.current.y, 2)
+        );
+        if (moveDist > TOUCH_TAP_THRESHOLD) {
+          hasMovedSignificantly.current = true;
+        }
+      }
+
+      // Drawing with brush/eraser
+      if (isDrawingRef.current && (tool === "brush" || tool === "eraser")) {
+        const coords = getCanvasCoords(t.clientX, t.clientY);
+        if (coords) {
+          pointsRef.current.push(coords);
+          drawSpline();
+        }
+        return;
+      }
+
+      // Panning (when using fill tool, or when zoomed in)
+      if (tool === "fill" || zoom > 1) {
+        if (touchPanRef.current && hasMovedSignificantly.current) {
+          const dx = t.clientX - touchPanRef.current.x;
+          const dy = t.clientY - touchPanRef.current.y;
+          setTranslate((tr) => ({ x: tr.x + dx, y: tr.y + dy }));
+        }
+        touchPanRef.current = { x: t.clientX, y: t.clientY };
+      }
     }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    e.preventDefault();
+    
+    // Commit any in-progress drawing
     if (isDrawingRef.current) {
       commitStroke();
       isDrawingRef.current = false;
       pointsRef.current = [];
     }
 
-    touchPanRef.current = null;
-    lastTouchDist.current = null;
+    /* Handle fill tool TAP detection */
+    /* Fill only triggers if: single tap, no multitouch, minimal movement, quick tap */
+    if (e.touches.length === 0 && 
+        tool === "fill" && 
+        !isTouchGesture.current && 
+        !hasMovedSignificantly.current &&
+        touchStartPos.current) {
+      
+      const tapDuration = Date.now() - touchStartTime.current;
+      
+      if (tapDuration < TOUCH_TAP_TIMEOUT) {
+        const coords = getCanvasCoords(touchStartPos.current.x, touchStartPos.current.y);
+        if (coords) {
+          floodFill(coords.x, coords.y, color);
+        }
+      }
+    }
 
-    /* Reset multitouch flag when all fingers are lifted */
+    /* Reset all touch state when all fingers lifted */
     if (e.touches.length === 0) {
-      isMultitouchRef.current = false;
+      touchPanRef.current = null;
+      lastTouchDist.current = null;
+      isTouchGesture.current = false;
+      hasMovedSignificantly.current = false;
+      touchStartPos.current = null;
     }
   };
 
@@ -1545,6 +1622,44 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   }, [translate.x, translate.y, clampPan]);
 
   /* ============================================================
+      CALCULATE AUTO-FIT ZOOM
+      
+      Calculates the optimal zoom level to fit the image within
+      the available viewport while preserving aspect ratio.
+  ============================================================= */
+  
+  const calculateAutoFitZoom = useCallback((imgWidth: number, imgHeight: number) => {
+    const wrapper = wrapperRef.current;
+    const container = containerRef.current;
+    
+    if (!wrapper && !container) {
+      // Fallback: estimate based on window size
+      const viewportWidth = window.innerWidth - (isMobile ? 20 : 280); // Account for toolbar
+      const viewportHeight = window.innerHeight - (isMobile ? 200 : 100); // Account for toolbar/header
+      
+      const scaleX = viewportWidth / imgWidth;
+      const scaleY = viewportHeight / imgHeight;
+      
+      // Use the smaller scale to ensure image fits, with some padding
+      return Math.min(scaleX, scaleY) * 0.9;
+    }
+    
+    const viewWidth = wrapper?.clientWidth || container?.clientWidth || window.innerWidth;
+    const viewHeight = wrapper?.clientHeight || container?.clientHeight || window.innerHeight;
+    
+    // Calculate scale factors for both dimensions
+    const scaleX = viewWidth / imgWidth;
+    const scaleY = viewHeight / imgHeight;
+    
+    // Use the smaller scale to ensure image fits completely
+    // Apply 0.9 factor to leave some padding around the image
+    const fitScale = Math.min(scaleX, scaleY) * 0.9;
+    
+    // Clamp to reasonable bounds (0.1 to 1.0 for initial load)
+    return Math.max(0.1, Math.min(1.0, fitScale));
+  }, [isMobile]);
+
+  /* ============================================================
       LOAD IMAGE AND INITIALIZE CANVASES
   ============================================================= */
 
@@ -1580,6 +1695,14 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
         undoStack.current = [drawCtx.getImageData(0, 0, draw.width, draw.height)];
       }
 
+      // AUTO-FIT: Calculate and set optimal zoom for the image to fit the screen
+      // Use a small delay to ensure container dimensions are available
+      setTimeout(() => {
+        const autoZoom = calculateAutoFitZoom(img.width, img.height);
+        setZoom(autoZoom);
+        setTranslate({ x: 0, y: 0 });
+      }, 50);
+
       setTool("fill");
       setImageLoaded(true);
     };
@@ -1589,20 +1712,42 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     };
 
     img.src = src;
-  }, [src]);
+  }, [src, calculateAutoFitZoom]);
 
   /* ============================================================
-      RESPONSIVE DETECTION
+      RESPONSIVE DETECTION + AUTO-FIT ON RESIZE
   ============================================================= */
 
   useEffect(() => {
-    const checkMobile = () => {
+    let resizeTimeout: NodeJS.Timeout;
+    
+    const handleResize = () => {
+      // Update mobile state
       setIsMobile(window.innerWidth < 900);
+      
+      // Debounce auto-fit recalculation
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        if (canvasSize.width > 0 && canvasSize.height > 0) {
+          const autoZoom = calculateAutoFitZoom(canvasSize.width, canvasSize.height);
+          setZoom(autoZoom);
+          setTranslate({ x: 0, y: 0 });
+        }
+      }, 200);
     };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+    
+    // Initial check
+    setIsMobile(window.innerWidth < 900);
+    
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+    
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+      clearTimeout(resizeTimeout);
+    };
+  }, [canvasSize, calculateAutoFitZoom]);
 
   /* ============================================================
       DOWNLOAD RESULT
