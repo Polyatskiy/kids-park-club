@@ -99,14 +99,6 @@ function ColoringToolbar({
             <ZoomControls zoom={zoom} onZoomIn={onZoomIn} onZoomOut={onZoomOut} />
           </div>
 
-          {/* Color Indicator */}
-          <div className="flex flex-col gap-2">
-            <div 
-              className="w-10 h-10 rounded-full border-2 border-gray-400 shadow-md"
-              style={{ background: color }} 
-            />
-          </div>
-
           {/* Brush Settings */}
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-2">
@@ -169,14 +161,6 @@ function ColoringToolbar({
         {/* Zoom Controls */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <ZoomControls zoom={zoom} onZoomIn={onZoomIn} onZoomOut={onZoomOut} />
-        </div>
-
-        {/* Color Indicator */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <div 
-            className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-gray-400 shadow-md"
-            style={{ background: color }} 
-          />
         </div>
 
         {/* Brush Settings */}
@@ -482,6 +466,8 @@ function MobileMenu({
 
 /* ============================================================
     ANIMATED TOOL BUTTONS
+    - Uses OUTLINE style for selection (same as color palette)
+    - No filled background when active
 ============================================================ */
 function ToolButton({ icon, active, onClick }: {
   icon: "brush" | "eraser" | "fill";
@@ -492,11 +478,11 @@ function ToolButton({ icon, active, onClick }: {
     <button
       onClick={onClick}
       className={`
-        w-10 h-10 md:w-12 md:h-12 rounded-full border flex items-center justify-center shadow-sm
+        w-10 h-10 md:w-12 md:h-12 rounded-full bg-white flex items-center justify-center shadow-sm
         transition-all duration-150 hover:scale-105 active:scale-95
         ${active 
-          ? "bg-pink-500 text-white border-pink-600 shadow-md ring-2 ring-pink-200" 
-          : "bg-white border-gray-300 hover:border-gray-400"
+          ? "border-[3px] border-blue-500 shadow-md ring-2 ring-blue-200" 
+          : "border-2 border-gray-300 hover:border-gray-400"
         }
       `}
     >
@@ -556,14 +542,31 @@ function ColorShadePopup({
   shades, 
   onSelect, 
   onClose, 
-  position 
+  position,
+  currentColor 
 }: {
   baseColor: string;
   shades: string[];
   onSelect: (color: string) => void;
   onClose: () => void;
   position: { x: number; y: number };
+  currentColor: string;
 }) {
+  // Check if a shade is the currently selected color
+  const isSelected = (shade: string) => {
+    return currentColor.toLowerCase() === shade.toLowerCase();
+  };
+
+  // Check if shade is white or very light (needs darker border to be visible)
+  const isLightColor = (shade: string) => {
+    const hex = shade.replace('#', '');
+    const r = parseInt(hex.slice(0, 2), 16);
+    const g = parseInt(hex.slice(2, 4), 16);
+    const b = parseInt(hex.slice(4, 6), 16);
+    // Calculate luminance - if > 200, consider it light
+    return (r + g + b) / 3 > 200;
+  };
+
   return (
     <>
       <div
@@ -586,7 +589,13 @@ function ColorShadePopup({
               onSelect(shade);
               onClose();
             }}
-            className="w-7 h-7 rounded-full border-2 border-gray-300 hover:scale-110 active:scale-95 transition-transform duration-150"
+            className={`w-7 h-7 rounded-full transition-all duration-150 hover:scale-110 active:scale-95 ${
+              isSelected(shade)
+                ? "border-[3px] border-blue-500 shadow-md ring-2 ring-blue-200 scale-110"
+                : isLightColor(shade)
+                  ? "border-2 border-gray-400"
+                  : "border-2 border-gray-300"
+            }`}
             style={{ background: shade }}
           />
         ))}
@@ -597,6 +606,8 @@ function ColorShadePopup({
 
 /* ============================================================
     FULL COLOR PALETTE (DESKTOP - ALL COLORS)
+    - Grayscale colors first (black to white)
+    - Selection indicated by blue outline (same as tool selection)
 ============================================================ */
 function FullColorPalette({ 
   color, 
@@ -605,6 +616,15 @@ function FullColorPalette({
   color: string;
   setColor: (v: string) => void;
 }) {
+  // Grayscale colors - displayed FIRST
+  const GRAYSCALE_COLORS = [
+    "#000000", // Black
+    "#4a4a4a", // Dark gray
+    "#7a7a7a", // Medium gray
+    "#bfbfbf", // Light gray
+    "#ffffff", // White
+  ];
+
   const BASE_COLORS = [
     { name: "red", base: "#FF1744" },
     { name: "orange", base: "#FF6F00" },
@@ -632,8 +652,8 @@ function FullColorPalette({
     ];
   };
 
-  // Get all colors (all shades of all base colors)
-  const allColors: string[] = [];
+  // Build all colors: grayscale first, then color shades
+  const allColors: string[] = [...GRAYSCALE_COLORS];
   BASE_COLORS.forEach(({ base }) => {
     allColors.push(...getShades(base));
   });
@@ -644,10 +664,10 @@ function FullColorPalette({
         <button
           key={idx}
           onClick={() => setColor(shade)}
-          className={`w-8 h-8 rounded-full border-2 transition-all duration-150 hover:scale-110 active:scale-95 ${
-            color === shade
-              ? "border-gray-800 shadow-md scale-110"
-              : "border-gray-300"
+          className={`w-8 h-8 rounded-full transition-all duration-150 hover:scale-110 active:scale-95 ${
+            color.toLowerCase() === shade.toLowerCase()
+              ? "border-[3px] border-blue-500 shadow-md ring-2 ring-blue-200 scale-110"
+              : "border-2 border-gray-300"
           }`}
           style={{ background: shade }}
           aria-label={`Color ${idx + 1}`}
@@ -658,7 +678,10 @@ function FullColorPalette({
 }
 
 /* ============================================================
-    COMPACT COLOR PALETTE (MOBILE - 7 BASE COLORS WITH POPUP)
+    COMPACT COLOR PALETTE (MOBILE - ALL COLORS WITH POPUP)
+    - Black is a parent color with grayscale shades (black to white)
+    - All color families have shades popup
+    - Selection indicated by blue outline (same as tool selection)
 ============================================================ */
 function CompactColorPalette({ 
   color, 
@@ -673,7 +696,9 @@ function CompactColorPalette({
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
   const colorRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
 
-  const BASE_COLORS = [
+  // All color families - BLACK is first with grayscale shades
+  const ALL_COLORS = [
+    { name: "black", base: "#000000" }, // Parent for grayscale shades
     { name: "red", base: "#FF1744" },
     { name: "orange", base: "#FF6F00" },
     { name: "yellow", base: "#FFD600" },
@@ -683,7 +708,23 @@ function CompactColorPalette({
     { name: "brown", base: "#8B4513" },
   ];
 
+  // Grayscale shades for black parent color
+  const GRAYSCALE_SHADES = [
+    "#000000", // Black
+    "#4A4A4A", // Dark gray
+    "#7A7A7A", // Medium gray
+    "#BFBFBF", // Light gray
+    "#FFFFFF", // White
+  ];
+
+  // Get shades for a color - special case for black (grayscale)
   const getShades = (baseHex: string): string[] => {
+    // Black uses predefined grayscale shades
+    if (baseHex.toLowerCase() === "#000000") {
+      return GRAYSCALE_SHADES;
+    }
+    
+    // Other colors use computed shades
     const r = parseInt(baseHex.slice(1, 3), 16);
     const g = parseInt(baseHex.slice(3, 5), 16);
     const b = parseInt(baseHex.slice(5, 7), 16);
@@ -713,20 +754,31 @@ function CompactColorPalette({
     }
   };
 
+  // Check if current color is selected (case-insensitive)
+  const isColorSelected = (checkColor: string) => {
+    return color.toLowerCase() === checkColor.toLowerCase();
+  };
+
+  // Check if color is in any shade family
+  const isInColorFamily = (baseColor: string) => {
+    return isColorSelected(baseColor) || getShades(baseColor).some(shade => isColorSelected(shade));
+  };
+
   return (
     <>
-      <div className="flex items-center gap-2">
-        {BASE_COLORS.map(({ name, base }) => (
+      <div className="flex items-center gap-1.5">
+        {/* All color families with popup - Black first */}
+        {ALL_COLORS.map(({ name, base }) => (
           <button
             key={name}
             ref={(el) => {
               colorRefs.current[base] = el;
             }}
             onClick={(e) => handleColorClick(base, e)}
-            className={`w-8 h-8 md:w-9 md:h-9 rounded-full border-2 transition-all duration-150 hover:scale-110 active:scale-95 ${
-              color === base || getShades(base).includes(color)
-                ? "border-gray-800 shadow-md scale-110"
-                : "border-gray-300"
+            className={`w-7 h-7 md:w-8 md:h-8 rounded-full transition-all duration-150 hover:scale-110 active:scale-95 ${
+              isInColorFamily(base)
+                ? "border-[3px] border-blue-500 shadow-md ring-2 ring-blue-200 scale-110"
+                : "border-2 border-gray-300"
             }`}
             style={{ background: base }}
             aria-label={name}
@@ -741,6 +793,7 @@ function CompactColorPalette({
           onSelect={setColor}
           onClose={() => setExpandedColor(null)}
           position={popupPosition}
+          currentColor={color}
         />
       )}
     </>
@@ -1006,10 +1059,6 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     const base = baseCanvasRef.current;
     const draw = drawCanvasRef.current;
     if (!base || !draw) return;
-    
-    // Save undo BEFORE the fill operation - this ensures undo restores pre-fill state
-    // This is the ONLY place saveUndo is called for fill operations
-    saveUndo();
 
     const w = draw.width;
     const h = draw.height;
@@ -1287,8 +1336,9 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     // Apply smoothed data to draw canvas
     drawCtx.putImageData(smoothedData, 0, 0);
     
-    // Note: saveUndo was already called at the START of floodFill
-    // This ensures undo restores the state BEFORE the fill
+    // Save undo AFTER the fill completes (same pattern as commitStroke for brush)
+    // This ensures the stack contains the result state, and undo restores correctly
+    saveUndo();
   };
 
   /* ============================================================
@@ -1309,8 +1359,8 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       if (!coords) return;
 
       if (tool === "fill") {
-        // Note: saveUndo() is called inside floodFill() AFTER the fill completes
-        // This ensures ONE undo step per fill operation
+        // saveUndo() is called at the END of floodFill() (same as commitStroke)
+        // This ensures exactly ONE undo step per fill operation
         floodFill(coords.x, coords.y, color);
         return;
       }
