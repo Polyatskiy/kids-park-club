@@ -22,6 +22,7 @@ function ColoringToolbar({
   brushSize,
   setBrushSize,
   zoom,
+  setZoom,
   onZoomIn,
   onZoomOut,
   undo,
@@ -38,6 +39,7 @@ function ColoringToolbar({
   brushSize: number;
   setBrushSize: (s: number) => void;
   zoom: number;
+  setZoom: (z: number) => void;
   onZoomIn: () => void;
   onZoomOut: () => void;
   undo: () => void;
@@ -140,45 +142,60 @@ function ColoringToolbar({
     );
   }
 
-  // Mobile: horizontal bottom toolbar with safe area padding
+  // Mobile: compact 2-row bottom toolbar with safe area padding
   return (
-    <div className="bg-white border-t border-gray-300 flex-shrink-0 overflow-x-auto shadow-sm mobile-toolbar-safe">
-      <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3 p-2 md:p-3 max-w-full">
-        {/* Tools Row */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <ToolButton icon="brush" active={tool === "brush"} onClick={() => setTool("brush")} />
-          <ToolButton icon="eraser" active={tool === "eraser"} onClick={() => setTool("eraser")} />
-          <ToolButton icon="fill" active={tool === "fill"} onClick={() => setTool("fill")} />
+    <div className="bg-white border-t border-gray-200 flex-shrink-0 shadow-lg mobile-toolbar-safe">
+      {/* Row 1: Tools, Actions, Zoom Slider */}
+      <div className="flex items-center justify-between px-2 py-1.5 gap-1 border-b border-gray-100">
+        {/* Tools */}
+        <div className="flex items-center gap-1">
+          <ToolButton icon="brush" active={tool === "brush"} onClick={() => setTool("brush")} compact />
+          <ToolButton icon="eraser" active={tool === "eraser"} onClick={() => setTool("eraser")} compact />
+          <ToolButton icon="fill" active={tool === "fill"} onClick={() => setTool("fill")} compact />
         </div>
 
-        {/* Actions Row */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <ActionButton type="undo" onClick={undo} />
-          <ActionButton type="trash" onClick={onClear} />
-          <ActionButton type="download" onClick={onDownload} />
+        {/* Divider */}
+        <div className="w-px h-6 bg-gray-200" />
+
+        {/* Actions */}
+        <div className="flex items-center gap-1">
+          <ActionButton type="undo" onClick={undo} compact />
+          <ActionButton type="trash" onClick={onClear} compact />
+          <ActionButton type="download" onClick={onDownload} compact />
         </div>
 
-        {/* Zoom Controls */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <ZoomControls zoom={zoom} onZoomIn={onZoomIn} onZoomOut={onZoomOut} />
-        </div>
+        {/* Divider */}
+        <div className="w-px h-6 bg-gray-200" />
 
-        {/* Brush Settings */}
-        <div className={`flex ${isMobile ? "flex-col" : "flex-row"} items-center gap-2 md:gap-3 flex-shrink-0`}>
-          <div className="flex items-center gap-1.5 md:gap-2">
-            <label className="text-xs md:text-sm text-gray-600 whitespace-nowrap">Толщина</label>
+        {/* Zoom Slider */}
+        <ZoomSlider zoom={zoom} setZoom={setZoom} />
+      </div>
+
+      {/* Row 2: Brush Settings + Color Palette */}
+      <div className="flex items-center justify-between px-2 py-1.5 gap-2">
+        {/* Compact Brush Settings */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Thickness */}
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-gray-500 w-4">📏</span>
             <input
               type="range"
               min={5}
               max={120}
               value={brushSize}
               onChange={(e) => setBrushSize(Number(e.target.value))}
-              className="w-16 md:w-24"
+              className="w-12 h-1 accent-blue-500"
+              style={{
+                WebkitAppearance: 'none',
+                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((brushSize - 5) / 115) * 100}%, #d1d5db ${((brushSize - 5) / 115) * 100}%, #d1d5db 100%)`,
+                borderRadius: '4px',
+              }}
             />
           </div>
 
-          <div className="flex items-center gap-1.5 md:gap-2">
-            <label className="text-xs md:text-sm text-gray-600 whitespace-nowrap">Прозрачность</label>
+          {/* Opacity */}
+          <div className="flex items-center gap-1">
+            <span className="text-[10px] text-gray-500 w-4">💧</span>
             <input
               type="range"
               min={0.1}
@@ -186,13 +203,18 @@ function ColoringToolbar({
               step={0.05}
               value={opacity}
               onChange={(e) => setOpacity(Number(e.target.value))}
-              className="w-16 md:w-24"
+              className="w-10 h-1 accent-blue-500"
+              style={{
+                WebkitAppearance: 'none',
+                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((opacity - 0.1) / 0.9) * 100}%, #d1d5db ${((opacity - 0.1) / 0.9) * 100}%, #d1d5db 100%)`,
+                borderRadius: '4px',
+              }}
             />
           </div>
         </div>
 
         {/* Compact Color Palette */}
-        <div className="flex-shrink-0">
+        <div className="flex-1 flex justify-end">
           <CompactColorPalette
             color={color}
             setColor={handleColorSelect}
@@ -469,16 +491,17 @@ function MobileMenu({
     - Uses OUTLINE style for selection (same as color palette)
     - No filled background when active
 ============================================================ */
-function ToolButton({ icon, active, onClick }: {
+function ToolButton({ icon, active, onClick, compact = false }: {
   icon: "brush" | "eraser" | "fill";
   active: boolean;
   onClick: () => void;
+  compact?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
       className={`
-        w-10 h-10 md:w-12 md:h-12 rounded-full bg-white flex items-center justify-center shadow-sm
+        ${compact ? "w-8 h-8" : "w-10 h-10 md:w-12 md:h-12"} rounded-full bg-white flex items-center justify-center shadow-sm
         transition-all duration-150 hover:scale-105 active:scale-95
         ${active 
           ? "border-[3px] border-blue-500 shadow-md ring-2 ring-blue-200" 
@@ -486,27 +509,28 @@ function ToolButton({ icon, active, onClick }: {
         }
       `}
     >
-      <img src={`/icons/${icon}.svg`} className="w-6 h-6 md:w-7 md:h-7" alt={icon} />
+      <img src={`/icons/${icon}.svg`} className={compact ? "w-4 h-4" : "w-6 h-6 md:w-7 md:h-7"} alt={icon} />
     </button>
   );
 }
 
-function ActionButton({ type, onClick }: {
+function ActionButton({ type, onClick, compact = false }: {
   type: "undo" | "trash" | "download";
   onClick: () => void;
+  compact?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white border border-gray-300 flex items-center justify-center shadow-sm transition-all duration-150 hover:scale-105 active:scale-95 hover:border-gray-400"
+      className={`${compact ? "w-7 h-7" : "w-10 h-10 md:w-11 md:h-11"} rounded-full bg-white border border-gray-300 flex items-center justify-center shadow-sm transition-all duration-150 hover:scale-105 active:scale-95 hover:border-gray-400`}
     >
-      <img src={`/icons/${type}.svg`} className="w-5 h-5 md:w-6 md:h-6" alt={type} />
+      <img src={`/icons/${type}.svg`} className={compact ? "w-3.5 h-3.5" : "w-5 h-5 md:w-6 md:h-6"} alt={type} />
     </button>
   );
 }
 
 /* ============================================================
-    ZOOM CONTROL
+    ZOOM CONTROLS - Desktop uses +/- buttons, Mobile uses slider
 ============================================================ */
 function ZoomControls({ zoom, onZoomIn, onZoomOut }: {
   zoom: number;
@@ -530,6 +554,46 @@ function ZoomControls({ zoom, onZoomIn, onZoomOut }: {
       >
         +
       </button>
+    </div>
+  );
+}
+
+/* ============================================================
+    COMPACT ZOOM SLIDER (Mobile only)
+============================================================ */
+function ZoomSlider({ zoom, setZoom }: {
+  zoom: number;
+  setZoom: (z: number) => void;
+}) {
+  const handleZoomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation();
+    setZoom(Number(e.target.value));
+  };
+
+  return (
+    <div 
+      className="flex items-center gap-1.5 bg-gray-100 rounded-full px-2 py-1"
+      onPointerDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+    >
+      <span className="text-[10px] text-gray-500">🔍</span>
+      <input
+        type="range"
+        min={0.25}
+        max={3}
+        step={0.05}
+        value={zoom}
+        onChange={handleZoomChange}
+        onPointerDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+        className="w-14 h-1 accent-blue-500 cursor-pointer"
+        style={{ 
+          WebkitAppearance: 'none',
+          background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((zoom - 0.25) / 2.75) * 100}%, #d1d5db ${((zoom - 0.25) / 2.75) * 100}%, #d1d5db 100%)`,
+          borderRadius: '4px',
+        }}
+      />
+      <span className="text-[10px] font-medium text-gray-600 min-w-[28px] text-right">{Math.round(zoom * 100)}%</span>
     </div>
   );
 }
@@ -1985,6 +2049,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
             brushSize={brushSize}
             setBrushSize={setBrushSize}
             zoom={zoom}
+            setZoom={setZoom}
             onZoomIn={handleZoomIn}
             onZoomOut={handleZoomOut}
             undo={undo}
@@ -2102,6 +2167,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
             brushSize={brushSize}
             setBrushSize={setBrushSize}
             zoom={zoom}
+            setZoom={setZoom}
             onZoomIn={handleZoomIn}
             onZoomOut={handleZoomOut}
             undo={undo}

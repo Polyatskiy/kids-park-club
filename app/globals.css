@@ -185,3 +185,47 @@ canvas {
     touch-action: manipulation;
   }
 }
+
+/* ============================================================
+   MOBILE TOOLBAR SLIDER STYLES
+============================================================ */
+
+/* Compact slider thumb styling */
+.mobile-toolbar-safe input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.mobile-toolbar-safe input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #3b82f6;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.mobile-toolbar-safe input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: #3b82f6;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Focus states for accessibility */
+.mobile-toolbar-safe input[type="range"]:focus {
+  outline: none;
+}
+
+.mobile-toolbar-safe input[type="range"]:focus::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
