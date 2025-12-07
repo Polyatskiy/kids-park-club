@@ -4,9 +4,9 @@ import { updateItem } from "../../admin-actions";
 export default async function EditColoringPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
+  const { id } = await params; // тут уже всё ок
 
   const supabase = supabaseServer();
 
