@@ -4,9 +4,10 @@ import { updateItem } from "../../admin-actions";
 export default async function EditColoringPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = await params;
+  const { id } = await params; // Next.js 15 requirement
+
   const supabase = supabaseServer();
 
   const { data, error } = await supabase
@@ -32,10 +33,8 @@ export default async function EditColoringPage({
         encType="multipart/form-data"
         className="space-y-4"
       >
-        {/* скрытое поле id */}
         <input type="hidden" name="id" value={data.id} />
 
-        {/* title */}
         <input
           name="title"
           defaultValue={data.title}
@@ -43,7 +42,6 @@ export default async function EditColoringPage({
           required
         />
 
-        {/* category */}
         <input
           name="category"
           defaultValue={data.category}
@@ -51,7 +49,6 @@ export default async function EditColoringPage({
           required
         />
 
-        {/* subcategory */}
         <input
           name="subcategory"
           defaultValue={data.subcategory}
@@ -59,21 +56,17 @@ export default async function EditColoringPage({
           required
         />
 
-        {/* текущая миниатюра */}
         <div>
           <div className="text-sm text-gray-700 mb-1">Текущая миниатюра:</div>
           <div className="w-24 h-24 bg-white border rounded flex items-center justify-center overflow-hidden">
-            <div className="w-full h-full flex items-center justify-center">
-              <img
-                src={data.thumbnail_url}
-                className="w-full h-full object-contain"
-                alt="thumbnail"
-              />
-            </div>
+            <img
+              src={data.thumbnail_url}
+              className="w-full h-full object-contain"
+              alt="thumbnail"
+            />
           </div>
         </div>
 
-        {/* новое изображение (необязательно) */}
         <div className="text-gray-700 text-sm">Заменить изображение:</div>
         <input
           type="file"
