@@ -23,7 +23,10 @@ const IMAGES: PuzzleImage[] = [
   { id: 'village', src: '/puzzles/village.png', label: 'Village' },
 ];
 
-const CELL_SIZE = 96; // шаг сетки (логический размер клетки)
+const CELL_SIZE = 96; // логическая клетка
+const TAB_RADIUS = CELL_SIZE * 0.22; // радиус «ушка» — точно как 'r' в getPiecePath
+const PIECE_VISUAL_SIZE = Math.ceil(CELL_SIZE + TAB_RADIUS * 2); // реальный размер div с учётом ушек
+
 const INITIAL_DIFFICULTY: Difficulty = 3;
 const BOARD_MARGIN = 24;
 
@@ -240,11 +243,14 @@ const getCorrectPosition = (
 ): { x: number; y: number } => {
   const row = Math.floor(pieceId / gridSize);
   const col = pieceId % gridSize;
+
+  // позиция — левый верх внешнего прямоугольника (учитываем TAB_RADIUS)
   return {
-    x: boardOriginX + col * CELL_SIZE,
-    y: boardOriginY + row * CELL_SIZE,
+    x: boardOriginX + col * CELL_SIZE - TAB_RADIUS,
+    y: boardOriginY + row * CELL_SIZE - TAB_RADIUS,
   };
 };
+
 
 // ---------- КОМПОНЕНТ ----------
 
@@ -297,28 +303,23 @@ export const JigsawGame: React.FC = () => {
     pieceRefs.current[id] = el;
   };
 
-  const newGame = (opts?: {
-    difficulty?: Difficulty;
-    imageId?: string;
-  }) => {
+  const newGame = (opts?: { difficulty?: Difficulty; imageId?: string }) => {
     const nextDifficulty = opts?.difficulty ?? difficulty;
     const total = nextDifficulty * nextDifficulty;
     const nextBoardSize = nextDifficulty * CELL_SIZE;
     const nextScatterWidth = nextBoardSize - BOARD_MARGIN * 2;
     const nextScatterHeight = nextBoardSize - BOARD_MARGIN * 2;
-
+  
     const nextPieces: PieceState[] = [];
-
+  
     for (let id = 0; id < total; id += 1) {
       const randX =
         scatterOriginX +
-        Math.random() *
-          Math.max(1, nextScatterWidth - CELL_SIZE);
+        Math.random() * Math.max(1, nextScatterWidth - PIECE_VISUAL_SIZE);
       const randY =
         scatterOriginY +
-        Math.random() *
-          Math.max(1, nextScatterHeight - CELL_SIZE);
-
+        Math.random() * Math.max(1, nextScatterHeight - PIECE_VISUAL_SIZE);
+  
       nextPieces.push({
         id,
         x: randX,
@@ -326,13 +327,14 @@ export const JigsawGame: React.FC = () => {
         snapped: false,
       });
     }
-
+  
     setDifficulty(nextDifficulty);
     if (opts?.imageId) setSelectedImageId(opts.imageId);
     setPieces(nextPieces);
     setMoves(0);
     dragStateRef.current = createInitialDragState();
   };
+  
 
   // раскидываем кусочки только на клиенте, после гидратации
   useEffect(() => {
@@ -375,6 +377,7 @@ export const JigsawGame: React.FC = () => {
 
   const onDrag = (e: React.PointerEvent<HTMLDivElement>) => {
     const drag = dragStateRef.current;
+    
 
     if (
       drag.activePieceId === null ||
@@ -393,8 +396,8 @@ export const JigsawGame: React.FC = () => {
     let newLeft = localX - drag.offsetX;
     let newTop = localY - drag.offsetY;
 
-    const maxX = drag.workspaceWidth - CELL_SIZE;
-    const maxY = drag.workspaceHeight - CELL_SIZE;
+    const maxX = drag.workspaceWidth - PIECE_VISUAL_SIZE;
+    const maxY = drag.workspaceHeight - PIECE_VISUAL_SIZE;
 
     newLeft = clamp(newLeft, 0, maxX);
     newTop = clamp(newTop, 0, maxY);
@@ -436,8 +439,9 @@ export const JigsawGame: React.FC = () => {
     const currentLeft = parseFloat(pieceEl.style.left || '0');
     const currentTop = parseFloat(pieceEl.style.top || '0');
 
-    const centerX = currentLeft + CELL_SIZE / 2;
-    const centerY = currentTop + CELL_SIZE / 2;
+    // Центр базовой ячейки (без ушек) для корректного snapping
+    const centerX = currentLeft + TAB_RADIUS + CELL_SIZE / 2;
+    const centerY = currentTop + TAB_RADIUS + CELL_SIZE / 2;
 
     const correctPos = getCorrectPosition(
       pieceId,
@@ -445,8 +449,8 @@ export const JigsawGame: React.FC = () => {
       boardOriginX,
       boardOriginY,
     );
-    const correctCenterX = correctPos.x + CELL_SIZE / 2;
-    const correctCenterY = correctPos.y + CELL_SIZE / 2;
+    const correctCenterX = correctPos.x + TAB_RADIUS + CELL_SIZE / 2;
+    const correctCenterY = correctPos.y + TAB_RADIUS + CELL_SIZE / 2;
 
     const dx = centerX - correctCenterX;
     const dy = centerY - correctCenterY;
@@ -464,8 +468,8 @@ export const JigsawGame: React.FC = () => {
       snapped = true;
     } else {
       const rect = containerEl.getBoundingClientRect();
-      const maxX = rect.width - CELL_SIZE;
-      const maxY = rect.height - CELL_SIZE;
+      const maxX = rect.width - PIECE_VISUAL_SIZE;
+      const maxY = rect.height - PIECE_VISUAL_SIZE;
       finalX = clamp(currentLeft, 0, maxX);
       finalY = clamp(currentTop, 0, maxY);
     }
@@ -700,8 +704,8 @@ export const JigsawGame: React.FC = () => {
               onPointerCancel={endDrag}
               style={{
                 position: 'absolute',
-                width: CELL_SIZE,
-                height: CELL_SIZE,
+                width: PIECE_VISUAL_SIZE,
+                height: PIECE_VISUAL_SIZE,
                 left: piece.x,
                 top: piece.y,
                 cursor: 'pointer',
@@ -715,11 +719,9 @@ export const JigsawGame: React.FC = () => {
               }}
             >
               <svg
-                width={CELL_SIZE}
-                height={CELL_SIZE}
-                viewBox={`-${CELL_SIZE * 0.25} -${CELL_SIZE * 0.25} ${
-                  CELL_SIZE * 1.5
-                } ${CELL_SIZE * 1.5}`}
+                width={PIECE_VISUAL_SIZE}
+                height={PIECE_VISUAL_SIZE}
+                viewBox={`${-TAB_RADIUS} ${-TAB_RADIUS} ${PIECE_VISUAL_SIZE} ${PIECE_VISUAL_SIZE}`}
               >
                 <defs>
                   <clipPath id={clipId}>
