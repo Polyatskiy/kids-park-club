@@ -3,7 +3,7 @@ import ColoringCanvas from "@/components/coloring-canvas";
 import { notFound } from "next/navigation";
 
 type Props = {
-  params: Promise<{ slug: string }>;
+  params: { slug: string };
 };
 
 export const dynamic = "force-dynamic";
