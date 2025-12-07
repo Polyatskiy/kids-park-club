@@ -14,5 +14,12 @@ export const gamesSeed: GameMeta[] = [
     slug: "puzzle",
     description: "Соедини пары картинок.",
     type: "puzzle"
+  },
+  {
+    id: "3",
+    title: "Пазлы",
+    slug: "jigsaw",
+    description: "Собери пазл из картинок.",
+    type: "jigsaw"
   }
 ];
