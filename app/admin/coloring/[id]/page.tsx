@@ -4,9 +4,9 @@ import { updateItem } from "../../admin-actions";
 export default async function EditColoringPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = await params; // Next.js 15 requirement
+  const { id } = await params;
 
   const supabase = supabaseServer();
 

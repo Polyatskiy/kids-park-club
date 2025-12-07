@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export default async function BookDetailPage({ params }: Props) {
