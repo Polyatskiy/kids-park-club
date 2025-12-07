@@ -3,21 +3,20 @@ import ColoringCanvas from "@/components/coloring-canvas";
 import { notFound } from "next/navigation";
 
 type Props = {
-  params: {
-    slug: string;
-  };
+  params: Promise<{ slug: string }>;
 };
 
 export const dynamic = "force-dynamic";
 
 export default async function ColoringPage({ params }: Props) {
+  const { slug } = await params;
   const supabase = supabaseServer();
 
   // Забираем запись по slug
   const { data: item, error } = await supabase
     .from("coloring_items")
     .select("*")
-    .eq("slug", params.slug)
+    .eq("slug", slug)
     .single();
 
   // Если нет записи — 404
@@ -26,17 +25,11 @@ export default async function ColoringPage({ params }: Props) {
     notFound();
   }
 
-  // -------------------------------
-  // 👉 ВАЖНО: выбираем правильное поле
-  // -------------------------------
-
-  const imageUrl =
-    item.image_url ||
-    item.url || // если всё же существует
-    null;
+  // Use image_url field from the coloring_items table
+  const imageUrl = item.image_url || null;
 
   if (!imageUrl) {
-    console.error("Image field missing for slug:", params.slug);
+    console.error("Image field missing for slug:", slug);
     notFound();
   }
 

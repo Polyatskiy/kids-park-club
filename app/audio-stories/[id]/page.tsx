@@ -5,11 +5,12 @@ import { getAudioStoryBySlug } from "@/lib/content-repository";
 export const dynamic = "force-dynamic";
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 export default async function AudioStoryDetailPage({ params }: Props) {
-  const story = await getAudioStoryBySlug(params.id);
+  const { id } = await params;
+  const story = await getAudioStoryBySlug(id);
   if (!story) return notFound();
 
   return (

@@ -8,7 +8,7 @@ export async function getColoringList(): Promise<Coloring[]> {
   const supabase = supabaseServer();
   const { data, error } = await supabase
     .from("coloring_items")
-    .select("id, title, slug, category, subcategory, url, thumbnail_url")
+    .select("id, title, slug, category, subcategory, image_url, thumbnail_url")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -22,7 +22,7 @@ export async function getColoringList(): Promise<Coloring[]> {
     slug: row.slug,
     category: row.category ?? "",
     subCategory: row.subcategory ?? "",
-    filePath: row.thumbnail_url || row.url || ""
+    filePath: row.thumbnail_url || row.image_url || ""
   }));
 }
 

@@ -4,14 +4,15 @@ import { updateItem } from "../../admin-actions";
 export default async function EditColoringPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const supabase = supabaseServer();
 
   const { data, error } = await supabase
     .from("coloring_items")
     .select("*")
-    .eq("id", params.id)
+    .eq("id", id)
     .single();
 
   if (error || !data) {
