@@ -252,6 +252,8 @@ const getCorrectPosition = (
 };
 
 
+const MOBILE_BREAKPOINT = 768;
+
 // ---------- КОМПОНЕНТ ----------
 
 export const JigsawGame: React.FC = () => {
@@ -271,10 +273,22 @@ export const JigsawGame: React.FC = () => {
   });
   const [moves, setMoves] = useState(0);
   const [showHint, setShowHint] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pieceRefs = useRef<(HTMLDivElement | null)[]>([]);
   const dragStateRef = useRef<DragState>(createInitialDragState());
+
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const selectedImage =
     IMAGES.find((img) => img.id === selectedImageId) ?? IMAGES[0];
@@ -283,16 +297,49 @@ export const JigsawGame: React.FC = () => {
   const totalPieces = gridSize * gridSize;
   const boardSize = gridSize * CELL_SIZE;
 
-  const workspaceWidth = boardSize * 2;
-  const workspaceHeight = boardSize + BOARD_MARGIN * 2;
+  // Layout variables - conditional on isMobile
+  let workspaceWidth: number;
+  let workspaceHeight: number;
+  let boardOriginX: number;
+  let boardOriginY: number;
+  let scatterOriginX: number;
+  let scatterOriginY: number;
+  let scatterWidth: number;
+  let scatterHeight: number;
 
-  const boardOriginX = workspaceWidth - boardSize - BOARD_MARGIN;
-  const boardOriginY = BOARD_MARGIN;
+  if (isMobile) {
+    workspaceWidth = boardSize + BOARD_MARGIN * 2;
 
-  const scatterOriginX = BOARD_MARGIN;
-  const scatterOriginY = BOARD_MARGIN;
-  const scatterWidth = boardSize - BOARD_MARGIN * 2;
-  const scatterHeight = boardSize - BOARD_MARGIN * 2;
+    // bottom area for scattered pieces
+    const bottomAreaHeight = Math.max(
+      boardSize * 0.6,
+      CELL_SIZE * 2 + BOARD_MARGIN * 2,
+    );
+
+    workspaceHeight =
+      boardSize + bottomAreaHeight + BOARD_MARGIN * 3;
+
+    // board at the top, centered
+    boardOriginX = (workspaceWidth - boardSize) / 2;
+    boardOriginY = BOARD_MARGIN;
+
+    // scattered pieces area BELOW the board
+    scatterOriginX = BOARD_MARGIN;
+    scatterOriginY = boardOriginY + boardSize + BOARD_MARGIN;
+    scatterWidth = workspaceWidth - BOARD_MARGIN * 2;
+    scatterHeight = bottomAreaHeight;
+  } else {
+    workspaceWidth = boardSize * 2;
+    workspaceHeight = boardSize + BOARD_MARGIN * 2;
+
+    boardOriginX = workspaceWidth - boardSize - BOARD_MARGIN;
+    boardOriginY = BOARD_MARGIN;
+
+    scatterOriginX = BOARD_MARGIN;
+    scatterOriginY = BOARD_MARGIN;
+    scatterWidth = boardSize - BOARD_MARGIN * 2;
+    scatterHeight = boardSize - BOARD_MARGIN * 2;
+  }
 
   const pieceEdges = useMemo(
     () => generatePieceEdges(gridSize),
@@ -307,19 +354,40 @@ export const JigsawGame: React.FC = () => {
     const nextDifficulty = opts?.difficulty ?? difficulty;
     const total = nextDifficulty * nextDifficulty;
     const nextBoardSize = nextDifficulty * CELL_SIZE;
-    const nextScatterWidth = nextBoardSize - BOARD_MARGIN * 2;
-    const nextScatterHeight = nextBoardSize - BOARD_MARGIN * 2;
-  
+
+    // Calculate scatter dimensions based on current isMobile state
+    let nextScatterOriginX: number;
+    let nextScatterOriginY: number;
+    let nextScatterWidth: number;
+    let nextScatterHeight: number;
+
+    if (isMobile) {
+      const nextWorkspaceWidth = nextBoardSize + BOARD_MARGIN * 2;
+      const bottomAreaHeight = Math.max(
+        nextBoardSize * 0.6,
+        CELL_SIZE * 2 + BOARD_MARGIN * 2,
+      );
+      nextScatterOriginX = BOARD_MARGIN;
+      nextScatterOriginY = BOARD_MARGIN + nextBoardSize + BOARD_MARGIN;
+      nextScatterWidth = nextWorkspaceWidth - BOARD_MARGIN * 2;
+      nextScatterHeight = bottomAreaHeight;
+    } else {
+      nextScatterOriginX = BOARD_MARGIN;
+      nextScatterOriginY = BOARD_MARGIN;
+      nextScatterWidth = nextBoardSize - BOARD_MARGIN * 2;
+      nextScatterHeight = nextBoardSize - BOARD_MARGIN * 2;
+    }
+
     const nextPieces: PieceState[] = [];
-  
+
     for (let id = 0; id < total; id += 1) {
       const randX =
-        scatterOriginX +
+        nextScatterOriginX +
         Math.random() * Math.max(1, nextScatterWidth - PIECE_VISUAL_SIZE);
       const randY =
-        scatterOriginY +
+        nextScatterOriginY +
         Math.random() * Math.max(1, nextScatterHeight - PIECE_VISUAL_SIZE);
-  
+
       nextPieces.push({
         id,
         x: randX,
@@ -327,20 +395,21 @@ export const JigsawGame: React.FC = () => {
         snapped: false,
       });
     }
-  
+
     setDifficulty(nextDifficulty);
     if (opts?.imageId) setSelectedImageId(opts.imageId);
     setPieces(nextPieces);
     setMoves(0);
+    setMenuOpen(false);
     dragStateRef.current = createInitialDragState();
   };
-  
+
 
   // раскидываем кусочки только на клиенте, после гидратации
   useEffect(() => {
     newGame({ difficulty: INITIAL_DIFFICULTY });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isMobile]);
 
   const startDrag = (
     e: React.PointerEvent<HTMLDivElement>,
@@ -501,6 +570,365 @@ export const JigsawGame: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalPieces]);
 
+  // ---------- CONTROLS JSX (reusable for desktop sidebar and mobile overlay) ----------
+  const controlsContent = (
+    <>
+      <h2 style={{ marginBottom: 12, marginTop: 0 }}>Jigsaw Puzzle</h2>
+
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 14, marginBottom: 4 }}>Картинка:</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {IMAGES.map((img) => (
+            <button
+              key={img.id}
+              type="button"
+              onClick={() => newGame({ difficulty, imageId: img.id })}
+              style={{
+                padding: '6px 10px',
+                fontSize: 12,
+                borderRadius: 6,
+                border:
+                  img.id === selectedImageId
+                    ? '2px solid #2563eb'
+                    : '1px solid #ccc',
+                backgroundColor:
+                  img.id === selectedImageId ? '#e0ecff' : '#f8f8f8',
+                cursor: 'pointer',
+              }}
+            >
+              {img.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 14, marginBottom: 4 }}>Сложность:</div>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          {[3, 4, 5].map((size) => {
+            const count = size * size;
+            return (
+              <button
+                key={size}
+                type="button"
+                onClick={() => newGame({ difficulty: size as Difficulty })}
+                style={{
+                  padding: '6px 10px',
+                  fontSize: 12,
+                  borderRadius: 6,
+                  border:
+                    size === difficulty
+                      ? '2px solid #16a34a'
+                      : '1px solid #ccc',
+                  backgroundColor:
+                    size === difficulty ? '#dcfce7' : '#f8f8f8',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                }}
+              >
+                {size} × {size} — {count} пазлов
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <button
+          type="button"
+          onClick={() => setShowHint((v) => !v)}
+          style={{
+            padding: '8px 12px',
+            borderRadius: 6,
+            border: '1px solid #ccc',
+            backgroundColor: showHint ? '#fef3c7' : '#f8fafc',
+            cursor: 'pointer',
+            fontSize: 14,
+            width: '100%',
+            marginBottom: 8,
+          }}
+        >
+          {showHint ? 'Скрыть подсказку' : 'Показать подсказку'}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => newGame()}
+          style={{
+            padding: '8px 12px',
+            borderRadius: 6,
+            border: '1px solid #ccc',
+            backgroundColor: '#eff6ff',
+            cursor: 'pointer',
+            fontSize: 14,
+            width: '100%',
+          }}
+        >
+          Новая игра
+        </button>
+      </div>
+
+      <div style={{ fontSize: 14 }}>
+        <div>
+          Ходы: <strong>{moves}</strong>
+        </div>
+        <div>
+          Пазлов: <strong>{totalPieces}</strong>
+        </div>
+      </div>
+    </>
+  );
+
+  // ---------- WORKSPACE JSX (the puzzle board and pieces) ----------
+  const workspaceContent = (
+    <div
+      ref={containerRef}
+      style={{
+        position: 'relative',
+        width: workspaceWidth,
+        height: workspaceHeight,
+        borderRadius: 12,
+        overflow: 'hidden',
+        border: '2px solid #4b5563',
+        background:
+          'radial-gradient(circle at top left, #4b5563 0, #111827 55%, #020617 100%)',
+        boxShadow: '0 12px 30px rgba(0,0,0,0.35)',
+        touchAction: 'none',
+        flexShrink: 0,
+      }}
+    >
+      {/* Рамка-цель */}
+      <div
+        style={{
+          position: 'absolute',
+          left: boardOriginX,
+          top: boardOriginY,
+          width: boardSize,
+          height: boardSize,
+          borderRadius: 12,
+          border: '2px dashed rgba(241,245,249,0.4)',
+          background:
+            'linear-gradient(145deg, rgba(15,23,42,0.95), rgba(30,64,175,0.35))',
+        }}
+      />
+
+      {/* Подсказка */}
+      {showHint && (
+        <div
+          style={{
+            position: 'absolute',
+            left: boardOriginX,
+            top: boardOriginY,
+            width: boardSize,
+            height: boardSize,
+            backgroundImage: `url(${selectedImage.src})`,
+            backgroundSize: `${boardSize}px ${boardSize}px`,
+            backgroundPosition: 'center',
+            opacity: 0.4,
+            pointerEvents: 'none',
+            borderRadius: 12,
+            zIndex: 5,
+          }}
+        />
+      )}
+
+      {/* Фигурные кусочки */}
+      {pieces.map((piece) => {
+        const row = Math.floor(piece.id / gridSize);
+        const col = piece.id % gridSize;
+        const edges = pieceEdges[row][col];
+        const path = getPiecePath(edges);
+
+        const correctRow = row;
+        const correctCol = col;
+        const clipId = `clip-${gridSize}-${piece.id}`;
+
+        return (
+          <div
+            key={piece.id}
+            ref={(el) => setPieceRef(piece.id, el)}
+            onPointerDown={(e) => startDrag(e, piece.id)}
+            onPointerMove={onDrag}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+            style={{
+              position: 'absolute',
+              width: PIECE_VISUAL_SIZE,
+              height: PIECE_VISUAL_SIZE,
+              left: piece.x,
+              top: piece.y,
+              cursor: 'pointer',
+              touchAction: 'none',
+              userSelect: 'none',
+              transition: 'left 160ms ease-out, top 160ms ease-out',
+              filter: piece.snapped
+                ? 'drop-shadow(0 2px 3px rgba(0,0,0,0.3))'
+                : 'drop-shadow(0 4px 8px rgba(0,0,0,0.6))',
+            }}
+          >
+            <svg
+              width={PIECE_VISUAL_SIZE}
+              height={PIECE_VISUAL_SIZE}
+              viewBox={`${-TAB_RADIUS} ${-TAB_RADIUS} ${PIECE_VISUAL_SIZE} ${PIECE_VISUAL_SIZE}`}
+            >
+              <defs>
+                <clipPath id={clipId}>
+                  <path d={path} />
+                </clipPath>
+              </defs>
+
+              <image
+                href={selectedImage.src}
+                x={-correctCol * CELL_SIZE}
+                y={-correctRow * CELL_SIZE}
+                width={boardSize}
+                height={boardSize}
+                clipPath={`url(#${clipId})`}
+                preserveAspectRatio="xMidYMid slice"
+              />
+
+              <path
+                d={path}
+                fill="none"
+                stroke="rgba(15,23,42,0.85)"
+                strokeWidth={1.4}
+              />
+            </svg>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  // ---------- MOBILE LAYOUT ----------
+  if (isMobile) {
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          background: '#111827',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          overflow: 'auto',
+          fontFamily:
+            'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+        }}
+      >
+        {/* Burger button */}
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          style={{
+            position: 'fixed',
+            top: 12,
+            left: 12,
+            zIndex: 10001,
+            width: 44,
+            height: 44,
+            borderRadius: 8,
+            border: 'none',
+            background: 'rgba(255,255,255,0.9)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 24,
+          }}
+          aria-label="Открыть меню"
+        >
+          ☰
+        </button>
+
+        {/* Mobile menu overlay */}
+        {menuOpen && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 10002,
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'flex-start',
+            }}
+          >
+            {/* Backdrop */}
+            <div
+              onClick={() => setMenuOpen(false)}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(0,0,0,0.5)',
+              }}
+            />
+            {/* Menu panel */}
+            <div
+              style={{
+                position: 'relative',
+                width: '80%',
+                maxWidth: 300,
+                height: '100%',
+                background: '#fff',
+                boxShadow: '2px 0 16px rgba(0,0,0,0.3)',
+                padding: 20,
+                overflowY: 'auto',
+              }}
+            >
+              {/* Close button */}
+              <button
+                type="button"
+                onClick={() => setMenuOpen(false)}
+                style={{
+                  position: 'absolute',
+                  top: 12,
+                  right: 12,
+                  width: 32,
+                  height: 32,
+                  borderRadius: 6,
+                  border: 'none',
+                  background: '#f3f4f6',
+                  cursor: 'pointer',
+                  fontSize: 18,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                aria-label="Закрыть меню"
+              >
+                ✕
+              </button>
+              {controlsContent}
+            </div>
+          </div>
+        )}
+
+        {/* Workspace centered */}
+        <div
+          style={{
+            padding: 16,
+            paddingTop: 64, // space for burger button
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            boxSizing: 'border-box',
+          }}
+        >
+          {workspaceContent}
+        </div>
+      </div>
+    );
+  }
+
+  // ---------- DESKTOP LAYOUT (unchanged) ----------
   return (
     <div
       style={{
@@ -512,244 +940,10 @@ export const JigsawGame: React.FC = () => {
       }}
     >
       {/* Панель управления */}
-      <div style={{ minWidth: 220 }}>
-        <h2 style={{ marginBottom: 12 }}>Jigsaw Puzzle</h2>
-
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 14, marginBottom: 4 }}>
-            Картинка:
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {IMAGES.map((img) => (
-              <button
-                key={img.id}
-                type="button"
-                onClick={() =>
-                  newGame({ difficulty, imageId: img.id })
-                }
-                style={{
-                  padding: '6px 10px',
-                  fontSize: 12,
-                  borderRadius: 6,
-                  border:
-                    img.id === selectedImageId
-                      ? '2px solid #2563eb'
-                      : '1px solid #ccc',
-                  backgroundColor:
-                    img.id === selectedImageId ? '#e0ecff' : '#f8f8f8',
-                  cursor: 'pointer',
-                }}
-              >
-                {img.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ fontSize: 14, marginBottom: 4 }}>
-            Сложность:
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-            }}
-          >
-            {[3, 4, 5].map((size) => {
-              const count = size * size;
-              return (
-                <button
-                  key={size}
-                  type="button"
-                  onClick={() =>
-                    newGame({ difficulty: size as Difficulty })
-                  }
-                  style={{
-                    padding: '6px 10px',
-                    fontSize: 12,
-                    borderRadius: 6,
-                    border:
-                      size === difficulty
-                        ? '2px solid #16a34a'
-                        : '1px solid #ccc',
-                    backgroundColor:
-                      size === difficulty ? '#dcfce7' : '#f8f8f8',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  {size} × {size} — {count} пазлов
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div style={{ marginBottom: 16 }}>
-          <button
-            type="button"
-            onClick={() => setShowHint((v) => !v)}
-            style={{
-              padding: '8px 12px',
-              borderRadius: 6,
-              border: '1px solid #ccc',
-              backgroundColor: showHint ? '#fef3c7' : '#f8fafc',
-              cursor: 'pointer',
-              fontSize: 14,
-              width: '100%',
-              marginBottom: 8,
-            }}
-          >
-            {showHint ? 'Скрыть подсказку' : 'Показать подсказку'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => newGame()}
-            style={{
-              padding: '8px 12px',
-              borderRadius: 6,
-              border: '1px solid #ccc',
-              backgroundColor: '#eff6ff',
-              cursor: 'pointer',
-              fontSize: 14,
-              width: '100%',
-            }}
-          >
-            Новая игра
-          </button>
-        </div>
-
-        <div style={{ fontSize: 14 }}>
-          <div>
-            Ходы: <strong>{moves}</strong>
-          </div>
-          <div>
-            Пазлов: <strong>{totalPieces}</strong>
-          </div>
-        </div>
-      </div>
+      <div style={{ minWidth: 220 }}>{controlsContent}</div>
 
       {/* Рабочее поле */}
-      <div
-        ref={containerRef}
-        style={{
-          position: 'relative',
-          width: workspaceWidth,
-          height: workspaceHeight,
-          borderRadius: 12,
-          overflow: 'hidden',
-          border: '2px solid #4b5563',
-          background:
-            'radial-gradient(circle at top left, #4b5563 0, #111827 55%, #020617 100%)',
-          boxShadow: '0 12px 30px rgba(0,0,0,0.35)',
-          touchAction: 'none',
-        }}
-      >
-        {/* Рамка-цель */}
-        <div
-          style={{
-            position: 'absolute',
-            left: boardOriginX,
-            top: boardOriginY,
-            width: boardSize,
-            height: boardSize,
-            borderRadius: 12,
-            border: '2px dashed rgba(241,245,249,0.4)',
-            background:
-              'linear-gradient(145deg, rgba(15,23,42,0.95), rgba(30,64,175,0.35))',
-          }}
-        />
-
-        {/* Подсказка */}
-        {showHint && (
-          <div
-            style={{
-              position: 'absolute',
-              left: boardOriginX,
-              top: boardOriginY,
-              width: boardSize,
-              height: boardSize,
-              backgroundImage: `url(${selectedImage.src})`,
-              backgroundSize: `${boardSize}px ${boardSize}px`,
-              backgroundPosition: 'center',
-              opacity: 0.4,
-              pointerEvents: 'none',
-              borderRadius: 12,
-              zIndex: 5,
-            }}
-          />
-        )}
-
-        {/* Фигурные кусочки */}
-        {pieces.map((piece) => {
-          const row = Math.floor(piece.id / gridSize);
-          const col = piece.id % gridSize;
-          const edges = pieceEdges[row][col];
-          const path = getPiecePath(edges);
-
-          const correctRow = row;
-          const correctCol = col;
-          const clipId = `clip-${gridSize}-${piece.id}`;
-
-          return (
-            <div
-              key={piece.id}
-              ref={(el) => setPieceRef(piece.id, el)}
-              onPointerDown={(e) => startDrag(e, piece.id)}
-              onPointerMove={onDrag}
-              onPointerUp={endDrag}
-              onPointerCancel={endDrag}
-              style={{
-                position: 'absolute',
-                width: PIECE_VISUAL_SIZE,
-                height: PIECE_VISUAL_SIZE,
-                left: piece.x,
-                top: piece.y,
-                cursor: 'pointer',
-                touchAction: 'none',
-                userSelect: 'none',
-                transition:
-                  'left 160ms ease-out, top 160ms ease-out',
-                filter: piece.snapped
-                  ? 'drop-shadow(0 2px 3px rgba(0,0,0,0.3))'
-                  : 'drop-shadow(0 4px 8px rgba(0,0,0,0.6))',
-              }}
-            >
-              <svg
-                width={PIECE_VISUAL_SIZE}
-                height={PIECE_VISUAL_SIZE}
-                viewBox={`${-TAB_RADIUS} ${-TAB_RADIUS} ${PIECE_VISUAL_SIZE} ${PIECE_VISUAL_SIZE}`}
-              >
-                <defs>
-                  <clipPath id={clipId}>
-                    <path d={path} />
-                  </clipPath>
-                </defs>
-
-                <image
-                  href={selectedImage.src}
-                  x={-correctCol * CELL_SIZE}
-                  y={-correctRow * CELL_SIZE}
-                  width={boardSize}
-                  height={boardSize}
-                  clipPath={`url(#${clipId})`}
-                  preserveAspectRatio="xMidYMid slice"
-                />
-
-                <path
-                  d={path}
-                  fill="none"
-                  stroke="rgba(15,23,42,0.85)"
-                  strokeWidth={1.4}
-                />
-              </svg>
-            </div>
-          );
-        })}
-      </div>
+      {workspaceContent}
     </div>
   );
 };
