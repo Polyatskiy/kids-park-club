@@ -4,7 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 
 const ADMIN_EMAIL = "polyatskiy@gmail.com";
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   let response = NextResponse.next();
 
   // Создаём серверный клиент Supabase

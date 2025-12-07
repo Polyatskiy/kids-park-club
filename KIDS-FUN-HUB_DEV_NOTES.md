@@ -144,7 +144,7 @@ kids-platform/
            lib/content-repository.ts
            lib/supabaseClient.ts
            lib/supabaseServer.ts
-           middleware.ts
+           proxy.ts
            next-env.d.ts
            next.config.mjs
            package-lock.json
