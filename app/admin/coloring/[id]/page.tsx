@@ -4,7 +4,7 @@ import { updateItem } from "../../admin-actions";
 export default async function EditColoringPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
   const { id } = await params;
 
