@@ -253,6 +253,7 @@ const getCorrectPosition = (
 
 
 const MOBILE_BREAKPOINT = 768;
+const MOBILE_BOARD_MARGIN = 8;
 
 // ---------- КОМПОНЕНТ ----------
 
@@ -280,14 +281,31 @@ export const JigsawGame: React.FC = () => {
   const pieceRefs = useRef<(HTMLDivElement | null)[]>([]);
   const dragStateRef = useRef<DragState>(createInitialDragState());
 
-  // Detect mobile
+  // Detect mobile - robust detection with user agent + viewport width
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    if (typeof window === 'undefined') return;
+
+    const checkViewport = () => {
+      const width = window.innerWidth;
+
+      const ua = navigator.userAgent.toLowerCase();
+      const isRealMobileUA =
+        ua.includes('iphone') ||
+        ua.includes('android') ||
+        ua.includes('ipad') ||
+        ua.includes('ipod') ||
+        ua.includes('mobile');
+
+      const mobileByWidth =
+        width <= MOBILE_BREAKPOINT ||
+        window.matchMedia?.('(max-width: 768px)').matches;
+
+      setIsMobile(mobileByWidth || isRealMobileUA);
     };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+
+    checkViewport();
+    window.addEventListener('resize', checkViewport);
+    return () => window.removeEventListener('resize', checkViewport);
   }, []);
 
   const selectedImage =
@@ -296,6 +314,9 @@ export const JigsawGame: React.FC = () => {
   const gridSize = difficulty;
   const totalPieces = gridSize * gridSize;
   const boardSize = gridSize * CELL_SIZE;
+
+  // Use smaller margin on mobile
+  const boardMargin = isMobile ? MOBILE_BOARD_MARGIN : BOARD_MARGIN;
 
   // Layout variables - conditional on isMobile
   let workspaceWidth: number;
@@ -308,25 +329,25 @@ export const JigsawGame: React.FC = () => {
   let scatterHeight: number;
 
   if (isMobile) {
-    workspaceWidth = boardSize + BOARD_MARGIN * 2;
+    workspaceWidth = boardSize + boardMargin * 2;
 
     // bottom area for scattered pieces
     const bottomAreaHeight = Math.max(
       boardSize * 0.6,
-      CELL_SIZE * 2 + BOARD_MARGIN * 2,
+      CELL_SIZE * 2 + boardMargin * 2,
     );
 
     workspaceHeight =
-      boardSize + bottomAreaHeight + BOARD_MARGIN * 3;
+      boardSize + bottomAreaHeight + boardMargin * 3;
 
-    // board at the top, centered
-    boardOriginX = (workspaceWidth - boardSize) / 2;
-    boardOriginY = BOARD_MARGIN;
+    // board at the top, with small margin
+    boardOriginX = boardMargin;
+    boardOriginY = boardMargin;
 
     // scattered pieces area BELOW the board
-    scatterOriginX = BOARD_MARGIN;
-    scatterOriginY = boardOriginY + boardSize + BOARD_MARGIN;
-    scatterWidth = workspaceWidth - BOARD_MARGIN * 2;
+    scatterOriginX = boardMargin;
+    scatterOriginY = boardOriginY + boardSize + boardMargin;
+    scatterWidth = workspaceWidth - boardMargin * 2;
     scatterHeight = bottomAreaHeight;
   } else {
     workspaceWidth = boardSize * 2;
@@ -355,6 +376,9 @@ export const JigsawGame: React.FC = () => {
     const total = nextDifficulty * nextDifficulty;
     const nextBoardSize = nextDifficulty * CELL_SIZE;
 
+    // Use correct margin based on isMobile
+    const margin = isMobile ? MOBILE_BOARD_MARGIN : BOARD_MARGIN;
+
     // Calculate scatter dimensions based on current isMobile state
     let nextScatterOriginX: number;
     let nextScatterOriginY: number;
@@ -362,14 +386,14 @@ export const JigsawGame: React.FC = () => {
     let nextScatterHeight: number;
 
     if (isMobile) {
-      const nextWorkspaceWidth = nextBoardSize + BOARD_MARGIN * 2;
+      const nextWorkspaceWidth = nextBoardSize + margin * 2;
       const bottomAreaHeight = Math.max(
         nextBoardSize * 0.6,
-        CELL_SIZE * 2 + BOARD_MARGIN * 2,
+        CELL_SIZE * 2 + margin * 2,
       );
-      nextScatterOriginX = BOARD_MARGIN;
-      nextScatterOriginY = BOARD_MARGIN + nextBoardSize + BOARD_MARGIN;
-      nextScatterWidth = nextWorkspaceWidth - BOARD_MARGIN * 2;
+      nextScatterOriginX = margin;
+      nextScatterOriginY = margin + nextBoardSize + margin;
+      nextScatterWidth = nextWorkspaceWidth - margin * 2;
       nextScatterHeight = bottomAreaHeight;
     } else {
       nextScatterOriginX = BOARD_MARGIN;
@@ -814,40 +838,46 @@ export const JigsawGame: React.FC = () => {
           position: 'fixed',
           inset: 0,
           zIndex: 9999,
-          background: '#111827',
+          background: '#020617',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          overflow: 'auto',
+          padding: 8,
+          boxSizing: 'border-box',
           fontFamily:
             'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
         }}
       >
-        {/* Burger button */}
-        <button
-          type="button"
-          onClick={() => setMenuOpen(true)}
+        {/* Top row with burger button */}
+        <div
           style={{
-            position: 'fixed',
-            top: 12,
-            left: 12,
-            zIndex: 10001,
-            width: 44,
-            height: 44,
-            borderRadius: 8,
-            border: 'none',
-            background: 'rgba(255,255,255,0.9)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-            cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 24,
+            marginBottom: 8,
+            height: 44,
+            flexShrink: 0,
           }}
-          aria-label="Открыть меню"
         >
-          ☰
-        </button>
+          <button
+            type="button"
+            onClick={() => setMenuOpen(true)}
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 8,
+              border: 'none',
+              background: 'rgba(255,255,255,0.9)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 24,
+            }}
+            aria-label="Открыть меню"
+          >
+            ☰
+          </button>
+        </div>
 
         {/* Mobile menu overlay */}
         {menuOpen && (
@@ -911,15 +941,14 @@ export const JigsawGame: React.FC = () => {
           </div>
         )}
 
-        {/* Workspace centered */}
+        {/* Workspace area - fills remaining space */}
         <div
           style={{
-            padding: 16,
-            paddingTop: 64, // space for burger button
-            width: '100%',
+            flex: 1,
             display: 'flex',
             justifyContent: 'center',
-            boxSizing: 'border-box',
+            alignItems: 'flex-start',
+            overflow: 'auto',
           }}
         >
           {workspaceContent}
