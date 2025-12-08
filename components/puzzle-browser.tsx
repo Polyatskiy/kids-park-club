@@ -5,9 +5,10 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 import { JIGSAW_DIFFICULTIES } from "@/app/games/jigsaw/jigsawConfig";
+import type { PuzzleImage } from "@/types/content";
 
 type PuzzleItem = {
-  id: number;
+  id: string;
   title: string;
   category: string;
   subcategory: string;
@@ -16,28 +17,79 @@ type PuzzleItem = {
   thumbnail_url: string | null;
 };
 
-export default function PuzzleBrowser() {
-  const [items, setItems] = useState<PuzzleItem[]>([]);
-  const [loading, setLoading] = useState(true);
+// Server-fetched puzzle type (from content-repository)
+type ServerPuzzle = PuzzleImage;
+
+interface PuzzleBrowserProps {
+  /** Puzzles pre-fetched on the server (bypasses RLS) */
+  serverPuzzles?: ServerPuzzle[];
+}
+
+export default function PuzzleBrowser({ serverPuzzles }: PuzzleBrowserProps) {
+  // Convert server puzzles to the format we use internally
+  const convertedServerPuzzles: PuzzleItem[] = (serverPuzzles || []).map((p) => ({
+    id: p.id,
+    title: p.title,
+    category: p.category,
+    subcategory: p.subCategory || "",
+    slug: p.slug,
+    image_url: p.imageUrl,
+    thumbnail_url: p.thumbnailUrl || null,
+  }));
+
+  const [items, setItems] = useState<PuzzleItem[]>(convertedServerPuzzles);
+  const [loading, setLoading] = useState(!serverPuzzles || serverPuzzles.length === 0);
 
   const supabase = supabaseBrowser();
 
   useEffect(() => {
+    // If we have server-provided puzzles, don't fetch again
+    if (serverPuzzles && serverPuzzles.length > 0) {
+      setLoading(false);
+      return;
+    }
+
+    // Fallback: try to fetch on client (may fail due to RLS)
     async function load() {
       const { data, error } = await supabase
         .from("puzzle_items")
         .select("*")
         .order("created_at", { ascending: false });
 
+      // DEBUG: Log the result to understand what's happening
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[DEBUG] puzzle_items client query result:", { 
+          data, 
+          error,
+          dataLength: data?.length,
+          errorMessage: error?.message,
+          errorCode: error?.code
+        });
+      }
+
+      if (error) {
+        console.error("[DEBUG] Supabase error fetching puzzles (likely RLS issue):", error);
+      }
+
       if (!error && data) {
-        setItems(data as PuzzleItem[]);
+        // Convert Supabase response to our format (id is number from DB, convert to string)
+        const converted = data.map((row: any) => ({
+          id: String(row.id),
+          title: row.title,
+          category: row.category,
+          subcategory: row.subcategory,
+          slug: row.slug,
+          image_url: row.image_url,
+          thumbnail_url: row.thumbnail_url,
+        }));
+        setItems(converted);
       }
 
       setLoading(false);
     }
 
     load();
-  }, []);
+  }, [serverPuzzles]);
 
   if (loading)
     return <div className="p-4 text-center text-gray-500">Загрузка...</div>;

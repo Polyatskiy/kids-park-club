@@ -1,9 +1,13 @@
 import { Container } from '@/ui/container';
 import PuzzleBrowser from '@/components/puzzle-browser';
+import { getPuzzleList } from '@/lib/content-repository';
 
 export const dynamic = "force-dynamic";
 
 export default async function JigsawGalleryPage() {
+  // Fetch puzzles on the server side (bypasses RLS with service role key)
+  const puzzles = await getPuzzleList();
+
   return (
     <Container className="py-8 space-y-6">
       <div>
@@ -13,7 +17,7 @@ export default async function JigsawGalleryPage() {
         </p>
       </div>
 
-      <PuzzleBrowser />
+      <PuzzleBrowser serverPuzzles={puzzles} />
     </Container>
   );
 }
