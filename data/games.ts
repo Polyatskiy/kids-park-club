@@ -18,7 +18,7 @@ export const gamesSeed: GameMeta[] = [
   {
     id: "3",
     title: "Пазлы",
-    slug: "jigsaw",
+    slug: "jigsaw/gallery",
     description: "Собери пазл из картинок.",
     type: "jigsaw"
   }

@@ -7,27 +7,21 @@ import React, {
   useState,
 } from 'react';
 
-type Difficulty = 3 | 4 | 5;
+import {
+  JIGSAW_IMAGES,
+  DEFAULT_IMAGE_ID,
+  DEFAULT_GRID_SIZE,
+  type JigsawDifficulty,
+} from './jigsawConfig';
 
-interface PuzzleImage {
-  id: string;
-  src: string;
-  label: string;
-}
+type Difficulty = JigsawDifficulty;
 
-// ⚠️ если файл лежит в public/puzzles/warsaw.png,
-// то путь в src должен быть '/puzzles/warsaw.png'
-const IMAGES: PuzzleImage[] = [
-  { id: 'city', src: '/puzzles/warsaw.png', label: 'Warsaw' },
-  { id: 'mountain', src: '/puzzles/mountain.png', label: 'Mountains' },
-  { id: 'village', src: '/puzzles/village.png', label: 'Village' },
-];
+const IMAGES = JIGSAW_IMAGES;
 
 const CELL_SIZE = 96; // логическая клетка
 const TAB_RADIUS = CELL_SIZE * 0.22; // радиус «ушка» — точно как 'r' в getPiecePath
 const PIECE_VISUAL_SIZE = Math.ceil(CELL_SIZE + TAB_RADIUS * 2); // реальный размер div с учётом ушек
 
-const INITIAL_DIFFICULTY: Difficulty = 3;
 const BOARD_MARGIN = 24;
 
 const clamp = (v: number, min: number, max: number) =>
@@ -257,14 +251,30 @@ const MOBILE_BOARD_MARGIN = 6;
 
 // ---------- КОМПОНЕНТ ----------
 
-export const JigsawGame: React.FC = () => {
+export interface JigsawGameProps {
+  initialImageId?: string;
+  initialGridSize?: number;
+}
+
+export const JigsawGame: React.FC<JigsawGameProps> = ({
+  initialImageId,
+  initialGridSize,
+}) => {
+  // Validate and apply initial values with fallbacks
+  const defaultImageId = initialImageId && IMAGES.some(img => img.id === initialImageId)
+    ? initialImageId
+    : DEFAULT_IMAGE_ID;
+  const defaultGridSize: Difficulty = (
+    initialGridSize === 3 || initialGridSize === 4 || initialGridSize === 5
+  ) ? initialGridSize : DEFAULT_GRID_SIZE;
+
   const [difficulty, setDifficulty] =
-    useState<Difficulty>(INITIAL_DIFFICULTY);
+    useState<Difficulty>(defaultGridSize);
   const [selectedImageId, setSelectedImageId] = useState<string>(
-    IMAGES[0].id,
+    defaultImageId,
   );
   const [pieces, setPieces] = useState<PieceState[]>(() => {
-    const total = INITIAL_DIFFICULTY * INITIAL_DIFFICULTY;
+    const total = defaultGridSize * defaultGridSize;
     return Array.from({ length: total }, (_, id) => ({
       id,
       x: 0,
@@ -431,7 +441,7 @@ export const JigsawGame: React.FC = () => {
 
   // раскидываем кусочки только на клиенте, после гидратации
   useEffect(() => {
-    newGame({ difficulty: INITIAL_DIFFICULTY });
+    newGame({ difficulty: defaultGridSize });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMobile]);
 
