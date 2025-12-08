@@ -253,7 +253,7 @@ const getCorrectPosition = (
 
 
 const MOBILE_BREAKPOINT = 768;
-const MOBILE_BOARD_MARGIN = 8;
+const MOBILE_BOARD_MARGIN = 6;
 
 // ---------- КОМПОНЕНТ ----------
 
@@ -331,20 +331,20 @@ export const JigsawGame: React.FC = () => {
   if (isMobile) {
     workspaceWidth = boardSize + boardMargin * 2;
 
-    // bottom area for scattered pieces
+    // bottom area for scattered pieces (slightly smaller)
     const bottomAreaHeight = Math.max(
-      boardSize * 0.6,
+      boardSize * 0.55,
       CELL_SIZE * 2 + boardMargin * 2,
     );
 
     workspaceHeight =
-      boardSize + bottomAreaHeight + boardMargin * 3;
+      boardSize + bottomAreaHeight + boardMargin * 2;
 
-    // board at the top, with small margin
+    // board starts very close to the top of the card
     boardOriginX = boardMargin;
     boardOriginY = boardMargin;
 
-    // scattered pieces area BELOW the board
+    // scattered pieces area directly under the board
     scatterOriginX = boardMargin;
     scatterOriginY = boardOriginY + boardSize + boardMargin;
     scatterWidth = workspaceWidth - boardMargin * 2;
@@ -388,7 +388,7 @@ export const JigsawGame: React.FC = () => {
     if (isMobile) {
       const nextWorkspaceWidth = nextBoardSize + margin * 2;
       const bottomAreaHeight = Math.max(
-        nextBoardSize * 0.6,
+        nextBoardSize * 0.55,
         CELL_SIZE * 2 + margin * 2,
       );
       nextScatterOriginX = margin;
@@ -717,12 +717,16 @@ export const JigsawGame: React.FC = () => {
         position: 'relative',
         width: workspaceWidth,
         height: workspaceHeight,
-        borderRadius: 12,
+        borderRadius: isMobile ? 18 : 12,
         overflow: 'hidden',
-        border: '2px solid #4b5563',
+        border: isMobile
+          ? '2px solid rgba(148,163,184,0.6)'
+          : '2px solid #4b5563',
         background:
           'radial-gradient(circle at top left, #4b5563 0, #111827 55%, #020617 100%)',
-        boxShadow: '0 12px 30px rgba(0,0,0,0.35)',
+        boxShadow: isMobile
+          ? '0 16px 40px rgba(0,0,0,0.55)'
+          : '0 12px 30px rgba(0,0,0,0.35)',
         touchAction: 'none',
         flexShrink: 0,
       }}
@@ -837,47 +841,53 @@ export const JigsawGame: React.FC = () => {
         style={{
           position: 'fixed',
           inset: 0,
-          zIndex: 9999,
+          zIndex: 50,
           background: '#020617',
           display: 'flex',
           flexDirection: 'column',
-          padding: 8,
+          padding: 'calc(env(safe-area-inset-top, 0px) + 8px) 8px 8px 8px',
           boxSizing: 'border-box',
           fontFamily:
             'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
         }}
       >
-        {/* Top row with burger button */}
-        <div
+        {/* Floating burger button (absolute, top-right) */}
+        <button
+          type="button"
+          onClick={() => setMenuOpen(true)}
+          aria-label="Menu"
           style={{
+            position: 'absolute',
+            top: 'calc(env(safe-area-inset-top, 0px) + 8px)',
+            right: 8,
+            width: 44,
+            height: 44,
+            borderRadius: 9999,
+            border: '1px solid rgba(255,255,255,0.35)',
+            background: 'rgba(15,23,42,0.8)',
             display: 'flex',
             alignItems: 'center',
-            marginBottom: 8,
-            height: 44,
-            flexShrink: 0,
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.45)',
+            padding: 0,
+            zIndex: 60,
+            cursor: 'pointer',
           }}
         >
-          <button
-            type="button"
-            onClick={() => setMenuOpen(true)}
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 8,
-              border: 'none',
-              background: 'rgba(255,255,255,0.9)',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 24,
-            }}
-            aria-label="Открыть меню"
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="rgba(255,255,255,0.9)"
+            strokeWidth="2"
+            strokeLinecap="round"
           >
-            ☰
-          </button>
-        </div>
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
 
         {/* Mobile menu overlay */}
         {menuOpen && (
@@ -910,7 +920,9 @@ export const JigsawGame: React.FC = () => {
                 background: '#fff',
                 boxShadow: '2px 0 16px rgba(0,0,0,0.3)',
                 padding: 20,
+                paddingTop: 'calc(env(safe-area-inset-top, 0px) + 20px)',
                 overflowY: 'auto',
+                boxSizing: 'border-box',
               }}
             >
               {/* Close button */}
@@ -919,7 +931,7 @@ export const JigsawGame: React.FC = () => {
                 onClick={() => setMenuOpen(false)}
                 style={{
                   position: 'absolute',
-                  top: 12,
+                  top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
                   right: 12,
                   width: 32,
                   height: 32,
@@ -941,14 +953,13 @@ export const JigsawGame: React.FC = () => {
           </div>
         )}
 
-        {/* Workspace area - fills remaining space */}
+        {/* Workspace area - centered, fills available space */}
         <div
           style={{
             flex: 1,
             display: 'flex',
+            alignItems: 'center',
             justifyContent: 'center',
-            alignItems: 'flex-start',
-            overflow: 'auto',
           }}
         >
           {workspaceContent}
