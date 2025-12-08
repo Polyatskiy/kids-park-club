@@ -2,8 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   THEME VARIABLES
+============================================================ */
+:root {
+  --color-primary: #FFB3C6;
+  --color-secondary: #BDE0FE;
+  --color-accent: #FFCF56;
+  --color-bg-soft: #FFF7F0;
+  --color-tile-pink: #FFE4EC;
+  --color-tile-blue: #E8F4FD;
+  --color-tile-yellow: #FFF8E1;
+  --color-tile-green: #E8F5E9;
+  --navbar-height: 70px;
+}
+
+/* ============================================================
+   BACKGROUND STYLES
+============================================================ */
+.app-background {
+  background-image: url('/assets/bg-mobile.png');
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+@media (min-width: 768px) {
+  .app-background {
+    background-image: url('/assets/bg-desktop.png');
+    background-position: left center;
+  }
+}
+
 body {
-  @apply bg-bgSoft text-gray-800;
+  @apply text-gray-800;
 }
 
 ::-webkit-scrollbar {
@@ -14,19 +48,23 @@ body {
   border-radius: 9999px;
 }
 
+/* ============================================================
+   COLORING PAGE - FULLSCREEN MODE
+============================================================ */
+
 /* Coloring page - hide all page scrolling and prevent bounce */
 html.coloring-page-active,
 body.coloring-page-active {
   overflow: hidden !important;
   height: 100vh !important;
-  height: 100dvh !important; /* Dynamic viewport for mobile browsers */
+  height: 100dvh !important;
   max-height: 100vh !important;
   max-height: 100dvh !important;
-  position: fixed !important; /* Prevent iOS safari bounce */
+  position: fixed !important;
   width: 100% !important;
-  touch-action: none; /* Prevent page-level touch gestures */
-  overscroll-behavior: none; /* Prevent overscroll/bounce effect */
-  -webkit-overflow-scrolling: auto; /* Disable momentum scrolling on body */
+  touch-action: none;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
 }
 
 /* Hide scrollbar on html/body when on coloring page */
@@ -62,19 +100,15 @@ body.coloring-page-active footer {
   background: #e5e5e5;
 }
 
-/* ============================================================
-   MOBILE COLORING PAGE - FULLSCREEN MODE
-============================================================ */
-
 /* Coloring page container - responsive height */
 .coloring-page-container {
-  height: calc(100vh - 64px); /* Desktop: account for navbar */
+  height: calc(100vh - 64px);
 }
 
 @media (max-width: 899px) {
   .coloring-page-container {
-    height: 100vh !important; /* Mobile: full screen */
-    height: 100dvh !important; /* Dynamic viewport height for mobile browsers */
+    height: 100vh !important;
+    height: 100dvh !important;
   }
 }
 
@@ -96,7 +130,10 @@ body.coloring-mobile-fullscreen main {
   }
 }
 
-/* Mobile menu drawer */
+/* ============================================================
+   MOBILE MENU DRAWER
+============================================================ */
+
 .mobile-menu-overlay {
   position: fixed;
   inset: 0;
@@ -118,7 +155,7 @@ body.coloring-mobile-fullscreen main {
   right: -280px;
   width: 280px;
   height: 100vh;
-  height: 100dvh; /* Dynamic viewport height for mobile */
+  height: 100dvh;
   background: white;
   z-index: 101;
   transition: right 0.3s ease;
@@ -132,11 +169,10 @@ body.coloring-mobile-fullscreen main {
   right: 0;
 }
 
-/* Navigation links section - scrollable if content overflows */
 .mobile-menu-drawer nav {
   flex: 1 1 auto;
   overflow-y: auto;
-  min-height: 0; /* Important for flex children to shrink */
+  min-height: 0;
 }
 
 /* Hide canvas scrollbar on mobile */
@@ -156,15 +192,13 @@ body.coloring-mobile-fullscreen main {
    CANVAS TOUCH INTERACTION FIXES
 ============================================================ */
 
-/* Ensure canvas container captures all touch events */
 .canvas-scroll-container {
-  touch-action: none; /* Prevent browser handling of touch gestures */
+  touch-action: none;
   -webkit-user-select: none;
   user-select: none;
-  -webkit-touch-callout: none; /* Disable iOS callout */
+  -webkit-touch-callout: none;
 }
 
-/* Prevent text selection and context menu on canvas */
 canvas {
   touch-action: none;
   -webkit-user-select: none;
@@ -172,15 +206,12 @@ canvas {
   -webkit-touch-callout: none;
 }
 
-/* Mobile-specific canvas optimizations */
 @media (max-width: 899px) {
-  /* Ensure smooth pinch-zoom without page zoom */
   .canvas-scroll-container {
     touch-action: none;
     overscroll-behavior: contain;
   }
   
-  /* Prevent double-tap zoom on canvas area */
   .canvas-scroll-container * {
     touch-action: manipulation;
   }
@@ -190,7 +221,6 @@ canvas {
    MOBILE TOOLBAR SLIDER STYLES
 ============================================================ */
 
-/* Compact slider thumb styling */
 .mobile-toolbar-safe input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
@@ -221,7 +251,6 @@ canvas {
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
-/* Focus states for accessibility */
 .mobile-toolbar-safe input[type="range"]:focus {
   outline: none;
 }
@@ -249,7 +278,6 @@ canvas {
   animation: fade-in-up 0.15s ease-out forwards;
 }
 
-/* Popover slider styling */
 .animate-fade-in input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
@@ -278,4 +306,25 @@ canvas {
   cursor: pointer;
   border: 2px solid white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* ============================================================
+   HOME TILE STYLES - Glass/Blur Effect
+============================================================ */
+
+.home-tile {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+.home-tile:hover {
+  transform: translateY(-6px) scale(1.05);
+}
+
+.home-tile:active {
+  transform: translateY(-2px) scale(1.02);
+}
+
+/* Ensure group hover works for glow effect */
+.group:hover .home-tile {
+  filter: brightness(1.05);
 }

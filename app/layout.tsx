@@ -21,9 +21,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru">
-      <body className="min-h-screen flex flex-col">
+      <body className="min-h-screen flex flex-col app-background">
         <Navbar />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 relative">{children}</main>
         <Footer />
         <SpeedInsights />
       </body>

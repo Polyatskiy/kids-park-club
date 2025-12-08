@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Container } from "@/ui/container";
+import { BackArrow } from "@/components/back-arrow";
 
 export default function ReactionGamePage() {
   const [status, setStatus] = useState<"idle" | "wait" | "go">("idle");
@@ -43,38 +44,41 @@ export default function ReactionGamePage() {
   }, [timeoutId]);
 
   return (
-    <Container className="py-8 space-y-6">
-      <h1 className="text-2xl font-bold">Игра на реакцию</h1>
-      <p className="text-sm text-gray-600">
-        Нажмите кнопку, как только она станет зелёной.
-      </p>
-      <div className="space-y-4">
-        <button
-          onClick={start}
-          className="px-5 py-3 rounded-2xl bg-secondary font-semibold"
-        >
-          Старт
-        </button>
-        <div
-          onClick={handleClick}
-          className={
-            "h-32 rounded-2xl flex items-center justify-center cursor-pointer select-none text-lg font-semibold " +
-            (status === "go"
-              ? "bg-green-400"
-              : status === "wait"
-              ? "bg-red-300"
-              : "bg-gray-200")
-          }
-        >
-          {status === "go" ? "Жми!" : status === "wait" ? "Жди..." : "Нажми, когда будет зелёным"}
+    <>
+      <BackArrow />
+      <Container className="pt-16 md:pt-20 pb-8 space-y-6">
+        <h1 className="text-2xl font-bold text-gray-900">Игра на реакцию</h1>
+        <p className="text-sm text-gray-600">
+          Нажмите кнопку, как только она станет зелёной.
+        </p>
+        <div className="space-y-4">
+          <button
+            onClick={start}
+            className="px-5 py-3 rounded-2xl bg-secondary font-semibold"
+          >
+            Старт
+          </button>
+          <div
+            onClick={handleClick}
+            className={
+              "h-32 rounded-2xl flex items-center justify-center cursor-pointer select-none text-lg font-semibold " +
+              (status === "go"
+                ? "bg-green-400"
+                : status === "wait"
+                ? "bg-red-300"
+                : "bg-gray-200")
+            }
+          >
+            {status === "go" ? "Жми!" : status === "wait" ? "Жди..." : "Нажми, когда будет зелёным"}
+          </div>
+          <p className="text-sm text-gray-700">{message}</p>
+          {result && (
+            <p className="text-lg font-semibold">
+              Ваша реакция: {Math.round(result)} мс
+            </p>
+          )}
         </div>
-        <p className="text-sm text-gray-700">{message}</p>
-        {result && (
-          <p className="text-lg font-semibold">
-            Ваша реакция: {Math.round(result)} мс
-          </p>
-        )}
-      </div>
-    </Container>
+      </Container>
+    </>
   );
 }

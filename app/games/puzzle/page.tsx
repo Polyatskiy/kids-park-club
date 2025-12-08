@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Container } from "@/ui/container";
+import { BackArrow } from "@/components/back-arrow";
 
 type Card = {
   id: number;
@@ -79,41 +80,44 @@ export default function PuzzleGamePage() {
   };
 
   return (
-    <Container className="py-8 space-y-6">
-      <h1 className="text-2xl font-bold">Мини-пазл</h1>
-      <p className="text-sm text-gray-600">
-        Открывай карточки и находи пары.
-      </p>
-      <div className="grid grid-cols-4 gap-3 max-w-xs">
-        {cards.map((card) => (
-          <button
-            key={card.id}
-            onClick={() => handleClick(card)}
-            className={
-              "h-16 rounded-2xl flex items-center justify-center text-2xl " +
-              (card.matched
-                ? "bg-green-200"
-                : card.opened
-                ? "bg-secondary"
-                : "bg-white border border-gray-200")
-            }
-          >
-            {(card.opened || card.matched) ? card.value : "?"}
-          </button>
-        ))}
-      </div>
-      <p className="text-sm text-gray-700">Ходы: {moves}</p>
-      {allMatched && (
-        <p className="text-lg font-semibold text-primary">
-          Молодец! Ты нашёл все пары!
+    <>
+      <BackArrow />
+      <Container className="pt-16 md:pt-20 pb-8 space-y-6">
+        <h1 className="text-2xl font-bold text-gray-900">Мини-пазл</h1>
+        <p className="text-sm text-gray-600">
+          Открывай карточки и находи пары.
         </p>
-      )}
-      <button
-        onClick={reset}
-        className="px-4 py-2 rounded-2xl bg-primary font-semibold"
-      >
-        Сыграть ещё
-      </button>
-    </Container>
+        <div className="grid grid-cols-4 gap-3 max-w-xs">
+          {cards.map((card) => (
+            <button
+              key={card.id}
+              onClick={() => handleClick(card)}
+              className={
+                "h-16 rounded-2xl flex items-center justify-center text-2xl " +
+                (card.matched
+                  ? "bg-green-200"
+                  : card.opened
+                  ? "bg-secondary"
+                  : "bg-white border border-gray-200")
+              }
+            >
+              {(card.opened || card.matched) ? card.value : "?"}
+            </button>
+          ))}
+        </div>
+        <p className="text-sm text-gray-700">Ходы: {moves}</p>
+        {allMatched && (
+          <p className="text-lg font-semibold text-primary">
+            Молодец! Ты нашёл все пары!
+          </p>
+        )}
+        <button
+          onClick={reset}
+          className="px-4 py-2 rounded-2xl bg-primary font-semibold"
+        >
+          Сыграть ещё
+        </button>
+      </Container>
+    </>
   );
 }
