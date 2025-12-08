@@ -33,3 +33,13 @@ export type GameMeta = {
   description: string;
   type: "reaction" | "puzzle" | "jigsaw";
 };
+
+export type PuzzleImage = {
+  id: string;
+  title: string;
+  slug: string;
+  category: string;
+  subCategory?: string;
+  imageUrl: string;
+  thumbnailUrl: string;
+};

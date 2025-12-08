@@ -254,14 +254,22 @@ const MOBILE_BOARD_MARGIN = 6;
 export interface JigsawGameProps {
   initialImageId?: string;
   initialGridSize?: number;
+  /** If provided (from Supabase), use this URL instead of static images */
+  puzzleImageUrl?: string;
+  puzzleTitle?: string;
 }
 
 export const JigsawGame: React.FC<JigsawGameProps> = ({
   initialImageId,
   initialGridSize,
+  puzzleImageUrl,
+  puzzleTitle,
 }) => {
+  // Check if we have a Supabase puzzle
+  const isSupabasePuzzle = Boolean(puzzleImageUrl);
+  
   // Validate and apply initial values with fallbacks
-  const defaultImageId = initialImageId && IMAGES.some(img => img.id === initialImageId)
+  const defaultImageId = !isSupabasePuzzle && initialImageId && IMAGES.some(img => img.id === initialImageId)
     ? initialImageId
     : DEFAULT_IMAGE_ID;
   const defaultGridSize: Difficulty = (
@@ -271,7 +279,12 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   const [difficulty, setDifficulty] =
     useState<Difficulty>(defaultGridSize);
   const [selectedImageId, setSelectedImageId] = useState<string>(
-    defaultImageId,
+    isSupabasePuzzle ? (initialImageId || 'supabase') : defaultImageId,
+  );
+  
+  // Custom image URL state for Supabase puzzles
+  const [customImageUrl, setCustomImageUrl] = useState<string | null>(
+    puzzleImageUrl || null
   );
   const [pieces, setPieces] = useState<PieceState[]>(() => {
     const total = defaultGridSize * defaultGridSize;
@@ -318,8 +331,10 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     return () => window.removeEventListener('resize', checkViewport);
   }, []);
 
-  const selectedImage =
-    IMAGES.find((img) => img.id === selectedImageId) ?? IMAGES[0];
+  // Get the current image - either from Supabase URL or static images
+  const selectedImage = customImageUrl 
+    ? { id: 'supabase', src: customImageUrl, label: puzzleTitle || 'Puzzle' }
+    : (IMAGES.find((img) => img.id === selectedImageId) ?? IMAGES[0]);
 
   const gridSize = difficulty;
   const totalPieces = gridSize * gridSize;
@@ -611,29 +626,51 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
 
       <div style={{ marginBottom: 16 }}>
         <div style={{ fontSize: 14, marginBottom: 4 }}>Картинка:</div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {IMAGES.map((img) => (
-            <button
-              key={img.id}
-              type="button"
-              onClick={() => newGame({ difficulty, imageId: img.id })}
-              style={{
-                padding: '6px 10px',
-                fontSize: 12,
-                borderRadius: 6,
-                border:
-                  img.id === selectedImageId
-                    ? '2px solid #2563eb'
-                    : '1px solid #ccc',
-                backgroundColor:
-                  img.id === selectedImageId ? '#e0ecff' : '#f8f8f8',
-                cursor: 'pointer',
-              }}
-            >
-              {img.label}
-            </button>
-          ))}
-        </div>
+        {customImageUrl ? (
+          // If using Supabase puzzle, show current puzzle info
+          <div style={{ 
+            padding: '8px 12px', 
+            borderRadius: 6, 
+            backgroundColor: '#e0ecff',
+            border: '2px solid #2563eb',
+            fontSize: 14,
+          }}>
+            {selectedImage.label}
+            <div style={{ fontSize: 11, color: '#666', marginTop: 4 }}>
+              <a href="/games/jigsaw/gallery" style={{ color: '#2563eb' }}>
+                ← Выбрать другой пазл
+              </a>
+            </div>
+          </div>
+        ) : (
+          // If using static images, show image selector
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {IMAGES.map((img) => (
+              <button
+                key={img.id}
+                type="button"
+                onClick={() => {
+                  setCustomImageUrl(null);
+                  newGame({ difficulty, imageId: img.id });
+                }}
+                style={{
+                  padding: '6px 10px',
+                  fontSize: 12,
+                  borderRadius: 6,
+                  border:
+                    img.id === selectedImageId
+                      ? '2px solid #2563eb'
+                      : '1px solid #ccc',
+                  backgroundColor:
+                    img.id === selectedImageId ? '#e0ecff' : '#f8f8f8',
+                  cursor: 'pointer',
+                }}
+              >
+                {img.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div style={{ marginBottom: 16 }}>

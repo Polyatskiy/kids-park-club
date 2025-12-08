@@ -9,6 +9,10 @@ export default function AdminPage() {
         Управление разукрасками
       </Link>
 
+      <Link href="/admin/puzzles" className="underline">
+        Управление пазлами
+      </Link>
+
       <Link href="/" className="underline">
         ← Вернуться на сайт
       </Link>

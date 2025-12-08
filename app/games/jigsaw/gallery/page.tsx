@@ -1,9 +1,9 @@
-import Link from 'next/link';
-import Image from 'next/image';
 import { Container } from '@/ui/container';
-import { JIGSAW_IMAGES, JIGSAW_DIFFICULTIES } from '../jigsawConfig';
+import PuzzleBrowser from '@/components/puzzle-browser';
 
-export default function JigsawGalleryPage() {
+export const dynamic = "force-dynamic";
+
+export default async function JigsawGalleryPage() {
   return (
     <Container className="py-8 space-y-6">
       <div>
@@ -13,43 +13,7 @@ export default function JigsawGalleryPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {JIGSAW_IMAGES.map((img) => (
-          <article
-            key={img.id}
-            className="rounded-xl bg-white shadow-md overflow-hidden flex flex-col border border-gray-100"
-          >
-            <div className="aspect-[4/3] relative bg-gray-100">
-              <Image
-                src={img.src}
-                alt={img.label}
-                fill
-                className="object-cover"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              />
-            </div>
-
-            <div className="p-4 flex flex-col gap-3">
-              <h2 className="text-base font-semibold text-gray-900">
-                {img.label}
-              </h2>
-
-              <div className="flex flex-wrap gap-2">
-                {JIGSAW_DIFFICULTIES.map((d) => (
-                  <Link
-                    key={d.gridSize}
-                    href={`/games/jigsaw?image=${img.id}&size=${d.gridSize}`}
-                    className="rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium bg-gray-50 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors"
-                  >
-                    {d.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
+      <PuzzleBrowser />
     </Container>
   );
 }
-

@@ -17,10 +17,10 @@ export const JIGSAW_DIFFICULTIES: JigsawDifficultyOption[] = [
   { gridSize: 5, label: '5 × 5 — 25 пазлов' },
 ];
 
+// Fallback static images (used when no Supabase puzzle is selected)
+// Main puzzle images are loaded from Supabase
 export const JIGSAW_IMAGES: JigsawImage[] = [
-  { id: 'city', src: '/puzzles/warsaw.png', label: 'Warsaw' },
-  { id: 'mountain', src: '/puzzles/mountain.png', label: 'Mountains' },
-  { id: 'village', src: '/puzzles/village.png', label: 'Village' },
+  { id: 'city', src: '/puzzles/warsaw.png', label: 'Warsaw (Demo)' },
 ];
 
 export const DEFAULT_IMAGE_ID = 'city';

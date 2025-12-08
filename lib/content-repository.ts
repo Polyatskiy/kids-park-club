@@ -1,5 +1,5 @@
 import { supabaseServer } from "./supabaseClient";
-import type { Coloring, AudioStory, Book, GameMeta } from "@/types/content";
+import type { Coloring, AudioStory, Book, GameMeta, PuzzleImage } from "@/types/content";
 import { gamesSeed } from "@/data/games"; // игры пока локально
 
 // --- РАЗУКРАШКИ ---
@@ -96,4 +96,58 @@ export async function getBookBySlug(slug: string): Promise<Book | null> {
 
 export async function getGames(): Promise<GameMeta[]> {
   return gamesSeed;
+}
+
+// --- ПАЗЛЫ ---
+
+export async function getPuzzleList(): Promise<PuzzleImage[]> {
+  const supabase = supabaseServer();
+  const { data, error } = await supabase
+    .from("puzzle_items")
+    .select("id, title, slug, category, subcategory, image_url, thumbnail_url")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("getPuzzleList error", error);
+    return [];
+  }
+
+  return (data ?? []).map((row: any) => ({
+    id: String(row.id),
+    title: row.title,
+    slug: row.slug,
+    category: row.category ?? "",
+    subCategory: row.subcategory ?? "",
+    imageUrl: row.image_url || "",
+    thumbnailUrl: row.thumbnail_url || row.image_url || ""
+  }));
+}
+
+export async function getPuzzleById(id: string): Promise<PuzzleImage | null> {
+  const supabase = supabaseServer();
+  const { data, error } = await supabase
+    .from("puzzle_items")
+    .select("id, title, slug, category, subcategory, image_url, thumbnail_url")
+    .eq("id", id)
+    .single();
+
+  if (error || !data) {
+    console.error("getPuzzleById error", error);
+    return null;
+  }
+
+  return {
+    id: String(data.id),
+    title: data.title,
+    slug: data.slug,
+    category: data.category ?? "",
+    subCategory: data.subcategory ?? "",
+    imageUrl: data.image_url || "",
+    thumbnailUrl: data.thumbnail_url || data.image_url || ""
+  };
+}
+
+export async function getPuzzleBySlug(slug: string): Promise<PuzzleImage | null> {
+  const list = await getPuzzleList();
+  return list.find((p) => p.slug === slug) ?? null;
 }
