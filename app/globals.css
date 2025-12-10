@@ -123,6 +123,11 @@ body.coloring-mobile-fullscreen main {
   max-height: 100vh !important;
 }
 
+/* ============================================================
+   JIGSAW GAME VIEW
+============================================================ */
+body[data-jigsaw-gameplay="true"] .navbar-logo { display: none !important; }
+
 /* Mobile toolbar safe area for bottom navigation bar */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .mobile-toolbar-safe {
@@ -328,3 +333,4 @@ canvas {
 .group:hover .home-tile {
   filter: brightness(1.05);
 }
+

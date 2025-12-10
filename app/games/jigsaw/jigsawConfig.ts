@@ -17,8 +17,6 @@ export const JIGSAW_OPTIONS: JigsawOption[] = [
   { pieces: 75, rows: 15, cols: 5 },
   { pieces: 100, rows: 10, cols: 10 },
   { pieces: 125, rows: 25, cols: 5 },
-  { pieces: 150, rows: 15, cols: 10 },
-  { pieces: 200, rows: 20, cols: 10 },
 ];
 
 // Fallback static images (used when no Supabase puzzle is selected)

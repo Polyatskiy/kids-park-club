@@ -309,7 +309,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   const [moves, setMoves] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pieceRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -347,6 +347,9 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     ? { id: 'supabase', src: customImageUrl, label: puzzleTitle || 'Puzzle' }
     : (IMAGES.find((img) => img.id === selectedImageId) ?? IMAGES[0]);
 
+  const isGameplayMode = Boolean(selectedImage);
+  const MOBILE_GRID_COLUMNS = 3;
+
   const rows = selectedOption.rows;
   const cols = selectedOption.cols;
   const totalPieces = rows * cols;
@@ -355,6 +358,22 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
 
   // Use smaller margin on mobile
   const boardMargin = isMobile ? MOBILE_BOARD_MARGIN : BOARD_MARGIN;
+
+  // Toggle a body flag so the Navbar can react to in-game mobile layout
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const body = document.body;
+
+    if (isGameplayMode) {
+      body.dataset.jigsawGameplay = 'true';
+    } else {
+      delete body.dataset.jigsawGameplay;
+    }
+
+    return () => {
+      delete body.dataset.jigsawGameplay;
+    };
+  }, [isMobile, isGameplayMode]);
 
   // Layout variables - conditional on isMobile
   let workspaceWidth: number;
@@ -463,7 +482,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     if (opts?.imageId) setSelectedImageId(opts.imageId);
     setPieces(nextPieces);
     setMoves(0);
-    setMenuOpen(false);
+    setIsPanelOpen(true);
     dragStateRef.current = createInitialDragState();
   };
 
@@ -635,66 +654,42 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   }, [totalPieces]);
 
   // ---------- CONTROLS JSX (reusable for desktop sidebar and mobile overlay) ----------
+  const difficultyColumns = `repeat(${MOBILE_GRID_COLUMNS}, minmax(0, 1fr))`;
+  const controlsTopMargin = isMobile ? 64 : 72;
+
+  const panelCardStyles: React.CSSProperties = {
+    width: '100%',
+    maxWidth: 420,
+    borderRadius: 20,
+    background: 'linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08))',
+    border: '1px solid rgba(255,255,255,0.35)',
+    boxShadow: '0 12px 28px rgba(0,0,0,0.2)',
+    backdropFilter: 'blur(16px)',
+    padding: 16,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 14,
+  };
+
   const controlsContent = (
     <>
-      <h2 style={{ marginBottom: 12, marginTop: 0 }}>Jigsaw Puzzle</h2>
-
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 14, marginBottom: 4 }}>Картинка:</div>
-        {customImageUrl ? (
-          // If using Supabase puzzle, show current puzzle info
-          <div style={{ 
-            padding: '8px 12px', 
-            borderRadius: 6, 
-            backgroundColor: '#e0ecff',
-            border: '2px solid #2563eb',
-            fontSize: 14,
-          }}>
-            {selectedImage.label}
-            <div style={{ fontSize: 11, color: '#666', marginTop: 4 }}>
-              <a href="/games/jigsaw/gallery" style={{ color: '#2563eb' }}>
-                ← Выбрать другой пазл
-              </a>
-            </div>
-          </div>
-        ) : (
-          // If using static images, show image selector
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {IMAGES.map((img) => (
-              <button
-                key={img.id}
-                type="button"
-                onClick={() => {
-                  setCustomImageUrl(null);
-                  newGame({ option: selectedOption, imageId: img.id });
-                }}
-                style={{
-                  padding: '6px 10px',
-                  fontSize: 12,
-                  borderRadius: 6,
-                  border:
-                    img.id === selectedImageId
-                      ? '2px solid #2563eb'
-                      : '1px solid #ccc',
-                  backgroundColor:
-                    img.id === selectedImageId ? '#e0ecff' : '#f8f8f8',
-                  cursor: 'pointer',
-                }}
-              >
-                {img.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 14, marginBottom: 4 }}>Сложность:</div>
+      <div
+        style={{
+          marginBottom: 16,
+          marginTop: controlsTopMargin,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Сложность</div>
         <div
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 10,
+            display: 'grid',
+            gridTemplateColumns: difficultyColumns,
+            gap: 14,
+            justifyItems: 'center',
+            width: '100%',
           }}
         >
           {JIGSAW_OPTIONS.map((opt) => {
@@ -705,16 +700,18 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
                 type="button"
                 onClick={() => newGame({ option: opt })}
                 style={{
-                  padding: '12px 14px',
-                  fontSize: 14,
-                  borderRadius: 20,
-                  border: active ? '2px solid rgba(255,255,255,0.8)' : '1px solid rgba(255,255,255,0.4)',
-                  background: active ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.22)',
+                  width: 'clamp(44px, 13vw, 58px)',
+                  height: 'clamp(32px, 8.5vw, 40px)',
+                  fontSize: 'clamp(12px, 2.7vw, 13px)',
+                  borderRadius: 9999,
+                  border: active ? '2px solid rgba(255,255,255,0.85)' : '1px solid rgba(255,255,255,0.45)',
+                  background: active ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.2)',
                   color: '#0f172a',
-                  fontWeight: 600,
+                  fontWeight: 700,
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 10,
+                  justifyContent: 'center',
+                  gap: 8,
                   cursor: 'pointer',
                   backdropFilter: 'blur(12px)',
                   boxShadow: active
@@ -734,41 +731,54 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
                     : '0 8px 20px rgba(0,0,0,0.14)';
                 }}
               >
-                <span>{opt.pieces}</span>
                 <span
                   style={{
-                    width: 18,
-                    height: 18,
+                    width: 'clamp(16px, 3.8vw, 20px)',
+                    height: 'clamp(16px, 3.8vw, 20px)',
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))',
+                    position: 'relative',
+                    zIndex: 1,
                   }}
                 >
                   <img
                     src="/assets/icon-puzzle.png"
                     alt="puzzle"
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      filter: 'brightness(1.15)',
+                    }}
                   />
                 </span>
+                <span style={{ position: 'relative', zIndex: 1 }}>{opt.pieces}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <button
           type="button"
           onClick={() => setShowHint((v) => !v)}
           style={{
-            padding: '8px 12px',
-            borderRadius: 6,
-            border: '1px solid #ccc',
-            backgroundColor: showHint ? '#fef3c7' : '#f8fafc',
+            padding: '12px 14px',
+            borderRadius: 14,
+            border: '1px solid rgba(255,255,255,0.35)',
+            background: showHint
+              ? 'rgba(255, 255, 255, 0.28)'
+              : 'rgba(255, 255, 255, 0.18)',
             cursor: 'pointer',
             fontSize: 14,
             width: '100%',
-            marginBottom: 8,
+            color: '#0f172a',
+            fontWeight: 600,
+            backdropFilter: 'blur(12px)',
+            boxShadow: '0 8px 18px rgba(0,0,0,0.16)',
           }}
         >
           {showHint ? 'Скрыть подсказку' : 'Показать подсказку'}
@@ -778,26 +788,63 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
           type="button"
           onClick={() => newGame()}
           style={{
-            padding: '8px 12px',
-            borderRadius: 6,
-            border: '1px solid #ccc',
-            backgroundColor: '#eff6ff',
+            padding: '12px 14px',
+            borderRadius: 14,
+            border: '1px solid rgba(255,255,255,0.35)',
+            background: 'rgba(255, 255, 255, 0.18)',
             cursor: 'pointer',
             fontSize: 14,
             width: '100%',
+            color: '#0f172a',
+            fontWeight: 600,
+            backdropFilter: 'blur(12px)',
+            boxShadow: '0 8px 18px rgba(0,0,0,0.16)',
           }}
         >
           Новая игра
         </button>
       </div>
 
-      <div style={{ fontSize: 14 }}>
-        <div>
-          Ходы: <strong>{moves}</strong>
-        </div>
-        <div>
-          Пазлов: <strong>{totalPieces}</strong>
-        </div>
+      <div
+        style={{
+          fontSize: 14,
+          display: 'flex',
+          gap: 10,
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          width: '100%',
+        }}
+      >
+        <span
+          style={{
+            padding: '6px 10px',
+            borderRadius: 999,
+            background: 'rgba(15,23,42,0.65)',
+            color: '#f8fafc',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          }}
+        >
+          <span style={{ opacity: 0.9 }}>Ходы:</span>
+          <strong style={{ color: '#fff' }}>{moves}</strong>
+        </span>
+        <span
+          style={{
+            padding: '6px 10px',
+            borderRadius: 999,
+            background: 'rgba(15,23,42,0.65)',
+            color: '#f8fafc',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          }}
+        >
+          <span style={{ opacity: 0.9 }}>Пазлов:</span>
+          <strong style={{ color: '#fff' }}>{totalPieces}</strong>
+        </span>
       </div>
     </>
   );
@@ -927,6 +974,58 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     </div>
   );
 
+  const burgerButton = (
+    <button
+      type="button"
+      onClick={() => setIsPanelOpen((v) => !v)}
+      aria-label={isPanelOpen ? 'Скрыть панель' : 'Показать панель'}
+      style={{
+        position: 'fixed',
+        top: isMobile ? 68 : 76,
+        left: isMobile ? 16 : 24,
+        width: 40,
+        height: 40,
+        borderRadius: 9999,
+        border: '1px solid rgba(255,255,255,0.35)',
+        background: 'linear-gradient(145deg, rgba(255,255,255,0.35), rgba(255,255,255,0.22))',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 6px 20px rgba(0,0,0,0.16)',
+        padding: 0,
+        zIndex: 60,
+        cursor: 'pointer',
+      }}
+    >
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="rgba(31,41,55,0.9)"
+        strokeWidth="2"
+        strokeLinecap="round"
+      >
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <line x1="3" y1="12" x2="21" y2="12" />
+        <line x1="3" y1="18" x2="21" y2="18" />
+      </svg>
+    </button>
+  );
+
+  const controlsPanel = isPanelOpen ? (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        width: '100%',
+        paddingTop: 8,
+      }}
+    >
+      <div style={panelCardStyles}>{controlsContent}</div>
+    </div>
+  ) : null;
+
   // ---------- MOBILE LAYOUT ----------
   if (isMobile) {
     return (
@@ -938,115 +1037,16 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
           background: '#020617',
           display: 'flex',
           flexDirection: 'column',
-          padding: 'calc(env(safe-area-inset-top, 0px) + 8px) 8px 8px 8px',
+          padding: 'calc(env(safe-area-inset-top, 0px) + 8px) 12px 12px 12px',
           boxSizing: 'border-box',
           fontFamily:
             'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+          gap: 14,
         }}
       >
-        {/* Floating burger button (absolute, top-right) */}
-        <button
-          type="button"
-          onClick={() => setMenuOpen(true)}
-          aria-label="Menu"
-          style={{
-            position: 'absolute',
-            top: 'calc(env(safe-area-inset-top, 0px) + 8px)',
-            right: 8,
-            width: 44,
-            height: 44,
-            borderRadius: 9999,
-            border: '1px solid rgba(255,255,255,0.35)',
-            background: 'rgba(15,23,42,0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.45)',
-            padding: 0,
-            zIndex: 60,
-            cursor: 'pointer',
-          }}
-        >
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="rgba(255,255,255,0.9)"
-            strokeWidth="2"
-            strokeLinecap="round"
-          >
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-        </button>
+        {burgerButton}
+        {controlsPanel}
 
-        {/* Mobile menu overlay */}
-        {menuOpen && (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 10002,
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'flex-start',
-            }}
-          >
-            {/* Backdrop */}
-            <div
-              onClick={() => setMenuOpen(false)}
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'rgba(0,0,0,0.5)',
-              }}
-            />
-            {/* Menu panel */}
-            <div
-              style={{
-                position: 'relative',
-                width: '80%',
-                maxWidth: 300,
-                height: '100%',
-                background: '#fff',
-                boxShadow: '2px 0 16px rgba(0,0,0,0.3)',
-                padding: 20,
-                paddingTop: 'calc(env(safe-area-inset-top, 0px) + 20px)',
-                overflowY: 'auto',
-                boxSizing: 'border-box',
-              }}
-            >
-              {/* Close button */}
-              <button
-                type="button"
-                onClick={() => setMenuOpen(false)}
-                style={{
-                  position: 'absolute',
-                  top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
-                  right: 12,
-                  width: 32,
-                  height: 32,
-                  borderRadius: 6,
-                  border: 'none',
-                  background: '#f3f4f6',
-                  cursor: 'pointer',
-                  fontSize: 18,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-                aria-label="Закрыть меню"
-              >
-                ✕
-              </button>
-              {controlsContent}
-            </div>
-          </div>
-        )}
-
-        {/* Workspace area - centered, fills available space */}
         <div
           style={{
             flex: 1,
@@ -1061,24 +1061,36 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     );
   }
 
-  // ---------- DESKTOP LAYOUT (unchanged) ----------
+  // ---------- DESKTOP LAYOUT ----------
   return (
     <div
       style={{
+        position: 'relative',
         display: 'flex',
         gap: 24,
         alignItems: 'flex-start',
         fontFamily:
           'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+        paddingTop: 8,
       }}
     >
-      {/* Панель управления */}
-      <div style={{ minWidth: 220 }}>{controlsContent}</div>
+      {burgerButton}
+      {controlsPanel && <div style={{ minWidth: 260 }}>{controlsPanel}</div>}
 
-      {/* Рабочее поле */}
-      {workspaceContent}
+      <div
+        style={{
+          display: 'flex',
+          flex: 1,
+          justifyContent: isPanelOpen ? 'flex-start' : 'center',
+        }}
+      >
+        {workspaceContent}
+      </div>
     </div>
   );
 };
 
 export default JigsawGame;
+
+
+
