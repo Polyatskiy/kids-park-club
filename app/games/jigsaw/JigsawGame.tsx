@@ -21,18 +21,19 @@ const IMAGES = JIGSAW_IMAGES;
 
 // Layout constants
 const MIN_CELL_SIZE = 16;
-const MAX_CELL_SIZE = 100;
 const MOBILE_BREAKPOINT = 768;
 
 // Vertical space allocation (mobile-first)
-const BOARD_HEIGHT_RATIO = 0.62; // Board gets ~62% of available height
-const TRAY_HEIGHT_RATIO = 0.38;  // Tray gets ~38% of available height
+const BOARD_HEIGHT_RATIO = 0.62;
 
 // Margins and padding
 const OUTER_PADDING = 8;
 const BOARD_MARGIN = 8;
 const TRAY_MARGIN = 8;
-const TRAY_INNER_PADDING = 6; // Padding inside tray for pieces
+const TRAY_INNER_PADDING = 6;
+
+// Board should fill at least this much of its allocated zone
+const MIN_BOARD_FILL_RATIO = 0.85;
 
 const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));
@@ -213,9 +214,6 @@ const getPiecePath = (edges: PieceEdges, cellSize: number): string => {
   ].join(' ');
 };
 
-/**
- * Calculate the correct (snapped) position for a piece on the board.
- */
 const getCorrectPosition = (
   pieceId: number,
   cols: number,
@@ -232,21 +230,12 @@ const getCorrectPosition = (
   };
 };
 
-/**
- * Calculate all layout dimensions based on available container space.
- * This is the SINGLE SOURCE OF TRUTH for all sizing.
- */
 interface LayoutDimensions {
-  // Overall workspace
   workspaceWidth: number;
   workspaceHeight: number;
-  
-  // Board zone (top area)
   boardZoneWidth: number;
   boardZoneHeight: number;
   boardZoneY: number;
-  
-  // Actual board (puzzle grid)
   cellSize: number;
   tabRadius: number;
   pieceVisualSize: number;
@@ -254,13 +243,9 @@ interface LayoutDimensions {
   boardHeight: number;
   boardOriginX: number;
   boardOriginY: number;
-  
-  // Tray zone (bottom area)
   trayZoneWidth: number;
   trayZoneHeight: number;
   trayZoneY: number;
-  
-  // Scatter area within tray (where pieces can be placed)
   scatterX: number;
   scatterY: number;
   scatterWidth: number;
@@ -273,41 +258,38 @@ const calculateLayout = (
   rows: number,
   cols: number,
 ): LayoutDimensions => {
-  // Available space after outer padding
   const availableWidth = containerWidth - OUTER_PADDING * 2;
   const availableHeight = containerHeight - OUTER_PADDING * 2;
   
-  // Split vertical space: board zone (top) and tray zone (bottom)
   const boardZoneHeight = Math.floor(availableHeight * BOARD_HEIGHT_RATIO);
   const trayZoneHeight = availableHeight - boardZoneHeight;
   
-  // Board zone positioning
   const boardZoneY = OUTER_PADDING;
   const boardZoneWidth = availableWidth;
   
-  // Tray zone positioning
   const trayZoneY = boardZoneY + boardZoneHeight;
   const trayZoneWidth = availableWidth;
   
-  // Calculate cell size to fit the board within the board zone
-  // Account for margins and tab overflow
+  // Available space for the board (with margins)
   const boardAvailableWidth = boardZoneWidth - BOARD_MARGIN * 2;
   const boardAvailableHeight = boardZoneHeight - BOARD_MARGIN * 2;
   
-  // Cell size is limited by both width and height, plus min/max constraints
+  // Calculate cell size to fill the available space
+  // The board should use most of the available space, not be tiny
   const cellSizeByWidth = boardAvailableWidth / cols;
   const cellSizeByHeight = boardAvailableHeight / rows;
-  const cellSize = clamp(
-    Math.floor(Math.min(cellSizeByWidth, cellSizeByHeight)),
+  
+  // Use the smaller dimension to ensure the board fits, but no hard upper cap
+  // This ensures small puzzles (like 3x3) still have big pieces and fill the space
+  const cellSize = Math.max(
     MIN_CELL_SIZE,
-    MAX_CELL_SIZE
+    Math.floor(Math.min(cellSizeByWidth, cellSizeByHeight))
   );
   
-  // Derived piece dimensions
   const tabRadius = cellSize * 0.22;
   const pieceVisualSize = Math.ceil(cellSize + tabRadius * 2);
   
-  // Actual board dimensions
+  // Board dimensions
   const boardWidth = cols * cellSize;
   const boardHeight = rows * cellSize;
   
@@ -315,14 +297,12 @@ const calculateLayout = (
   const boardOriginX = OUTER_PADDING + Math.floor((boardZoneWidth - boardWidth) / 2);
   const boardOriginY = boardZoneY + Math.floor((boardZoneHeight - boardHeight) / 2);
   
-  // Scatter area: the area within the tray where pieces can be placed
-  // Account for margins and ensure pieces stay fully inside
+  // Tray scatter area
   const scatterX = OUTER_PADDING + TRAY_MARGIN + TRAY_INNER_PADDING;
   const scatterY = trayZoneY + TRAY_MARGIN + TRAY_INNER_PADDING;
   const scatterWidth = trayZoneWidth - TRAY_MARGIN * 2 - TRAY_INNER_PADDING * 2;
   const scatterHeight = trayZoneHeight - TRAY_MARGIN * 2 - TRAY_INNER_PADDING * 2;
   
-  // Workspace dimensions (the visible game area)
   const workspaceWidth = containerWidth;
   const workspaceHeight = containerHeight;
   
@@ -349,10 +329,6 @@ const calculateLayout = (
   };
 };
 
-/**
- * Scatter pieces uniformly across the entire tray area.
- * Each piece is positioned randomly but clamped to stay fully inside.
- */
 const scatterPiecesInTray = (
   total: number,
   scatterX: number,
@@ -363,12 +339,10 @@ const scatterPiecesInTray = (
 ): PieceState[] => {
   const pieces: PieceState[] = [];
   
-  // Maximum valid position (so piece stays fully inside)
   const maxX = Math.max(0, scatterWidth - pieceVisualSize);
   const maxY = Math.max(0, scatterHeight - pieceVisualSize);
   
   for (let id = 0; id < total; id++) {
-    // Random position within the valid range
     const localX = maxX > 0 ? Math.random() * maxX : 0;
     const localY = maxY > 0 ? Math.random() * maxY : 0;
     
@@ -381,6 +355,49 @@ const scatterPiecesInTray = (
   }
   
   return pieces;
+};
+
+// ---------- ANIMATED BURGER/X ICON ----------
+interface BurgerIconProps {
+  isOpen: boolean;
+}
+
+const BurgerIcon: React.FC<BurgerIconProps> = ({ isOpen }) => {
+  const lineStyle: React.CSSProperties = {
+    position: 'absolute',
+    width: 18,
+    height: 2.5,
+    backgroundColor: '#1e293b', // Dark color for contrast on light background
+    borderRadius: 2,
+    transition: 'transform 0.3s ease, opacity 0.3s ease',
+    left: '50%',
+    marginLeft: -9,
+  };
+
+  return (
+    <div style={{ position: 'relative', width: 24, height: 24 }}>
+      {/* Top line - rotates to form X */}
+      <span
+        style={{
+          ...lineStyle,
+          top: isOpen ? '50%' : 8,
+          transform: isOpen 
+            ? 'translateY(-50%) rotate(45deg)' 
+            : 'translateY(0) rotate(0deg)',
+        }}
+      />
+      {/* Bottom line - rotates to form X */}
+      <span
+        style={{
+          ...lineStyle,
+          top: isOpen ? '50%' : 14,
+          transform: isOpen 
+            ? 'translateY(-50%) rotate(-45deg)' 
+            : 'translateY(0) rotate(0deg)',
+        }}
+      />
+    </div>
+  );
 };
 
 // ---------- COMPONENT ----------
@@ -426,7 +443,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   const [moves, setMoves] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
   const outerContainerRef = useRef<HTMLDivElement | null>(null);
@@ -469,7 +486,6 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   const cols = selectedOption.cols;
   const totalPieces = rows * cols;
 
-  // Calculate layout based on container size
   const layout = useMemo(() => {
     const width = containerSize.width || (isMobile ? 360 : 800);
     const height = containerSize.height || (isMobile ? 600 : 700);
@@ -494,7 +510,6 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     scatterHeight,
   } = layout;
 
-  // Toggle body flag for navbar
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const body = document.body;
@@ -517,17 +532,14 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     pieceRefs.current[id] = el;
   };
 
-  // Start new game with given option
   const newGame = useCallback((opts?: { option?: JigsawOption; imageId?: string }) => {
     const nextOption = opts?.option ?? selectedOption;
     const total = nextOption.rows * nextOption.cols;
     
-    // Calculate layout for the new option
     const width = containerSize.width || (isMobile ? 360 : 800);
     const height = containerSize.height || (isMobile ? 600 : 700);
     const nextLayout = calculateLayout(width, height, nextOption.rows, nextOption.cols);
     
-    // Scatter pieces in the tray
     const nextPieces = scatterPiecesInTray(
       total,
       nextLayout.scatterX,
@@ -541,19 +553,17 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     if (opts?.imageId) setSelectedImageId(opts.imageId);
     setPieces(nextPieces);
     setMoves(0);
-    setIsPanelOpen(true);
+    setIsMenuOpen(false); // Close menu after selecting new game
     setIsInitialized(true);
     dragStateRef.current = createInitialDragState();
   }, [selectedOption, containerSize.width, containerSize.height, isMobile]);
 
-  // Initialize game when container is measured
   useEffect(() => {
     if (containerSize.width > 0 && containerSize.height > 0 && !isInitialized) {
       newGame({ option: selectedOption });
     }
   }, [containerSize.width, containerSize.height, isInitialized, newGame, selectedOption]);
 
-  // Re-scatter pieces when layout changes significantly
   const prevLayoutRef = useRef<{ scatterWidth: number; scatterHeight: number; pieceVisualSize: number } | null>(null);
   useEffect(() => {
     if (!isInitialized || pieces.length === 0) return;
@@ -564,11 +574,9 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
       Math.abs(prev.scatterHeight - scatterHeight) > 20 ||
       Math.abs(prev.pieceVisualSize - pieceVisualSize) > 5
     )) {
-      // Rescatter pieces on significant layout change
       setPieces(prevPieces => {
         return prevPieces.map(piece => {
           if (piece.snapped) {
-            // Recalculate snapped position
             const correctPos = getCorrectPosition(
               piece.id,
               cols,
@@ -580,7 +588,6 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
             return { ...piece, x: correctPos.x, y: correctPos.y };
           }
           
-          // Re-scatter unsnapped pieces
           const maxX = Math.max(0, scatterWidth - pieceVisualSize);
           const maxY = Math.max(0, scatterHeight - pieceVisualSize);
           const localX = maxX > 0 ? Math.random() * maxX : 0;
@@ -598,7 +605,6 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     prevLayoutRef.current = { scatterWidth, scatterHeight, pieceVisualSize };
   }, [scatterWidth, scatterHeight, pieceVisualSize, isInitialized, pieces.length, cols, boardOriginX, boardOriginY, cellSize, tabRadius, scatterX, scatterY]);
 
-  // Handle piece count changes
   useEffect(() => {
     if (pieces.length !== totalPieces && isInitialized) {
       newGame({ option: selectedOption });
@@ -683,7 +689,6 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     const currentLeft = parseFloat(pieceEl.style.left || '0');
     const currentTop = parseFloat(pieceEl.style.top || '0');
 
-    // Center of base cell for snapping
     const centerX = currentLeft + tabRadius + cellSize / 2;
     const centerY = currentTop + tabRadius + cellSize / 2;
 
@@ -734,29 +739,17 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     dragStateRef.current = createInitialDragState();
   };
 
-  // ---------- CONTROLS PANEL ----------
-  const controlsTopMargin = isMobile ? 64 : 72;
+  // ---------- MENU PANEL CONTENT ----------
   const difficultyColumns = `repeat(${MOBILE_GRID_COLUMNS}, minmax(0, 1fr))`;
 
-  const panelCardStyles: React.CSSProperties = {
-    width: '100%',
-    maxWidth: 420,
-    borderRadius: 20,
-    background: 'linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08))',
-    border: '1px solid rgba(255,255,255,0.35)',
-    boxShadow: '0 12px 28px rgba(0,0,0,0.2)',
-    backdropFilter: 'blur(16px)',
-    padding: 16,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 14,
-  };
-
-  const controlsContent = (
-    <>
-      <div style={{ marginBottom: 16, marginTop: controlsTopMargin, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Сложность</div>
-        <div style={{ display: 'grid', gridTemplateColumns: difficultyColumns, gap: 14, justifyItems: 'center', width: '100%' }}>
+  const menuContent = (
+    <div style={{ padding: 20, paddingTop: 60 }}>
+      {/* Difficulty section */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9', marginBottom: 12, textAlign: 'center' }}>
+          Сложность
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: difficultyColumns, gap: 10, justifyItems: 'center' }}>
           {JIGSAW_OPTIONS.map((opt) => {
             const active = opt.pieces === selectedOption.pieces;
             return (
@@ -765,88 +758,81 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
                 type="button"
                 onClick={() => newGame({ option: opt })}
                 style={{
-                  width: 'clamp(44px, 13vw, 58px)',
-                  height: 'clamp(32px, 8.5vw, 40px)',
-                  fontSize: 'clamp(12px, 2.7vw, 13px)',
+                  width: 56,
+                  height: 36,
+                  fontSize: 13,
                   borderRadius: 9999,
-                  border: active ? '2px solid rgba(255,255,255,0.85)' : '1px solid rgba(255,255,255,0.45)',
-                  background: active ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.2)',
-                  color: '#0f172a',
+                  border: active ? '2px solid rgba(255,255,255,0.85)' : '1px solid rgba(255,255,255,0.35)',
+                  background: active ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)',
+                  color: '#f1f5f9',
                   fontWeight: 700,
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 8,
+                  gap: 6,
                   cursor: 'pointer',
-                  backdropFilter: 'blur(12px)',
-                  boxShadow: active ? '0 10px 26px rgba(0,0,0,0.2)' : '0 8px 20px rgba(0,0,0,0.14)',
-                  transform: active ? 'scale(1.02)' : 'scale(1)',
                   transition: 'all 0.2s ease',
                 }}
               >
-                <span style={{ width: 'clamp(16px, 3.8vw, 20px)', height: 'clamp(16px, 3.8vw, 20px)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))', position: 'relative', zIndex: 1 }}>
-                  <img src="/assets/icon-puzzle.png" alt="puzzle" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'brightness(1.15)' }} />
+                <span style={{ width: 16, height: 16, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <img src="/assets/icon-puzzle.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'brightness(1.2)' }} />
                 </span>
-                <span style={{ position: 'relative', zIndex: 1 }}>{opt.pieces}</span>
+                {opt.pieces}
               </button>
             );
           })}
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* Action buttons */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
         <button
           type="button"
           onClick={() => setShowHint((v) => !v)}
           style={{
-            padding: '12px 14px',
-            borderRadius: 14,
-            border: '1px solid rgba(255,255,255,0.35)',
-            background: showHint ? 'rgba(255, 255, 255, 0.28)' : 'rgba(255, 255, 255, 0.18)',
+            padding: '14px 16px',
+            borderRadius: 12,
+            border: '1px solid rgba(255,255,255,0.25)',
+            background: showHint ? 'rgba(59, 130, 246, 0.4)' : 'rgba(255, 255, 255, 0.1)',
             cursor: 'pointer',
             fontSize: 14,
-            width: '100%',
-            color: '#0f172a',
+            color: '#f1f5f9',
             fontWeight: 600,
-            backdropFilter: 'blur(12px)',
-            boxShadow: '0 8px 18px rgba(0,0,0,0.16)',
+            transition: 'all 0.2s ease',
           }}
         >
-          {showHint ? 'Скрыть подсказку' : 'Показать подсказку'}
+          {showHint ? '🔍 Скрыть подсказку' : '🔍 Показать подсказку'}
         </button>
 
         <button
           type="button"
           onClick={() => newGame()}
           style={{
-            padding: '12px 14px',
-            borderRadius: 14,
-            border: '1px solid rgba(255,255,255,0.35)',
-            background: 'rgba(255, 255, 255, 0.18)',
+            padding: '14px 16px',
+            borderRadius: 12,
+            border: '1px solid rgba(255,255,255,0.25)',
+            background: 'rgba(255, 255, 255, 0.1)',
             cursor: 'pointer',
             fontSize: 14,
-            width: '100%',
-            color: '#0f172a',
+            color: '#f1f5f9',
             fontWeight: 600,
-            backdropFilter: 'blur(12px)',
-            boxShadow: '0 8px 18px rgba(0,0,0,0.16)',
+            transition: 'all 0.2s ease',
           }}
         >
-          Новая игра
+          🔄 Новая игра
         </button>
       </div>
 
-      <div style={{ fontSize: 14, display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
-        <span style={{ padding: '6px 10px', borderRadius: 999, background: 'rgba(15,23,42,0.65)', color: '#f8fafc', display: 'inline-flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
-          <span style={{ opacity: 0.9 }}>Ходы:</span>
-          <strong style={{ color: '#fff' }}>{moves}</strong>
+      {/* Stats */}
+      <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+        <span style={{ padding: '8px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.1)', color: '#f1f5f9', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          Ходы: <strong>{moves}</strong>
         </span>
-        <span style={{ padding: '6px 10px', borderRadius: 999, background: 'rgba(15,23,42,0.65)', color: '#f8fafc', display: 'inline-flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
-          <span style={{ opacity: 0.9 }}>Пазлов:</span>
-          <strong style={{ color: '#fff' }}>{totalPieces}</strong>
+        <span style={{ padding: '8px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.1)', color: '#f1f5f9', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          Пазлов: <strong>{totalPieces}</strong>
         </span>
       </div>
-    </>
+    </div>
   );
 
   // ---------- WORKSPACE (game area with board + tray) ----------
@@ -866,7 +852,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
         touchAction: 'none',
       }}
     >
-      {/* Board zone indicator (dashed rectangle for assembly) */}
+      {/* Board zone indicator */}
       <div
         style={{
           position: 'absolute',
@@ -979,42 +965,83 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     </div>
   );
 
+  // ---------- BURGER BUTTON (top-right, with animated icon) ----------
+  // Light style to match the back arrow button
   const burgerButton = (
     <button
       type="button"
-      onClick={() => setIsPanelOpen((v) => !v)}
-      aria-label={isPanelOpen ? 'Скрыть панель' : 'Показать панель'}
+      onClick={() => setIsMenuOpen((v) => !v)}
+      aria-label={isMenuOpen ? 'Закрыть меню' : 'Открыть меню'}
       style={{
         position: 'fixed',
-        top: isMobile ? 68 : 76,
-        left: isMobile ? 16 : 24,
-        width: 40,
-        height: 40,
-        borderRadius: 9999,
-        border: '1px solid rgba(255,255,255,0.35)',
-        background: 'linear-gradient(145deg, rgba(255,255,255,0.35), rgba(255,255,255,0.22))',
+        top: isMobile ? 16 : 20,
+        right: isMobile ? 16 : 24,
+        width: 44,
+        height: 44,
+        borderRadius: 9999, // Fully rounded like back arrow
+        border: 'none',
+        background: 'linear-gradient(145deg, rgba(255,255,255,0.95), rgba(241,245,249,0.9))',
+        backdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        boxShadow: '0 6px 20px rgba(0,0,0,0.16)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1)',
         padding: 0,
-        zIndex: 60,
+        zIndex: 100,
         cursor: 'pointer',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'scale(1.05)';
+        e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.2), 0 3px 10px rgba(0,0,0,0.15)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'scale(1)';
+        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1)';
       }}
     >
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(31,41,55,0.9)" strokeWidth="2" strokeLinecap="round">
-        <line x1="3" y1="6" x2="21" y2="6" />
-        <line x1="3" y1="12" x2="21" y2="12" />
-        <line x1="3" y1="18" x2="21" y2="18" />
-      </svg>
+      <BurgerIcon isOpen={isMenuOpen} />
     </button>
   );
 
-  const controlsPanel = isPanelOpen ? (
-    <div style={{ display: 'flex', justifyContent: 'center', width: '100%', paddingTop: 8 }}>
-      <div style={panelCardStyles}>{controlsContent}</div>
-    </div>
-  ) : null;
+  // ---------- SLIDE-IN MENU OVERLAY ----------
+  const menuOverlay = (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={() => setIsMenuOpen(false)}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.5)',
+          zIndex: 90,
+          opacity: isMenuOpen ? 1 : 0,
+          pointerEvents: isMenuOpen ? 'auto' : 'none',
+          transition: 'opacity 0.3s ease',
+        }}
+      />
+      
+      {/* Slide-in panel from right */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: isMobile ? '85%' : 320,
+          maxWidth: 360,
+          background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)',
+          boxShadow: '-4px 0 24px rgba(0,0,0,0.4)',
+          zIndex: 95,
+          transform: isMenuOpen ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.3s ease',
+          overflowY: 'auto',
+        }}
+      >
+        {menuContent}
+      </div>
+    </>
+  );
 
   // ---------- MOBILE LAYOUT ----------
   if (isMobile) {
@@ -1028,27 +1055,22 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
           background: '#020617',
           display: 'flex',
           flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
           padding: 'calc(env(safe-area-inset-top, 0px) + 8px) 8px 8px 8px',
           boxSizing: 'border-box',
           fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-          gap: 8,
           overflow: 'hidden',
         }}
       >
+        {/* Game workspace - always visible, never pushed */}
+        {workspaceContent}
+        
+        {/* Burger button in top-right */}
         {burgerButton}
-        {controlsPanel}
-
-        <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-          }}
-        >
-          {workspaceContent}
-        </div>
+        
+        {/* Menu overlay - slides from right */}
+        {menuOverlay}
       </div>
     );
   }
@@ -1060,8 +1082,8 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
       style={{
         position: 'relative',
         display: 'flex',
-        gap: 24,
-        alignItems: 'flex-start',
+        alignItems: 'center',
+        justifyContent: 'center',
         fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
         paddingTop: 8,
         width: '100%',
@@ -1070,21 +1092,14 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
         overflow: 'hidden',
       }}
     >
+      {/* Game workspace - always centered */}
+      {workspaceContent}
+      
+      {/* Burger button in top-right */}
       {burgerButton}
-      {controlsPanel && <div style={{ minWidth: 260, flexShrink: 0 }}>{controlsPanel}</div>}
-
-      <div
-        style={{
-          display: 'flex',
-          flex: 1,
-          justifyContent: isPanelOpen ? 'flex-start' : 'center',
-          alignItems: 'center',
-          overflow: 'hidden',
-          height: '100%',
-        }}
-      >
-        {workspaceContent}
-      </div>
+      
+      {/* Menu overlay - slides from right */}
+      {menuOverlay}
     </div>
   );
 };
