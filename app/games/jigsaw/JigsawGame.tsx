@@ -5,6 +5,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  useCallback,
 } from 'react';
 
 import {
@@ -14,14 +15,24 @@ import {
   JIGSAW_OPTIONS,
   type JigsawOption,
 } from './jigsawConfig';
+import { useContainerSize } from '@/lib/useContainerSize';
 
 const IMAGES = JIGSAW_IMAGES;
 
-const CELL_SIZE = 96; // логическая клетка
-const TAB_RADIUS = CELL_SIZE * 0.22; // радиус «ушка» — точно как 'r' в getPiecePath
-const PIECE_VISUAL_SIZE = Math.ceil(CELL_SIZE + TAB_RADIUS * 2); // реальный размер div с учётом ушек
+// Layout constants
+const MIN_CELL_SIZE = 16;
+const MAX_CELL_SIZE = 100;
+const MOBILE_BREAKPOINT = 768;
 
-const BOARD_MARGIN = 24;
+// Vertical space allocation (mobile-first)
+const BOARD_HEIGHT_RATIO = 0.62; // Board gets ~62% of available height
+const TRAY_HEIGHT_RATIO = 0.38;  // Tray gets ~38% of available height
+
+// Margins and padding
+const OUTER_PADDING = 8;
+const BOARD_MARGIN = 8;
+const TRAY_MARGIN = 8;
+const TRAY_INNER_PADDING = 6; // Padding inside tray for pieces
 
 const clamp = (v: number, min: number, max: number) =>
   Math.max(min, Math.min(max, v));
@@ -55,7 +66,7 @@ const createInitialDragState = (): DragState => ({
   workspaceHeight: 0,
 });
 
-// ---------- ГЕОМЕТРИЯ ПАЗЛА ----------
+// ---------- PUZZLE GEOMETRY ----------
 
 type EdgeType = 'flat' | 'tab' | 'blank';
 
@@ -69,10 +80,6 @@ interface PieceEdges {
 const complementEdge = (e: EdgeType): EdgeType =>
   e === 'tab' ? 'blank' : e === 'blank' ? 'tab' : 'flat';
 
-/**
- * Детерминированно генерируем типы граней для всех кусков.
- * Без случайности → одинаково на сервере и клиенте.
- */
 const generatePieceEdges = (rows: number, cols: number): PieceEdges[][] => {
   const edges: PieceEdges[][] = Array.from(
     { length: rows },
@@ -87,30 +94,21 @@ const generatePieceEdges = (rows: number, cols: number): PieceEdges[][] => {
   for (let r = 0; r < rows; r += 1) {
     for (let c = 0; c < cols; c += 1) {
       const piece = edges[r][c];
-
-      // top
       if (r === 0) {
         piece.top = 'flat';
       } else {
         piece.top = complementEdge(edges[r - 1][c].bottom);
       }
-
-      // left
       if (c === 0) {
         piece.left = 'flat';
       } else {
         piece.left = complementEdge(edges[r][c - 1].right);
       }
-
-      // bottom (внутренние горизонтальные стыки)
       if (r === rows - 1) {
         piece.bottom = 'flat';
       } else {
-        // шахматный узор: таб/пустота
         piece.bottom = (r + c) % 2 === 0 ? 'tab' : 'blank';
       }
-
-      // right (внутренние вертикальные стыки)
       if (c === cols - 1) {
         piece.right = 'flat';
       } else {
@@ -122,21 +120,16 @@ const generatePieceEdges = (rows: number, cols: number): PieceEdges[][] => {
   return edges;
 };
 
-/**
- * Строим path для конкретного куска с учётом типов граней.
- * Основано на простых Bézier-дугах, выглядит как классический пазл.
- */
-const getPiecePath = (edges: PieceEdges): string => {
-  const s = CELL_SIZE;
-  const r = s * 0.22; // радиус "ушки"
+const getPiecePath = (edges: PieceEdges, cellSize: number): string => {
+  const s = cellSize;
+  const r = s * 0.22;
   const notchW = s * 0.18;
   const mid = s / 2;
   const x1 = mid - notchW;
   const x2 = mid + notchW;
   const y1 = mid - notchW;
   const y2 = mid + notchW;
-
-  const k = 0.4; // коэффициент "крутизны" дуги
+  const k = 0.4;
 
   const topSegment = (type: EdgeType): string => {
     if (type === 'flat') return `L ${s} 0 `;
@@ -148,7 +141,6 @@ const getPiecePath = (edges: PieceEdges): string => {
         `L ${s} 0`,
       ].join(' ');
     }
-    // blank
     return [
       `L ${x1} 0`,
       `C ${x1 + notchW * k} 0 ${mid - r} ${r} ${mid} ${r}`,
@@ -167,7 +159,6 @@ const getPiecePath = (edges: PieceEdges): string => {
         `L ${s} ${s}`,
       ].join(' ');
     }
-    // blank
     return [
       `L ${s} ${y1}`,
       `C ${s} ${y1 + notchW * k} ${s - r} ${mid - r} ${s - r} ${mid}`,
@@ -181,19 +172,14 @@ const getPiecePath = (edges: PieceEdges): string => {
     if (type === 'tab') {
       return [
         `L ${x2} ${s}`,
-        `C ${x2 - notchW * k} ${s} ${mid + r} ${s + r} ${mid} ${
-          s + r
-        }`,
+        `C ${x2 - notchW * k} ${s} ${mid + r} ${s + r} ${mid} ${s + r}`,
         `C ${mid - r} ${s + r} ${x1 + notchW * k} ${s} ${x1} ${s}`,
         `L 0 ${s}`,
       ].join(' ');
     }
-    // blank
     return [
       `L ${x2} ${s}`,
-      `C ${x2 - notchW * k} ${s} ${mid + r} ${s - r} ${mid} ${
-        s - r
-      }`,
+      `C ${x2 - notchW * k} ${s} ${mid + r} ${s - r} ${mid} ${s - r}`,
       `C ${mid - r} ${s - r} ${x1 + notchW * k} ${s} ${x1} ${s}`,
       `L 0 ${s}`,
     ].join(' ');
@@ -209,7 +195,6 @@ const getPiecePath = (edges: PieceEdges): string => {
         `L 0 0`,
       ].join(' ');
     }
-    // blank
     return [
       `L 0 ${y2}`,
       `C 0 ${y2 - notchW * k} ${r} ${mid + r} ${r} ${mid}`,
@@ -228,33 +213,181 @@ const getPiecePath = (edges: PieceEdges): string => {
   ].join(' ');
 };
 
+/**
+ * Calculate the correct (snapped) position for a piece on the board.
+ */
 const getCorrectPosition = (
   pieceId: number,
-  rows: number,
   cols: number,
   boardOriginX: number,
   boardOriginY: number,
+  cellSize: number,
+  tabRadius: number,
 ): { x: number; y: number } => {
   const row = Math.floor(pieceId / cols);
   const col = pieceId % cols;
-
-  // позиция — левый верх внешнего прямоугольника (учитываем TAB_RADIUS)
   return {
-    x: boardOriginX + col * CELL_SIZE - TAB_RADIUS,
-    y: boardOriginY + row * CELL_SIZE - TAB_RADIUS,
+    x: boardOriginX + col * cellSize - tabRadius,
+    y: boardOriginY + row * cellSize - tabRadius,
   };
 };
 
+/**
+ * Calculate all layout dimensions based on available container space.
+ * This is the SINGLE SOURCE OF TRUTH for all sizing.
+ */
+interface LayoutDimensions {
+  // Overall workspace
+  workspaceWidth: number;
+  workspaceHeight: number;
+  
+  // Board zone (top area)
+  boardZoneWidth: number;
+  boardZoneHeight: number;
+  boardZoneY: number;
+  
+  // Actual board (puzzle grid)
+  cellSize: number;
+  tabRadius: number;
+  pieceVisualSize: number;
+  boardWidth: number;
+  boardHeight: number;
+  boardOriginX: number;
+  boardOriginY: number;
+  
+  // Tray zone (bottom area)
+  trayZoneWidth: number;
+  trayZoneHeight: number;
+  trayZoneY: number;
+  
+  // Scatter area within tray (where pieces can be placed)
+  scatterX: number;
+  scatterY: number;
+  scatterWidth: number;
+  scatterHeight: number;
+}
 
-const MOBILE_BREAKPOINT = 768;
-const MOBILE_BOARD_MARGIN = 6;
+const calculateLayout = (
+  containerWidth: number,
+  containerHeight: number,
+  rows: number,
+  cols: number,
+): LayoutDimensions => {
+  // Available space after outer padding
+  const availableWidth = containerWidth - OUTER_PADDING * 2;
+  const availableHeight = containerHeight - OUTER_PADDING * 2;
+  
+  // Split vertical space: board zone (top) and tray zone (bottom)
+  const boardZoneHeight = Math.floor(availableHeight * BOARD_HEIGHT_RATIO);
+  const trayZoneHeight = availableHeight - boardZoneHeight;
+  
+  // Board zone positioning
+  const boardZoneY = OUTER_PADDING;
+  const boardZoneWidth = availableWidth;
+  
+  // Tray zone positioning
+  const trayZoneY = boardZoneY + boardZoneHeight;
+  const trayZoneWidth = availableWidth;
+  
+  // Calculate cell size to fit the board within the board zone
+  // Account for margins and tab overflow
+  const boardAvailableWidth = boardZoneWidth - BOARD_MARGIN * 2;
+  const boardAvailableHeight = boardZoneHeight - BOARD_MARGIN * 2;
+  
+  // Cell size is limited by both width and height, plus min/max constraints
+  const cellSizeByWidth = boardAvailableWidth / cols;
+  const cellSizeByHeight = boardAvailableHeight / rows;
+  const cellSize = clamp(
+    Math.floor(Math.min(cellSizeByWidth, cellSizeByHeight)),
+    MIN_CELL_SIZE,
+    MAX_CELL_SIZE
+  );
+  
+  // Derived piece dimensions
+  const tabRadius = cellSize * 0.22;
+  const pieceVisualSize = Math.ceil(cellSize + tabRadius * 2);
+  
+  // Actual board dimensions
+  const boardWidth = cols * cellSize;
+  const boardHeight = rows * cellSize;
+  
+  // Center the board within the board zone
+  const boardOriginX = OUTER_PADDING + Math.floor((boardZoneWidth - boardWidth) / 2);
+  const boardOriginY = boardZoneY + Math.floor((boardZoneHeight - boardHeight) / 2);
+  
+  // Scatter area: the area within the tray where pieces can be placed
+  // Account for margins and ensure pieces stay fully inside
+  const scatterX = OUTER_PADDING + TRAY_MARGIN + TRAY_INNER_PADDING;
+  const scatterY = trayZoneY + TRAY_MARGIN + TRAY_INNER_PADDING;
+  const scatterWidth = trayZoneWidth - TRAY_MARGIN * 2 - TRAY_INNER_PADDING * 2;
+  const scatterHeight = trayZoneHeight - TRAY_MARGIN * 2 - TRAY_INNER_PADDING * 2;
+  
+  // Workspace dimensions (the visible game area)
+  const workspaceWidth = containerWidth;
+  const workspaceHeight = containerHeight;
+  
+  return {
+    workspaceWidth,
+    workspaceHeight,
+    boardZoneWidth,
+    boardZoneHeight,
+    boardZoneY,
+    cellSize,
+    tabRadius,
+    pieceVisualSize,
+    boardWidth,
+    boardHeight,
+    boardOriginX,
+    boardOriginY,
+    trayZoneWidth,
+    trayZoneHeight,
+    trayZoneY,
+    scatterX,
+    scatterY,
+    scatterWidth,
+    scatterHeight,
+  };
+};
 
-// ---------- КОМПОНЕНТ ----------
+/**
+ * Scatter pieces uniformly across the entire tray area.
+ * Each piece is positioned randomly but clamped to stay fully inside.
+ */
+const scatterPiecesInTray = (
+  total: number,
+  scatterX: number,
+  scatterY: number,
+  scatterWidth: number,
+  scatterHeight: number,
+  pieceVisualSize: number,
+): PieceState[] => {
+  const pieces: PieceState[] = [];
+  
+  // Maximum valid position (so piece stays fully inside)
+  const maxX = Math.max(0, scatterWidth - pieceVisualSize);
+  const maxY = Math.max(0, scatterHeight - pieceVisualSize);
+  
+  for (let id = 0; id < total; id++) {
+    // Random position within the valid range
+    const localX = maxX > 0 ? Math.random() * maxX : 0;
+    const localY = maxY > 0 ? Math.random() * maxY : 0;
+    
+    pieces.push({
+      id,
+      x: scatterX + localX,
+      y: scatterY + localY,
+      snapped: false,
+    });
+  }
+  
+  return pieces;
+};
+
+// ---------- COMPONENT ----------
 
 export interface JigsawGameProps {
   initialImageId?: string;
   initialGridSize?: number;
-  /** If provided (from Supabase), use this URL instead of static images */
   puzzleImageUrl?: string;
   puzzleTitle?: string;
 }
@@ -265,10 +398,8 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   puzzleImageUrl,
   puzzleTitle,
 }) => {
-  // Check if we have a Supabase puzzle
   const isSupabasePuzzle = Boolean(puzzleImageUrl);
   
-  // Helpers for option selection (supports legacy grid sizes 3/4/5)
   const normalizePieces = (value?: number): number => {
     if (!value) return DEFAULT_OPTION.pieces;
     if (value === 3) return 9;
@@ -280,48 +411,36 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   const getOptionByPieces = (pieces: number): JigsawOption =>
     JIGSAW_OPTIONS.find((opt) => opt.pieces === pieces) || DEFAULT_OPTION;
 
-  // Validate and apply initial values with fallbacks
   const defaultImageId = !isSupabasePuzzle && initialImageId && IMAGES.some(img => img.id === initialImageId)
     ? initialImageId
     : DEFAULT_IMAGE_ID;
   const initialPieces = normalizePieces(initialGridSize);
   const defaultOption = getOptionByPieces(initialPieces);
 
-  const [selectedOption, setSelectedOption] =
-    useState<JigsawOption>(defaultOption);
+  const [selectedOption, setSelectedOption] = useState<JigsawOption>(defaultOption);
   const [selectedImageId, setSelectedImageId] = useState<string>(
     isSupabasePuzzle ? (initialImageId || 'supabase') : defaultImageId,
   );
-  
-  // Custom image URL state for Supabase puzzles
-  const [customImageUrl, setCustomImageUrl] = useState<string | null>(
-    puzzleImageUrl || null
-  );
-  const [pieces, setPieces] = useState<PieceState[]>(() => {
-    const total = defaultOption.rows * defaultOption.cols;
-    return Array.from({ length: total }, (_, id) => ({
-      id,
-      x: 0,
-      y: 0,
-      snapped: false,
-    }));
-  });
+  const [customImageUrl] = useState<string | null>(puzzleImageUrl || null);
+  const [pieces, setPieces] = useState<PieceState[]>([]);
   const [moves, setMoves] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  const outerContainerRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const pieceRefs = useRef<(HTMLDivElement | null)[]>([]);
   const dragStateRef = useRef<DragState>(createInitialDragState());
 
-  // Detect mobile - robust detection with user agent + viewport width
+  const containerSize = useContainerSize(outerContainerRef);
+
+  // Detect mobile
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
     const checkViewport = () => {
       const width = window.innerWidth;
-
       const ua = navigator.userAgent.toLowerCase();
       const isRealMobileUA =
         ua.includes('iphone') ||
@@ -329,20 +448,16 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
         ua.includes('ipad') ||
         ua.includes('ipod') ||
         ua.includes('mobile');
-
       const mobileByWidth =
         width <= MOBILE_BREAKPOINT ||
         window.matchMedia?.('(max-width: 768px)').matches;
-
       setIsMobile(mobileByWidth || isRealMobileUA);
     };
-
     checkViewport();
     window.addEventListener('resize', checkViewport);
     return () => window.removeEventListener('resize', checkViewport);
   }, []);
 
-  // Get the current image - either from Supabase URL or static images
   const selectedImage = customImageUrl 
     ? { id: 'supabase', src: customImageUrl, label: puzzleTitle || 'Puzzle' }
     : (IMAGES.find((img) => img.id === selectedImageId) ?? IMAGES[0]);
@@ -353,71 +468,45 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   const rows = selectedOption.rows;
   const cols = selectedOption.cols;
   const totalPieces = rows * cols;
-  const boardWidth = cols * CELL_SIZE;
-  const boardHeight = rows * CELL_SIZE;
 
-  // Use smaller margin on mobile
-  const boardMargin = isMobile ? MOBILE_BOARD_MARGIN : BOARD_MARGIN;
+  // Calculate layout based on container size
+  const layout = useMemo(() => {
+    const width = containerSize.width || (isMobile ? 360 : 800);
+    const height = containerSize.height || (isMobile ? 600 : 700);
+    return calculateLayout(width, height, rows, cols);
+  }, [containerSize.width, containerSize.height, rows, cols, isMobile]);
 
-  // Toggle a body flag so the Navbar can react to in-game mobile layout
+  const {
+    workspaceWidth,
+    workspaceHeight,
+    cellSize,
+    tabRadius,
+    pieceVisualSize,
+    boardWidth,
+    boardHeight,
+    boardOriginX,
+    boardOriginY,
+    trayZoneY,
+    trayZoneHeight,
+    scatterX,
+    scatterY,
+    scatterWidth,
+    scatterHeight,
+  } = layout;
+
+  // Toggle body flag for navbar
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const body = document.body;
-
     if (isGameplayMode) {
       body.dataset.jigsawGameplay = 'true';
     } else {
       delete body.dataset.jigsawGameplay;
     }
-
     return () => {
       delete body.dataset.jigsawGameplay;
     };
   }, [isMobile, isGameplayMode]);
-
-  // Layout variables - conditional on isMobile
-  let workspaceWidth: number;
-  let workspaceHeight: number;
-  let boardOriginX: number;
-  let boardOriginY: number;
-  let scatterOriginX: number;
-  let scatterOriginY: number;
-  let scatterWidth: number;
-  let scatterHeight: number;
-
-  if (isMobile) {
-    workspaceWidth = boardWidth + boardMargin * 2;
-
-    // bottom area for scattered pieces (slightly smaller)
-    const bottomAreaHeight = Math.max(
-      boardHeight * 0.55,
-      CELL_SIZE * 2 + boardMargin * 2,
-    );
-
-    workspaceHeight =
-      boardHeight + bottomAreaHeight + boardMargin * 2;
-
-    // board starts very close to the top of the card
-    boardOriginX = boardMargin;
-    boardOriginY = boardMargin;
-
-    // scattered pieces area directly under the board
-    scatterOriginX = boardMargin;
-    scatterOriginY = boardOriginY + boardHeight + boardMargin;
-    scatterWidth = workspaceWidth - boardMargin * 2;
-    scatterHeight = bottomAreaHeight;
-  } else {
-    workspaceWidth = boardWidth * 2;
-    workspaceHeight = boardHeight + BOARD_MARGIN * 2;
-
-    boardOriginX = workspaceWidth - boardWidth - BOARD_MARGIN;
-    boardOriginY = BOARD_MARGIN;
-
-    scatterOriginX = BOARD_MARGIN;
-    scatterOriginY = BOARD_MARGIN;
-    scatterWidth = Math.max(PIECE_VISUAL_SIZE, boardWidth - BOARD_MARGIN * 2);
-    scatterHeight = Math.max(PIECE_VISUAL_SIZE, boardHeight - BOARD_MARGIN * 2);
-  }
 
   const pieceEdges = useMemo(
     () => generatePieceEdges(rows, cols),
@@ -428,75 +517,96 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     pieceRefs.current[id] = el;
   };
 
-  const newGame = (opts?: { option?: JigsawOption; imageId?: string }) => {
+  // Start new game with given option
+  const newGame = useCallback((opts?: { option?: JigsawOption; imageId?: string }) => {
     const nextOption = opts?.option ?? selectedOption;
     const total = nextOption.rows * nextOption.cols;
-    const nextBoardWidth = nextOption.cols * CELL_SIZE;
-    const nextBoardHeight = nextOption.rows * CELL_SIZE;
-
-    // Use correct margin based on isMobile
-    const margin = isMobile ? MOBILE_BOARD_MARGIN : BOARD_MARGIN;
-
-    // Calculate scatter dimensions based on current isMobile state
-    let nextScatterOriginX: number;
-    let nextScatterOriginY: number;
-    let nextScatterWidth: number;
-    let nextScatterHeight: number;
-
-    if (isMobile) {
-      const nextWorkspaceWidth = nextBoardWidth + margin * 2;
-      const bottomAreaHeight = Math.max(
-        nextBoardHeight * 0.55,
-        CELL_SIZE * 2 + margin * 2,
-      );
-      nextScatterOriginX = margin;
-      nextScatterOriginY = margin + nextBoardHeight + margin;
-      nextScatterWidth = nextWorkspaceWidth - margin * 2;
-      nextScatterHeight = bottomAreaHeight;
-    } else {
-      nextScatterOriginX = BOARD_MARGIN;
-      nextScatterOriginY = BOARD_MARGIN;
-      nextScatterWidth = Math.max(PIECE_VISUAL_SIZE, nextBoardWidth - BOARD_MARGIN * 2);
-      nextScatterHeight = Math.max(PIECE_VISUAL_SIZE, nextBoardHeight - BOARD_MARGIN * 2);
-    }
-
-    const nextPieces: PieceState[] = [];
-
-    for (let id = 0; id < total; id += 1) {
-      const randX =
-        nextScatterOriginX +
-        Math.random() * Math.max(1, nextScatterWidth - PIECE_VISUAL_SIZE);
-      const randY =
-        nextScatterOriginY +
-        Math.random() * Math.max(1, nextScatterHeight - PIECE_VISUAL_SIZE);
-
-      nextPieces.push({
-        id,
-        x: randX,
-        y: randY,
-        snapped: false,
-      });
-    }
+    
+    // Calculate layout for the new option
+    const width = containerSize.width || (isMobile ? 360 : 800);
+    const height = containerSize.height || (isMobile ? 600 : 700);
+    const nextLayout = calculateLayout(width, height, nextOption.rows, nextOption.cols);
+    
+    // Scatter pieces in the tray
+    const nextPieces = scatterPiecesInTray(
+      total,
+      nextLayout.scatterX,
+      nextLayout.scatterY,
+      nextLayout.scatterWidth,
+      nextLayout.scatterHeight,
+      nextLayout.pieceVisualSize,
+    );
 
     setSelectedOption(nextOption);
     if (opts?.imageId) setSelectedImageId(opts.imageId);
     setPieces(nextPieces);
     setMoves(0);
     setIsPanelOpen(true);
+    setIsInitialized(true);
     dragStateRef.current = createInitialDragState();
-  };
+  }, [selectedOption, containerSize.width, containerSize.height, isMobile]);
 
-
-  // раскидываем кусочки только на клиенте, после гидратации
+  // Initialize game when container is measured
   useEffect(() => {
-    newGame({ option: defaultOption });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMobile]);
+    if (containerSize.width > 0 && containerSize.height > 0 && !isInitialized) {
+      newGame({ option: selectedOption });
+    }
+  }, [containerSize.width, containerSize.height, isInitialized, newGame, selectedOption]);
 
-  const startDrag = (
-    e: React.PointerEvent<HTMLDivElement>,
-    pieceId: number,
-  ) => {
+  // Re-scatter pieces when layout changes significantly
+  const prevLayoutRef = useRef<{ scatterWidth: number; scatterHeight: number; pieceVisualSize: number } | null>(null);
+  useEffect(() => {
+    if (!isInitialized || pieces.length === 0) return;
+    
+    const prev = prevLayoutRef.current;
+    if (prev && (
+      Math.abs(prev.scatterWidth - scatterWidth) > 20 ||
+      Math.abs(prev.scatterHeight - scatterHeight) > 20 ||
+      Math.abs(prev.pieceVisualSize - pieceVisualSize) > 5
+    )) {
+      // Rescatter pieces on significant layout change
+      setPieces(prevPieces => {
+        return prevPieces.map(piece => {
+          if (piece.snapped) {
+            // Recalculate snapped position
+            const correctPos = getCorrectPosition(
+              piece.id,
+              cols,
+              boardOriginX,
+              boardOriginY,
+              cellSize,
+              tabRadius,
+            );
+            return { ...piece, x: correctPos.x, y: correctPos.y };
+          }
+          
+          // Re-scatter unsnapped pieces
+          const maxX = Math.max(0, scatterWidth - pieceVisualSize);
+          const maxY = Math.max(0, scatterHeight - pieceVisualSize);
+          const localX = maxX > 0 ? Math.random() * maxX : 0;
+          const localY = maxY > 0 ? Math.random() * maxY : 0;
+          
+          return {
+            ...piece,
+            x: scatterX + localX,
+            y: scatterY + localY,
+          };
+        });
+      });
+    }
+    
+    prevLayoutRef.current = { scatterWidth, scatterHeight, pieceVisualSize };
+  }, [scatterWidth, scatterHeight, pieceVisualSize, isInitialized, pieces.length, cols, boardOriginX, boardOriginY, cellSize, tabRadius, scatterX, scatterY]);
+
+  // Handle piece count changes
+  useEffect(() => {
+    if (pieces.length !== totalPieces && isInitialized) {
+      newGame({ option: selectedOption });
+    }
+  }, [totalPieces, pieces.length, isInitialized, newGame, selectedOption]);
+
+  // Drag handlers
+  const startDrag = (e: React.PointerEvent<HTMLDivElement>, pieceId: number) => {
     if (e.button !== 0 && e.pointerType !== 'touch') return;
 
     const containerEl = containerRef.current;
@@ -528,15 +638,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
 
   const onDrag = (e: React.PointerEvent<HTMLDivElement>) => {
     const drag = dragStateRef.current;
-    
-
-    if (
-      drag.activePieceId === null ||
-      drag.pointerId === null ||
-      drag.pointerId !== e.pointerId
-    ) {
-      return;
-    }
+    if (drag.activePieceId === null || drag.pointerId !== e.pointerId) return;
 
     const pieceEl = pieceRefs.current[drag.activePieceId];
     if (!pieceEl) return;
@@ -547,8 +649,8 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     let newLeft = localX - drag.offsetX;
     let newTop = localY - drag.offsetY;
 
-    const maxX = drag.workspaceWidth - PIECE_VISUAL_SIZE;
-    const maxY = drag.workspaceHeight - PIECE_VISUAL_SIZE;
+    const maxX = drag.workspaceWidth - pieceVisualSize;
+    const maxY = drag.workspaceHeight - pieceVisualSize;
 
     newLeft = clamp(newLeft, 0, maxX);
     newTop = clamp(newTop, 0, maxY);
@@ -561,14 +663,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
 
   const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
     const drag = dragStateRef.current;
-
-    if (
-      drag.activePieceId === null ||
-      drag.pointerId === null ||
-      drag.pointerId !== e.pointerId
-    ) {
-      return;
-    }
+    if (drag.activePieceId === null || drag.pointerId !== e.pointerId) return;
 
     const pieceId = drag.activePieceId;
     const pieceEl = pieceRefs.current[pieceId];
@@ -581,34 +676,33 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
 
     try {
       pieceEl.releasePointerCapture(e.pointerId);
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
 
     pieceEl.style.transition = 'left 160ms ease-out, top 160ms ease-out';
 
     const currentLeft = parseFloat(pieceEl.style.left || '0');
     const currentTop = parseFloat(pieceEl.style.top || '0');
 
-    // Центр базовой ячейки (без ушек) для корректного snapping
-    const centerX = currentLeft + TAB_RADIUS + CELL_SIZE / 2;
-    const centerY = currentTop + TAB_RADIUS + CELL_SIZE / 2;
+    // Center of base cell for snapping
+    const centerX = currentLeft + tabRadius + cellSize / 2;
+    const centerY = currentTop + tabRadius + cellSize / 2;
 
     const correctPos = getCorrectPosition(
       pieceId,
-      rows,
       cols,
       boardOriginX,
       boardOriginY,
+      cellSize,
+      tabRadius,
     );
-    const correctCenterX = correctPos.x + TAB_RADIUS + CELL_SIZE / 2;
-    const correctCenterY = correctPos.y + TAB_RADIUS + CELL_SIZE / 2;
+    const correctCenterX = correctPos.x + tabRadius + cellSize / 2;
+    const correctCenterY = correctPos.y + tabRadius + cellSize / 2;
 
     const dx = centerX - correctCenterX;
     const dy = centerY - correctCenterY;
     const distance = Math.hypot(dx, dy);
 
-    const SNAP_THRESHOLD = CELL_SIZE * 0.45;
+    const SNAP_THRESHOLD = cellSize * 0.45;
 
     let finalX = currentLeft;
     let finalY = currentTop;
@@ -620,8 +714,8 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
       snapped = true;
     } else {
       const rect = containerEl.getBoundingClientRect();
-      const maxX = rect.width - PIECE_VISUAL_SIZE;
-      const maxY = rect.height - PIECE_VISUAL_SIZE;
+      const maxX = rect.width - pieceVisualSize;
+      const maxY = rect.height - pieceVisualSize;
       finalX = clamp(currentLeft, 0, maxX);
       finalY = clamp(currentTop, 0, maxY);
     }
@@ -640,22 +734,9 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     dragStateRef.current = createInitialDragState();
   };
 
-  // Если вдруг сменили сложность, а массив не совпадает по длине —
-  // аккуратно пересоздаём, без рандома.
-  useEffect(() => {
-    if (pieces.length !== totalPieces) {
-      const fixed: PieceState[] = Array.from(
-        { length: totalPieces },
-        (_, id) => ({ id, x: 0, y: 0, snapped: false }),
-      );
-      setPieces(fixed);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalPieces]);
-
-  // ---------- CONTROLS JSX (reusable for desktop sidebar and mobile overlay) ----------
-  const difficultyColumns = `repeat(${MOBILE_GRID_COLUMNS}, minmax(0, 1fr))`;
+  // ---------- CONTROLS PANEL ----------
   const controlsTopMargin = isMobile ? 64 : 72;
+  const difficultyColumns = `repeat(${MOBILE_GRID_COLUMNS}, minmax(0, 1fr))`;
 
   const panelCardStyles: React.CSSProperties = {
     width: '100%',
@@ -673,25 +754,9 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
 
   const controlsContent = (
     <>
-      <div
-        style={{
-          marginBottom: 16,
-          marginTop: controlsTopMargin,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
+      <div style={{ marginBottom: 16, marginTop: controlsTopMargin, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a' }}>Сложность</div>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: difficultyColumns,
-            gap: 14,
-            justifyItems: 'center',
-            width: '100%',
-          }}
-        >
+        <div style={{ display: 'grid', gridTemplateColumns: difficultyColumns, gap: 14, justifyItems: 'center', width: '100%' }}>
           {JIGSAW_OPTIONS.map((opt) => {
             const active = opt.pieces === selectedOption.pieces;
             return (
@@ -714,45 +779,13 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
                   gap: 8,
                   cursor: 'pointer',
                   backdropFilter: 'blur(12px)',
-                  boxShadow: active
-                    ? '0 10px 26px rgba(0,0,0,0.2)'
-                    : '0 8px 20px rgba(0,0,0,0.14)',
+                  boxShadow: active ? '0 10px 26px rgba(0,0,0,0.2)' : '0 8px 20px rgba(0,0,0,0.14)',
                   transform: active ? 'scale(1.02)' : 'scale(1)',
                   transition: 'all 0.2s ease',
                 }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.05)';
-                  (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 12px 28px rgba(0,0,0,0.22)';
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.transform = active ? 'scale(1.02)' : 'scale(1)';
-                  (e.currentTarget as HTMLButtonElement).style.boxShadow = active
-                    ? '0 10px 26px rgba(0,0,0,0.2)'
-                    : '0 8px 20px rgba(0,0,0,0.14)';
-                }}
               >
-                <span
-                  style={{
-                    width: 'clamp(16px, 3.8vw, 20px)',
-                    height: 'clamp(16px, 3.8vw, 20px)',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))',
-                    position: 'relative',
-                    zIndex: 1,
-                  }}
-                >
-                  <img
-                    src="/assets/icon-puzzle.png"
-                    alt="puzzle"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                      filter: 'brightness(1.15)',
-                    }}
-                  />
+                <span style={{ width: 'clamp(16px, 3.8vw, 20px)', height: 'clamp(16px, 3.8vw, 20px)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))', position: 'relative', zIndex: 1 }}>
+                  <img src="/assets/icon-puzzle.png" alt="puzzle" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'brightness(1.15)' }} />
                 </span>
                 <span style={{ position: 'relative', zIndex: 1 }}>{opt.pieces}</span>
               </button>
@@ -769,9 +802,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
             padding: '12px 14px',
             borderRadius: 14,
             border: '1px solid rgba(255,255,255,0.35)',
-            background: showHint
-              ? 'rgba(255, 255, 255, 0.28)'
-              : 'rgba(255, 255, 255, 0.18)',
+            background: showHint ? 'rgba(255, 255, 255, 0.28)' : 'rgba(255, 255, 255, 0.18)',
             cursor: 'pointer',
             fontSize: 14,
             width: '100%',
@@ -805,43 +836,12 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
         </button>
       </div>
 
-      <div
-        style={{
-          fontSize: 14,
-          display: 'flex',
-          gap: 10,
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-          width: '100%',
-        }}
-      >
-        <span
-          style={{
-            padding: '6px 10px',
-            borderRadius: 999,
-            background: 'rgba(15,23,42,0.65)',
-            color: '#f8fafc',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-          }}
-        >
+      <div style={{ fontSize: 14, display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+        <span style={{ padding: '6px 10px', borderRadius: 999, background: 'rgba(15,23,42,0.65)', color: '#f8fafc', display: 'inline-flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
           <span style={{ opacity: 0.9 }}>Ходы:</span>
           <strong style={{ color: '#fff' }}>{moves}</strong>
         </span>
-        <span
-          style={{
-            padding: '6px 10px',
-            borderRadius: 999,
-            background: 'rgba(15,23,42,0.65)',
-            color: '#f8fafc',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-          }}
-        >
+        <span style={{ padding: '6px 10px', borderRadius: 999, background: 'rgba(15,23,42,0.65)', color: '#f8fafc', display: 'inline-flex', alignItems: 'center', gap: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
           <span style={{ opacity: 0.9 }}>Пазлов:</span>
           <strong style={{ color: '#fff' }}>{totalPieces}</strong>
         </span>
@@ -849,7 +849,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     </>
   );
 
-  // ---------- WORKSPACE JSX (the puzzle board and pieces) ----------
+  // ---------- WORKSPACE (game area with board + tray) ----------
   const workspaceContent = (
     <div
       ref={containerRef}
@@ -857,21 +857,16 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
         position: 'relative',
         width: workspaceWidth,
         height: workspaceHeight,
-        borderRadius: isMobile ? 18 : 12,
+        maxWidth: '100%',
+        maxHeight: '100%',
+        borderRadius: 16,
         overflow: 'hidden',
-        border: isMobile
-          ? '2px solid rgba(148,163,184,0.6)'
-          : '2px solid #4b5563',
-        background:
-          'radial-gradient(circle at top left, #4b5563 0, #111827 55%, #020617 100%)',
-        boxShadow: isMobile
-          ? '0 16px 40px rgba(0,0,0,0.55)'
-          : '0 12px 30px rgba(0,0,0,0.35)',
+        background: 'radial-gradient(circle at top left, #4b5563 0, #111827 55%, #020617 100%)',
+        boxShadow: '0 16px 40px rgba(0,0,0,0.55)',
         touchAction: 'none',
-        flexShrink: 0,
       }}
     >
-      {/* Рамка-цель */}
+      {/* Board zone indicator (dashed rectangle for assembly) */}
       <div
         style={{
           position: 'absolute',
@@ -881,12 +876,25 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
           height: boardHeight,
           borderRadius: 12,
           border: '2px dashed rgba(241,245,249,0.4)',
-          background:
-            'linear-gradient(145deg, rgba(15,23,42,0.95), rgba(30,64,175,0.35))',
+          background: 'linear-gradient(145deg, rgba(15,23,42,0.95), rgba(30,64,175,0.35))',
         }}
       />
 
-      {/* Подсказка */}
+      {/* Tray zone indicator */}
+      <div
+        style={{
+          position: 'absolute',
+          left: OUTER_PADDING + TRAY_MARGIN,
+          top: trayZoneY + TRAY_MARGIN,
+          width: workspaceWidth - OUTER_PADDING * 2 - TRAY_MARGIN * 2,
+          height: trayZoneHeight - TRAY_MARGIN * 2,
+          borderRadius: 12,
+          border: '1px dashed rgba(148,163,184,0.3)',
+          background: 'rgba(15,23,42,0.3)',
+        }}
+      />
+
+      {/* Hint overlay */}
       {showHint && (
         <div
           style={{
@@ -906,16 +914,15 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
         />
       )}
 
-      {/* Фигурные кусочки */}
+      {/* Puzzle pieces */}
       {pieces.map((piece) => {
         const row = Math.floor(piece.id / cols);
         const col = piece.id % cols;
-        const edges = pieceEdges[row][col];
-        const path = getPiecePath(edges);
-
-        const correctRow = row;
-        const correctCol = col;
-        const clipId = `clip-${rows}x${cols}-${piece.id}`;
+        const edges = pieceEdges[row]?.[col];
+        if (!edges) return null;
+        
+        const path = getPiecePath(edges, cellSize);
+        const clipId = `clip-${rows}x${cols}-${piece.id}-${cellSize}`;
 
         return (
           <div
@@ -927,8 +934,8 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
             onPointerCancel={endDrag}
             style={{
               position: 'absolute',
-              width: PIECE_VISUAL_SIZE,
-              height: PIECE_VISUAL_SIZE,
+              width: pieceVisualSize,
+              height: pieceVisualSize,
               left: piece.x,
               top: piece.y,
               cursor: 'pointer',
@@ -941,26 +948,24 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
             }}
           >
             <svg
-              width={PIECE_VISUAL_SIZE}
-              height={PIECE_VISUAL_SIZE}
-              viewBox={`${-TAB_RADIUS} ${-TAB_RADIUS} ${PIECE_VISUAL_SIZE} ${PIECE_VISUAL_SIZE}`}
+              width={pieceVisualSize}
+              height={pieceVisualSize}
+              viewBox={`${-tabRadius} ${-tabRadius} ${pieceVisualSize} ${pieceVisualSize}`}
             >
               <defs>
                 <clipPath id={clipId}>
                   <path d={path} />
                 </clipPath>
               </defs>
-
               <image
                 href={selectedImage.src}
-                x={-correctCol * CELL_SIZE}
-                y={-correctRow * CELL_SIZE}
+                x={-col * cellSize}
+                y={-row * cellSize}
                 width={boardWidth}
                 height={boardHeight}
                 clipPath={`url(#${clipId})`}
                 preserveAspectRatio="xMidYMid slice"
               />
-
               <path
                 d={path}
                 fill="none"
@@ -997,15 +1002,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
         cursor: 'pointer',
       }}
     >
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="rgba(31,41,55,0.9)"
-        strokeWidth="2"
-        strokeLinecap="round"
-      >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(31,41,55,0.9)" strokeWidth="2" strokeLinecap="round">
         <line x1="3" y1="6" x2="21" y2="6" />
         <line x1="3" y1="12" x2="21" y2="12" />
         <line x1="3" y1="18" x2="21" y2="18" />
@@ -1014,14 +1011,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   );
 
   const controlsPanel = isPanelOpen ? (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        width: '100%',
-        paddingTop: 8,
-      }}
-    >
+    <div style={{ display: 'flex', justifyContent: 'center', width: '100%', paddingTop: 8 }}>
       <div style={panelCardStyles}>{controlsContent}</div>
     </div>
   ) : null;
@@ -1030,6 +1020,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   if (isMobile) {
     return (
       <div
+        ref={outerContainerRef}
         style={{
           position: 'fixed',
           inset: 0,
@@ -1037,11 +1028,11 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
           background: '#020617',
           display: 'flex',
           flexDirection: 'column',
-          padding: 'calc(env(safe-area-inset-top, 0px) + 8px) 12px 12px 12px',
+          padding: 'calc(env(safe-area-inset-top, 0px) + 8px) 8px 8px 8px',
           boxSizing: 'border-box',
-          fontFamily:
-            'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-          gap: 14,
+          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+          gap: 8,
+          overflow: 'hidden',
         }}
       >
         {burgerButton}
@@ -1053,6 +1044,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            overflow: 'hidden',
           }}
         >
           {workspaceContent}
@@ -1064,24 +1056,31 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   // ---------- DESKTOP LAYOUT ----------
   return (
     <div
+      ref={outerContainerRef}
       style={{
         position: 'relative',
         display: 'flex',
         gap: 24,
         alignItems: 'flex-start',
-        fontFamily:
-          'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
         paddingTop: 8,
+        width: '100%',
+        height: 'calc(100vh - 100px)',
+        maxHeight: 'calc(100vh - 100px)',
+        overflow: 'hidden',
       }}
     >
       {burgerButton}
-      {controlsPanel && <div style={{ minWidth: 260 }}>{controlsPanel}</div>}
+      {controlsPanel && <div style={{ minWidth: 260, flexShrink: 0 }}>{controlsPanel}</div>}
 
       <div
         style={{
           display: 'flex',
           flex: 1,
           justifyContent: isPanelOpen ? 'flex-start' : 'center',
+          alignItems: 'center',
+          overflow: 'hidden',
+          height: '100%',
         }}
       >
         {workspaceContent}
@@ -1091,6 +1090,3 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
 };
 
 export default JigsawGame;
-
-
-
