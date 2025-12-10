@@ -1,20 +1,24 @@
-export type JigsawDifficulty = 3 | 4 | 5;
-
 export interface JigsawImage {
   id: string;
   src: string;
   label: string;
 }
 
-export interface JigsawDifficultyOption {
-  gridSize: JigsawDifficulty;
-  label: string;
+export interface JigsawOption {
+  pieces: number;
+  rows: number;
+  cols: number;
 }
 
-export const JIGSAW_DIFFICULTIES: JigsawDifficultyOption[] = [
-  { gridSize: 3, label: '3 × 3 — 9 пазлов' },
-  { gridSize: 4, label: '4 × 4 — 16 пазлов' },
-  { gridSize: 5, label: '5 × 5 — 25 пазлов' },
+export const JIGSAW_OPTIONS: JigsawOption[] = [
+  { pieces: 9, rows: 3, cols: 3 },
+  { pieces: 16, rows: 4, cols: 4 },
+  { pieces: 25, rows: 5, cols: 5 },
+  { pieces: 75, rows: 15, cols: 5 },
+  { pieces: 100, rows: 10, cols: 10 },
+  { pieces: 125, rows: 25, cols: 5 },
+  { pieces: 150, rows: 15, cols: 10 },
+  { pieces: 200, rows: 20, cols: 10 },
 ];
 
 // Fallback static images (used when no Supabase puzzle is selected)
@@ -24,5 +28,5 @@ export const JIGSAW_IMAGES: JigsawImage[] = [
 ];
 
 export const DEFAULT_IMAGE_ID = 'city';
-export const DEFAULT_GRID_SIZE: JigsawDifficulty = 3;
+export const DEFAULT_OPTION = JIGSAW_OPTIONS[0];
 

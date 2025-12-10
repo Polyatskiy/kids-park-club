@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 
@@ -50,7 +51,7 @@ export default function ColoringBrowser() {
     );
 
   return (
-    <div className="p-4 max-w-4xl mx-auto">
+    <div className="p-4 max-w-5xl mx-auto">
       {/* Группируем по категориям */}
       {Array.from(new Set(items.map((i) => i.category))).map((category) => (
         <CategoryBlock
@@ -74,7 +75,9 @@ function CategoryBlock({
 
   return (
     <div className="mb-10">
-      <h2 className="text-2xl font-bold mb-4">{title}</h2>
+      <h2 className="inline-block text-2xl font-bold mb-4 px-3 py-1 rounded-xl bg-white/35 backdrop-blur-[12px] text-[#222] shadow-[0_2px_8px_rgba(0,0,0,0.18)]">
+        {title}
+      </h2>
 
       {subcats.map((sub) => (
         <SubcategoryBlock
@@ -96,26 +99,31 @@ function SubcategoryBlock({
 }) {
   return (
     <div className="mb-6">
-      <h3 className="text-xl font-semibold mb-3">{title}</h3>
+      <h3 className="inline-block text-xl font-semibold mb-3 px-3 py-1 rounded-lg bg-white/30 backdrop-blur-[10px] text-[#222] shadow-[0_2px_6px_rgba(0,0,0,0.15)]">
+        {title}
+      </h3>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         {items.map((item) => (
           <Link
             key={item.id}
             href={`/coloring/${item.slug}`}
-            className="block p-2 rounded-lg border hover:shadow"
+            className="block p-2 rounded-2xl border border-white/30 bg-white/20 backdrop-blur-md hover:shadow-[0_12px_30px_rgba(0,0,0,0.16)] transition-shadow shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
           >
-            <div className="w-full h-48 bg-white rounded-lg border flex items-center justify-center overflow-hidden">
-              <div className="w-full h-full flex items-center justify-center">
-                <img
-                  src={item.thumbnail_url ?? undefined}
-                  alt={item.title}
-                  className="w-full h-full object-contain"
-                />
-              </div>
+            <div className="w-full relative aspect-[4/3] rounded-xl overflow-hidden bg-white/30">
+              <Image
+                src={item.thumbnail_url ?? "/placeholder.png"}
+                alt={item.title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              />
             </div>
 
-            <div className="mt-2 text-center text-sm font-medium">
+            <div
+              className="mt-2 text-center text-sm font-semibold text-white"
+              style={{ textShadow: "0 2px 6px rgba(0,0,0,0.25)" }}
+            >
               {item.title}
             </div>
           </Link>

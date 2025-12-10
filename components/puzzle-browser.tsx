@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabaseClient";
-import { JIGSAW_DIFFICULTIES } from "@/app/games/jigsaw/jigsawConfig";
+import { JIGSAW_OPTIONS } from "@/app/games/jigsaw/jigsawConfig";
 import type { PuzzleImage } from "@/types/content";
 
 type PuzzleItem = {
@@ -161,8 +161,8 @@ function SubcategoryBlock({
 
 function PuzzleCard({ item }: { item: PuzzleItem }) {
   return (
-    <article className="rounded-xl bg-white shadow-md overflow-hidden flex flex-col border border-gray-100">
-      <div className="aspect-[4/3] relative bg-gray-100">
+    <article className="rounded-2xl bg-white/20 backdrop-blur-md shadow-[0_10px_28px_rgba(0,0,0,0.14)] overflow-hidden flex flex-col border border-white/30">
+      <div className="aspect-[4/3] relative bg-white/30">
         {item.thumbnail_url ? (
           <Image
             src={item.thumbnail_url}
@@ -172,25 +172,37 @@ function PuzzleCard({ item }: { item: PuzzleItem }) {
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
+          <div className="w-full h-full flex items-center justify-center text-gray-100">
             Нет изображения
           </div>
         )}
       </div>
 
       <div className="p-4 flex flex-col gap-3">
-        <h2 className="text-base font-semibold text-gray-900">
+        <h2
+          className="text-base font-semibold text-white"
+          style={{ textShadow: "0 2px 6px rgba(0,0,0,0.25)" }}
+        >
           {item.title}
         </h2>
 
-        <div className="flex flex-wrap gap-2">
-          {JIGSAW_DIFFICULTIES.map((d) => (
+        <div className="flex flex-wrap gap-3">
+          {JIGSAW_OPTIONS.map((opt) => (
             <Link
-              key={d.gridSize}
-              href={`/games/jigsaw?imageId=${item.id}&size=${d.gridSize}`}
-              className="rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium bg-gray-50 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors"
+              key={opt.pieces}
+              href={`/games/jigsaw?imageId=${item.id}&size=${opt.pieces}`}
+              className="inline-flex items-center gap-2 rounded-[20px] border border-white/40 px-3 py-2 text-sm font-semibold bg-white/30 backdrop-blur-md text-white hover:bg-white/45 transition-all shadow-[0_10px_24px_rgba(0,0,0,0.14)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.18)] hover:scale-[1.03]"
+              style={{ textShadow: "0 2px 6px rgba(0,0,0,0.25)" }}
             >
-              {d.label}
+              <span>{opt.pieces}</span>
+              <span className="relative w-4 h-4 inline-block">
+                <Image
+                  src="/assets/icon-puzzle.png"
+                  alt="puzzle"
+                  fill
+                  className="object-contain"
+                />
+              </span>
             </Link>
           ))}
         </div>

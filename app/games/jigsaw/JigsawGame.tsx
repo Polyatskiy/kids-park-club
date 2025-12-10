@@ -10,11 +10,10 @@ import React, {
 import {
   JIGSAW_IMAGES,
   DEFAULT_IMAGE_ID,
-  DEFAULT_GRID_SIZE,
-  type JigsawDifficulty,
+  DEFAULT_OPTION,
+  JIGSAW_OPTIONS,
+  type JigsawOption,
 } from './jigsawConfig';
-
-type Difficulty = JigsawDifficulty;
 
 const IMAGES = JIGSAW_IMAGES;
 
@@ -74,10 +73,10 @@ const complementEdge = (e: EdgeType): EdgeType =>
  * Детерминированно генерируем типы граней для всех кусков.
  * Без случайности → одинаково на сервере и клиенте.
  */
-const generatePieceEdges = (gridSize: number): PieceEdges[][] => {
+const generatePieceEdges = (rows: number, cols: number): PieceEdges[][] => {
   const edges: PieceEdges[][] = Array.from(
-    { length: gridSize },
-    () => Array.from({ length: gridSize }, () => ({
+    { length: rows },
+    () => Array.from({ length: cols }, () => ({
       top: 'flat' as EdgeType,
       right: 'flat' as EdgeType,
       bottom: 'flat' as EdgeType,
@@ -85,8 +84,8 @@ const generatePieceEdges = (gridSize: number): PieceEdges[][] => {
     })),
   );
 
-  for (let r = 0; r < gridSize; r += 1) {
-    for (let c = 0; c < gridSize; c += 1) {
+  for (let r = 0; r < rows; r += 1) {
+    for (let c = 0; c < cols; c += 1) {
       const piece = edges[r][c];
 
       // top
@@ -104,7 +103,7 @@ const generatePieceEdges = (gridSize: number): PieceEdges[][] => {
       }
 
       // bottom (внутренние горизонтальные стыки)
-      if (r === gridSize - 1) {
+      if (r === rows - 1) {
         piece.bottom = 'flat';
       } else {
         // шахматный узор: таб/пустота
@@ -112,7 +111,7 @@ const generatePieceEdges = (gridSize: number): PieceEdges[][] => {
       }
 
       // right (внутренние вертикальные стыки)
-      if (c === gridSize - 1) {
+      if (c === cols - 1) {
         piece.right = 'flat';
       } else {
         piece.right = (r + c + 1) % 2 === 0 ? 'tab' : 'blank';
@@ -231,12 +230,13 @@ const getPiecePath = (edges: PieceEdges): string => {
 
 const getCorrectPosition = (
   pieceId: number,
-  gridSize: number,
+  rows: number,
+  cols: number,
   boardOriginX: number,
   boardOriginY: number,
 ): { x: number; y: number } => {
-  const row = Math.floor(pieceId / gridSize);
-  const col = pieceId % gridSize;
+  const row = Math.floor(pieceId / cols);
+  const col = pieceId % cols;
 
   // позиция — левый верх внешнего прямоугольника (учитываем TAB_RADIUS)
   return {
@@ -268,16 +268,27 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   // Check if we have a Supabase puzzle
   const isSupabasePuzzle = Boolean(puzzleImageUrl);
   
+  // Helpers for option selection (supports legacy grid sizes 3/4/5)
+  const normalizePieces = (value?: number): number => {
+    if (!value) return DEFAULT_OPTION.pieces;
+    if (value === 3) return 9;
+    if (value === 4) return 16;
+    if (value === 5) return 25;
+    return value;
+  };
+
+  const getOptionByPieces = (pieces: number): JigsawOption =>
+    JIGSAW_OPTIONS.find((opt) => opt.pieces === pieces) || DEFAULT_OPTION;
+
   // Validate and apply initial values with fallbacks
   const defaultImageId = !isSupabasePuzzle && initialImageId && IMAGES.some(img => img.id === initialImageId)
     ? initialImageId
     : DEFAULT_IMAGE_ID;
-  const defaultGridSize: Difficulty = (
-    initialGridSize === 3 || initialGridSize === 4 || initialGridSize === 5
-  ) ? initialGridSize : DEFAULT_GRID_SIZE;
+  const initialPieces = normalizePieces(initialGridSize);
+  const defaultOption = getOptionByPieces(initialPieces);
 
-  const [difficulty, setDifficulty] =
-    useState<Difficulty>(defaultGridSize);
+  const [selectedOption, setSelectedOption] =
+    useState<JigsawOption>(defaultOption);
   const [selectedImageId, setSelectedImageId] = useState<string>(
     isSupabasePuzzle ? (initialImageId || 'supabase') : defaultImageId,
   );
@@ -287,7 +298,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     puzzleImageUrl || null
   );
   const [pieces, setPieces] = useState<PieceState[]>(() => {
-    const total = defaultGridSize * defaultGridSize;
+    const total = defaultOption.rows * defaultOption.cols;
     return Array.from({ length: total }, (_, id) => ({
       id,
       x: 0,
@@ -336,9 +347,11 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     ? { id: 'supabase', src: customImageUrl, label: puzzleTitle || 'Puzzle' }
     : (IMAGES.find((img) => img.id === selectedImageId) ?? IMAGES[0]);
 
-  const gridSize = difficulty;
-  const totalPieces = gridSize * gridSize;
-  const boardSize = gridSize * CELL_SIZE;
+  const rows = selectedOption.rows;
+  const cols = selectedOption.cols;
+  const totalPieces = rows * cols;
+  const boardWidth = cols * CELL_SIZE;
+  const boardHeight = rows * CELL_SIZE;
 
   // Use smaller margin on mobile
   const boardMargin = isMobile ? MOBILE_BOARD_MARGIN : BOARD_MARGIN;
@@ -354,16 +367,16 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   let scatterHeight: number;
 
   if (isMobile) {
-    workspaceWidth = boardSize + boardMargin * 2;
+    workspaceWidth = boardWidth + boardMargin * 2;
 
     // bottom area for scattered pieces (slightly smaller)
     const bottomAreaHeight = Math.max(
-      boardSize * 0.55,
+      boardHeight * 0.55,
       CELL_SIZE * 2 + boardMargin * 2,
     );
 
     workspaceHeight =
-      boardSize + bottomAreaHeight + boardMargin * 2;
+      boardHeight + bottomAreaHeight + boardMargin * 2;
 
     // board starts very close to the top of the card
     boardOriginX = boardMargin;
@@ -371,35 +384,36 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
 
     // scattered pieces area directly under the board
     scatterOriginX = boardMargin;
-    scatterOriginY = boardOriginY + boardSize + boardMargin;
+    scatterOriginY = boardOriginY + boardHeight + boardMargin;
     scatterWidth = workspaceWidth - boardMargin * 2;
     scatterHeight = bottomAreaHeight;
   } else {
-    workspaceWidth = boardSize * 2;
-    workspaceHeight = boardSize + BOARD_MARGIN * 2;
+    workspaceWidth = boardWidth * 2;
+    workspaceHeight = boardHeight + BOARD_MARGIN * 2;
 
-    boardOriginX = workspaceWidth - boardSize - BOARD_MARGIN;
+    boardOriginX = workspaceWidth - boardWidth - BOARD_MARGIN;
     boardOriginY = BOARD_MARGIN;
 
     scatterOriginX = BOARD_MARGIN;
     scatterOriginY = BOARD_MARGIN;
-    scatterWidth = boardSize - BOARD_MARGIN * 2;
-    scatterHeight = boardSize - BOARD_MARGIN * 2;
+    scatterWidth = Math.max(PIECE_VISUAL_SIZE, boardWidth - BOARD_MARGIN * 2);
+    scatterHeight = Math.max(PIECE_VISUAL_SIZE, boardHeight - BOARD_MARGIN * 2);
   }
 
   const pieceEdges = useMemo(
-    () => generatePieceEdges(gridSize),
-    [gridSize],
+    () => generatePieceEdges(rows, cols),
+    [rows, cols],
   );
 
   const setPieceRef = (id: number, el: HTMLDivElement | null) => {
     pieceRefs.current[id] = el;
   };
 
-  const newGame = (opts?: { difficulty?: Difficulty; imageId?: string }) => {
-    const nextDifficulty = opts?.difficulty ?? difficulty;
-    const total = nextDifficulty * nextDifficulty;
-    const nextBoardSize = nextDifficulty * CELL_SIZE;
+  const newGame = (opts?: { option?: JigsawOption; imageId?: string }) => {
+    const nextOption = opts?.option ?? selectedOption;
+    const total = nextOption.rows * nextOption.cols;
+    const nextBoardWidth = nextOption.cols * CELL_SIZE;
+    const nextBoardHeight = nextOption.rows * CELL_SIZE;
 
     // Use correct margin based on isMobile
     const margin = isMobile ? MOBILE_BOARD_MARGIN : BOARD_MARGIN;
@@ -411,20 +425,20 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     let nextScatterHeight: number;
 
     if (isMobile) {
-      const nextWorkspaceWidth = nextBoardSize + margin * 2;
+      const nextWorkspaceWidth = nextBoardWidth + margin * 2;
       const bottomAreaHeight = Math.max(
-        nextBoardSize * 0.55,
+        nextBoardHeight * 0.55,
         CELL_SIZE * 2 + margin * 2,
       );
       nextScatterOriginX = margin;
-      nextScatterOriginY = margin + nextBoardSize + margin;
+      nextScatterOriginY = margin + nextBoardHeight + margin;
       nextScatterWidth = nextWorkspaceWidth - margin * 2;
       nextScatterHeight = bottomAreaHeight;
     } else {
       nextScatterOriginX = BOARD_MARGIN;
       nextScatterOriginY = BOARD_MARGIN;
-      nextScatterWidth = nextBoardSize - BOARD_MARGIN * 2;
-      nextScatterHeight = nextBoardSize - BOARD_MARGIN * 2;
+      nextScatterWidth = Math.max(PIECE_VISUAL_SIZE, nextBoardWidth - BOARD_MARGIN * 2);
+      nextScatterHeight = Math.max(PIECE_VISUAL_SIZE, nextBoardHeight - BOARD_MARGIN * 2);
     }
 
     const nextPieces: PieceState[] = [];
@@ -445,7 +459,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
       });
     }
 
-    setDifficulty(nextDifficulty);
+    setSelectedOption(nextOption);
     if (opts?.imageId) setSelectedImageId(opts.imageId);
     setPieces(nextPieces);
     setMoves(0);
@@ -456,7 +470,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
 
   // раскидываем кусочки только на клиенте, после гидратации
   useEffect(() => {
-    newGame({ difficulty: defaultGridSize });
+    newGame({ option: defaultOption });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMobile]);
 
@@ -563,7 +577,8 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
 
     const correctPos = getCorrectPosition(
       pieceId,
-      gridSize,
+      rows,
+      cols,
       boardOriginX,
       boardOriginY,
     );
@@ -651,7 +666,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
                 type="button"
                 onClick={() => {
                   setCustomImageUrl(null);
-                  newGame({ difficulty, imageId: img.id });
+                  newGame({ option: selectedOption, imageId: img.id });
                 }}
                 style={{
                   padding: '6px 10px',
@@ -679,31 +694,62 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
           style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: 8,
+            gap: 10,
           }}
         >
-          {[3, 4, 5].map((size) => {
-            const count = size * size;
+          {JIGSAW_OPTIONS.map((opt) => {
+            const active = opt.pieces === selectedOption.pieces;
             return (
               <button
-                key={size}
+                key={opt.pieces}
                 type="button"
-                onClick={() => newGame({ difficulty: size as Difficulty })}
+                onClick={() => newGame({ option: opt })}
                 style={{
-                  padding: '6px 10px',
-                  fontSize: 12,
-                  borderRadius: 6,
-                  border:
-                    size === difficulty
-                      ? '2px solid #16a34a'
-                      : '1px solid #ccc',
-                  backgroundColor:
-                    size === difficulty ? '#dcfce7' : '#f8f8f8',
+                  padding: '12px 14px',
+                  fontSize: 14,
+                  borderRadius: 20,
+                  border: active ? '2px solid rgba(255,255,255,0.8)' : '1px solid rgba(255,255,255,0.4)',
+                  background: active ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.22)',
+                  color: '#0f172a',
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 10,
                   cursor: 'pointer',
-                  textAlign: 'left',
+                  backdropFilter: 'blur(12px)',
+                  boxShadow: active
+                    ? '0 10px 26px rgba(0,0,0,0.2)'
+                    : '0 8px 20px rgba(0,0,0,0.14)',
+                  transform: active ? 'scale(1.02)' : 'scale(1)',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.05)';
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 12px 28px rgba(0,0,0,0.22)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = active ? 'scale(1.02)' : 'scale(1)';
+                  (e.currentTarget as HTMLButtonElement).style.boxShadow = active
+                    ? '0 10px 26px rgba(0,0,0,0.2)'
+                    : '0 8px 20px rgba(0,0,0,0.14)';
                 }}
               >
-                {size} × {size} — {count} пазлов
+                <span>{opt.pieces}</span>
+                <span
+                  style={{
+                    width: 18,
+                    height: 18,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <img
+                    src="/assets/icon-puzzle.png"
+                    alt="puzzle"
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  />
+                </span>
               </button>
             );
           })}
@@ -784,8 +830,8 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
           position: 'absolute',
           left: boardOriginX,
           top: boardOriginY,
-          width: boardSize,
-          height: boardSize,
+          width: boardWidth,
+          height: boardHeight,
           borderRadius: 12,
           border: '2px dashed rgba(241,245,249,0.4)',
           background:
@@ -800,10 +846,10 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
             position: 'absolute',
             left: boardOriginX,
             top: boardOriginY,
-            width: boardSize,
-            height: boardSize,
+            width: boardWidth,
+            height: boardHeight,
             backgroundImage: `url(${selectedImage.src})`,
-            backgroundSize: `${boardSize}px ${boardSize}px`,
+            backgroundSize: `${boardWidth}px ${boardHeight}px`,
             backgroundPosition: 'center',
             opacity: 0.4,
             pointerEvents: 'none',
@@ -815,14 +861,14 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
 
       {/* Фигурные кусочки */}
       {pieces.map((piece) => {
-        const row = Math.floor(piece.id / gridSize);
-        const col = piece.id % gridSize;
+        const row = Math.floor(piece.id / cols);
+        const col = piece.id % cols;
         const edges = pieceEdges[row][col];
         const path = getPiecePath(edges);
 
         const correctRow = row;
         const correctCol = col;
-        const clipId = `clip-${gridSize}-${piece.id}`;
+        const clipId = `clip-${rows}x${cols}-${piece.id}`;
 
         return (
           <div
@@ -862,8 +908,8 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
                 href={selectedImage.src}
                 x={-correctCol * CELL_SIZE}
                 y={-correctRow * CELL_SIZE}
-                width={boardSize}
-                height={boardSize}
+                width={boardWidth}
+                height={boardHeight}
                 clipPath={`url(#${clipId})`}
                 preserveAspectRatio="xMidYMid slice"
               />

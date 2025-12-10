@@ -7,16 +7,20 @@ export default function PopularPage() {
     <>
       <BackArrow />
       <Container className="pt-16 md:pt-20 pb-8">
-        <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 md:p-12 shadow-lg text-center max-w-2xl mx-auto">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+        <div className="bg-white/25 backdrop-blur-xl border border-white/30 rounded-3xl p-8 md:p-12 shadow-[0_14px_36px_rgba(0,0,0,0.18)] text-center max-w-2xl mx-auto">
+          <h1
+            className="text-3xl md:text-4xl font-bold text-white mb-4"
+            style={{ textShadow: "0 2px 8px rgba(0,0,0,0.25)" }}
+          >
             ⭐ Популярное
           </h1>
-          <p className="text-gray-600 text-lg mb-8">
+          <p className="text-white/90 text-lg mb-8">
             Скоро здесь появятся самые популярные разукраски и игры!
           </p>
           <Link
             href="/"
-            className="inline-block px-6 py-3 bg-primary hover:bg-primary/90 text-gray-800 font-semibold rounded-full shadow-md transition-all hover:shadow-lg"
+            className="inline-block px-6 py-3 bg-white/25 border border-white/40 hover:bg-white/35 text-white font-semibold rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.16)] transition-all hover:shadow-[0_12px_28px_rgba(0,0,0,0.2)]"
+            style={{ textShadow: "0 2px 6px rgba(0,0,0,0.25)" }}
           >
             На главную
           </Link>

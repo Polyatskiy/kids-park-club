@@ -8,18 +8,18 @@ export function Navbar() {
   const { user, loading, handleLogout, isAdmin } = useNavigation();
 
   return (
-    <nav className="absolute top-0 left-0 right-0 z-50 px-4 py-4 md:px-6 md:py-5">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <nav className="absolute top-0 left-0 right-0 z-50 px-5 md:px-8 py-4 md:py-5">
+      <div className="max-w-7xl mx-auto flex items-center justify-between pl-12 md:pl-16">
         {/* Logo - Left Side */}
         <Link href="/" className="flex items-center">
-          <div className="relative w-[100px] h-[40px] md:w-[140px] md:h-[50px]">
+          <div className="relative w-[130px] h-[52px] md:w-[200px] md:h-[72px] drop-shadow-lg">
             <Image
               src="/assets/logo.png"
               alt="Kids Park Club"
               fill
               className="object-contain drop-shadow-lg"
               priority
-              sizes="140px"
+              sizes="200px"
             />
           </div>
         </Link>

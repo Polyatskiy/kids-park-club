@@ -8,9 +8,9 @@ export function BackArrow() {
   return (
     <button
       onClick={() => router.back()}
-      className="fixed top-4 left-4 md:top-5 md:left-6 z-50 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-white/20 backdrop-blur-md hover:bg-white/30 transition-all hover:scale-110 group"
+      className="fixed top-5 left-4 md:top-5 md:left-6 z-50 w-11 h-11 md:w-12 md:h-12 flex items-center justify-center rounded-full bg-white/25 backdrop-blur-md hover:bg-white/35 transition-all hover:scale-110 group shadow-[0_6px_20px_rgba(0,0,0,0.16)]"
       style={{
-        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)"
+        boxShadow: "0 6px 22px rgba(0, 0, 0, 0.18), 0 2px 10px rgba(0, 0, 0, 0.12)"
       }}
       aria-label="Go back"
     >
