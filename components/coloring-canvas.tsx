@@ -6,7 +6,7 @@ import React, {
   useState,
   useCallback,
 } from "react";
-import Link from "next/link";
+import { Link } from "@/src/i18n/navigation";
 import { useRouter } from "next/navigation";
 import { useNavigation } from "@/lib/useNavigation";
 

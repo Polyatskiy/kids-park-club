@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
 import { useNavigation } from "@/lib/useNavigation";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/src/i18n/navigation";
+import { LocaleSwitcher } from "@/src/components/LocaleSwitcher";
 
 export function Navbar() {
   const { user, loading, handleLogout, isAdmin } = useNavigation();
@@ -37,8 +37,11 @@ export function Navbar() {
           </div>
         </Link>
 
-        {/* Right Side - Auth Button + Admin Link */}
+        {/* Right Side - Locale Switcher + Auth Button + Admin Link */}
         <div className={rightClasses}>
+          {/* Locale Switcher */}
+          <LocaleSwitcher />
+
           {/* Admin link for admins */}
           {isAdmin && (
             <Link

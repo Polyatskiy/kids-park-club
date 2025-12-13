@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabaseClient";
+import { useRouter } from "@/src/i18n/navigation";
 
 /* ============================================================
    NAVIGATION HOOK - Shared between Navbar and Mobile Menu
@@ -41,6 +42,7 @@ export interface NavigationState {
 export function useNavigation(): NavigationState {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const supabase = supabaseBrowser();
@@ -65,7 +67,7 @@ export function useNavigation(): NavigationState {
   const handleLogout = async () => {
     const supabase = supabaseBrowser();
     await supabase.auth.signOut();
-    window.location.href = "/";
+    router.push("/");
   };
 
   // Check if user is admin
