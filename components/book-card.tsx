@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { Card } from "@/ui/card";
 import type { Book } from "@/types/content";
 

@@ -6,9 +6,10 @@ import React, {
   useState,
   useCallback,
 } from "react";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { useRouter } from "next/navigation";
 import { useNavigation } from "@/lib/useNavigation";
+import { useTranslations } from "next-intl";
 
 /* ============================================================
     COLORING TOOLBAR COMPONENT
@@ -48,6 +49,7 @@ function ColoringToolbar({
   onDownload: () => void;
   isMobile: boolean;
 }) {
+  const tToolbar = useTranslations("common.toolbar");
   // Handle color selection: switch from eraser to brush if needed
   const handleColorSelect = (selectedColor: string) => {
     // If eraser is active, switch to brush
@@ -211,21 +213,21 @@ function ColoringToolbar({
         <div className="flex items-center gap-1">
           <SettingsButton
             icon="🔍"
-            label="Zoom"
+            label={tToolbar("zoom")}
             isActive={openPanel === "zoom"}
             onClick={() => togglePanel("zoom")}
             buttonRef={zoomButtonRef}
           />
           <SettingsButton
             icon="📏"
-            label="Brush Size"
+            label={tToolbar("brushSize")}
             isActive={openPanel === "brush"}
             onClick={() => togglePanel("brush")}
             buttonRef={brushButtonRef}
           />
           <SettingsButton
             icon="💧"
-            label="Opacity"
+            label={tToolbar("opacity")}
             isActive={openPanel === "opacity"}
             onClick={() => togglePanel("opacity")}
             buttonRef={opacityButtonRef}
@@ -319,6 +321,8 @@ function MobileMenu({
 }) {
   // Use shared navigation hook - same logic as desktop Navbar
   const { user, loading, links, handleLogout } = useNavigation();
+  const t = useTranslations("common");
+  const tAuth = useTranslations("common.auth");
 
   // Handle logout and close menu
   const onLogoutClick = async () => {
@@ -423,19 +427,19 @@ function MobileMenu({
                 <span style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
                   <MenuIcon href="/" />
                 </span>
-                Home
+                {t("home")}
               </Link>
               <Link href="/coloring" onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px', color: '#374151', fontWeight: '500', fontSize: '16px', textDecoration: 'none' }}>
                 <span style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
                   <MenuIcon href="/coloring" />
                 </span>
-                Coloring
+                {t("coloring")}
               </Link>
               <Link href="/games" onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px', color: '#374151', fontWeight: '500', fontSize: '16px', textDecoration: 'none' }}>
                 <span style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
                   <MenuIcon href="/games" />
                 </span>
-                Games
+                {t("games")}
               </Link>
             </>
           )}
@@ -496,7 +500,7 @@ function MobileMenu({
                   <line x1="15" y1="12" x2="3" y2="12" />
                 </svg>
               </span>
-              Login
+              {tAuth("login")}
             </Link>
           )}
         </div>

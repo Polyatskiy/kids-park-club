@@ -1,0 +1,67 @@
+{
+  "common": {
+    "home": "Главная",
+    "coloring": "Раскраски",
+    "games": "Игры",
+    "popular": "Популярное",
+    "puzzles": "Пазлы",
+    "admin": "Администратор",
+    "login": "Войти",
+    "logout": "Выйти",
+    "footer": {
+      "copyright": "© {year} Kids Park Club",
+      "tagline": "Раскраски и игры для детей"
+    },
+    "pages": {
+      "miniGames": "Мини-игры",
+      "miniGamesDescription": "Простые игры для разминки внимания и памяти.",
+      "popularTitle": "⭐ Популярное",
+      "popularDescription": "Самые популярные раскраски и игры появятся здесь скоро!",
+      "backToHome": "Главная"
+    },
+    "adminPanel": {
+      "adminPanel": "Панель Администратора",
+      "manageColoring": "Управление Раскрасками",
+      "managePuzzles": "Управление Пазлами",
+      "backToSite": "← Вернуться на Сайт",
+      "addNewColoring": "Добавить Новую Раскраску",
+      "addNewPuzzle": "Добавить Новый Пазл",
+      "backToAdmin": "← Вернуться в Панель Администратора",
+      "title": "Название",
+      "category": "Категория",
+      "subcategory": "Подкатегория",
+      "upload": "Загрузить",
+      "uploadPuzzle": "Загрузить Пазл",
+      "titlePlaceholder": "Название",
+      "categoryPlaceholder": "Категория (Животные)",
+      "subcategoryPlaceholder": "Подкатегория (Коты)",
+      "puzzleTitlePlaceholder": "Название (например: Варшава)",
+      "puzzleCategoryPlaceholder": "Категория (например: Города)",
+      "puzzleSubcategoryPlaceholder": "Подкатегория (например: Европа)"
+    },
+    "auth": {
+      "login": "Войти",
+      "register": "Регистрация",
+      "email": "Email",
+      "password": "Пароль",
+      "loginSuccessful": "Вход выполнен успешно!",
+      "accountCreated": "Аккаунт создан!",
+      "createAccount": "Создать Аккаунт",
+      "createAccountLink": "Создать аккаунт →",
+      "alreadyHaveAccount": "Уже есть аккаунт? Войти →"
+    },
+    "browser": {
+      "noColoringPages": "Раскрасок пока нет. Добавьте первую!",
+      "noPuzzles": "Пазлов пока нет. Добавьте первый в панели администратора!",
+      "loading": "Загрузка..."
+    },
+    "toolbar": {
+      "zoom": "Масштаб",
+      "brushSize": "Размер Кисти",
+      "opacity": "Прозрачность"
+    }
+  },
+  "nav": {
+    "language": "Язык"
+  }
+}

@@ -1,10 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 import { CarouselRow } from "@/components/carousel-row";
+import { useTranslations } from "next-intl";
 
 type ColoringItem = {
   id: number;
@@ -19,6 +20,7 @@ type ColoringItem = {
 export default function ColoringBrowser() {
   const [items, setItems] = useState<ColoringItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const t = useTranslations("common.browser");
 
   // Создаем клиент Supabase (браузер)
   const supabase = supabaseBrowser();
@@ -42,12 +44,12 @@ export default function ColoringBrowser() {
   }, []);
 
   if (loading)
-    return <div className="p-4 text-center text-gray-500">Loading...</div>;
+    return <div className="p-4 text-center text-gray-500">{t("loading")}</div>;
 
   if (items.length === 0)
     return (
       <div className="p-6 text-center text-gray-500">
-        No coloring pages yet. Add the first one!
+        {t("noColoringPages")}
       </div>
     );
 

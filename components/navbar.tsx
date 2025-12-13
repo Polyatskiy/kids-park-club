@@ -1,13 +1,16 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import { useNavigation } from "@/lib/useNavigation";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export function Navbar() {
   const { user, loading, handleLogout, isAdmin } = useNavigation();
   const pathname = usePathname();
+  const t = useTranslations("common");
 
   const isJigsawRoute = pathname?.startsWith("/games/jigsaw");
   const navPaddingX = isJigsawRoute ? "px-4 md:px-6" : "px-5 md:px-8";
@@ -37,15 +40,18 @@ export function Navbar() {
           </div>
         </Link>
 
-        {/* Right Side - Auth Button + Admin Link */}
+        {/* Right Side - Language Switcher + Auth Button + Admin Link */}
         <div className={rightClasses}>
+          {/* Language Switcher */}
+          <LanguageSwitcher />
+
           {/* Admin link for admins */}
           {isAdmin && (
             <Link
               href="/admin"
               className="text-sm text-white/90 hover:text-white transition-colors drop-shadow-md"
             >
-              Admin
+              {t("admin")}
             </Link>
           )}
 
@@ -60,14 +66,14 @@ export function Navbar() {
                     boxShadow: "0 4px 15px rgba(255, 107, 157, 0.4)"
                   }}
                 >
-                  Login
+                  {t("login")}
                 </Link>
               ) : (
                 <button
                   onClick={handleLogout}
                   className="px-4 py-2 md:px-5 md:py-2.5 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-medium rounded-full transition-all text-sm md:text-base"
                 >
-                  Logout
+                  {t("logout")}
                 </button>
               )}
             </>

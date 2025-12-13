@@ -1,0 +1,67 @@
+{
+  "common": {
+    "home": "Головна",
+    "coloring": "Розмальовки",
+    "games": "Ігри",
+    "popular": "Популярне",
+    "puzzles": "Пазли",
+    "admin": "Адміністратор",
+    "login": "Увійти",
+    "logout": "Вийти",
+    "footer": {
+      "copyright": "© {year} Kids Park Club",
+      "tagline": "Розмальовки та ігри для дітей"
+    },
+    "pages": {
+      "miniGames": "Міні-ігри",
+      "miniGamesDescription": "Прості ігри для розминки уваги та пам'яті.",
+      "popularTitle": "⭐ Популярне",
+      "popularDescription": "Найпопулярніші розмальовки та ігри з'являться тут незабаром!",
+      "backToHome": "Головна"
+    },
+    "adminPanel": {
+      "adminPanel": "Панель Адміністратора",
+      "manageColoring": "Управління Розмальовками",
+      "managePuzzles": "Управління Пазлами",
+      "backToSite": "← Повернутися на Сайт",
+      "addNewColoring": "Додати Нову Розмальовку",
+      "addNewPuzzle": "Додати Новий Пазл",
+      "backToAdmin": "← Повернутися до Панелі Адміністратора",
+      "title": "Назва",
+      "category": "Категорія",
+      "subcategory": "Підкатегорія",
+      "upload": "Завантажити",
+      "uploadPuzzle": "Завантажити Пазл",
+      "titlePlaceholder": "Назва",
+      "categoryPlaceholder": "Категорія (Тварини)",
+      "subcategoryPlaceholder": "Підкатегорія (Коти)",
+      "puzzleTitlePlaceholder": "Назва (наприклад: Варшава)",
+      "puzzleCategoryPlaceholder": "Категорія (наприклад: Міста)",
+      "puzzleSubcategoryPlaceholder": "Підкатегорія (наприклад: Європа)"
+    },
+    "auth": {
+      "login": "Увійти",
+      "register": "Реєстрація",
+      "email": "Email",
+      "password": "Пароль",
+      "loginSuccessful": "Вхід виконано успішно!",
+      "accountCreated": "Обліковий запис створено!",
+      "createAccount": "Створити Обліковий Запис",
+      "createAccountLink": "Створити обліковий запис →",
+      "alreadyHaveAccount": "Вже є обліковий запис? Увійти →"
+    },
+    "browser": {
+      "noColoringPages": "Розмальовок поки немає. Додайте першу!",
+      "noPuzzles": "Пазлів поки немає. Додайте перший у панелі адміністратора!",
+      "loading": "Завантаження..."
+    },
+    "toolbar": {
+      "zoom": "Масштаб",
+      "brushSize": "Розмір Пензля",
+      "opacity": "Прозорість"
+    }
+  },
+  "nav": {
+    "language": "Мова"
+  }
+}

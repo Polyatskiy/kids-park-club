@@ -1,12 +1,13 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabaseClient";
-import { JIGSAW_OPTIONS } from "@/app/games/jigsaw/jigsawConfig";
+import { JIGSAW_OPTIONS } from "@/app/[locale]/games/jigsaw/jigsawConfig";
 import type { PuzzleImage } from "@/types/content";
 import { CarouselRow } from "@/components/carousel-row";
+import { useTranslations } from "next-intl";
 
 type PuzzleItem = {
   id: string;
@@ -27,6 +28,8 @@ interface PuzzleBrowserProps {
 }
 
 export default function PuzzleBrowser({ serverPuzzles }: PuzzleBrowserProps) {
+  const t = useTranslations("common.browser");
+  
   // Convert server puzzles to the format we use internally
   const convertedServerPuzzles: PuzzleItem[] = (serverPuzzles || []).map((p) => ({
     id: p.id,
@@ -93,12 +96,12 @@ export default function PuzzleBrowser({ serverPuzzles }: PuzzleBrowserProps) {
   }, [serverPuzzles]);
 
   if (loading)
-    return <div className="p-4 text-center text-gray-500">Loading...</div>;
+    return <div className="p-4 text-center text-gray-500">{t("loading")}</div>;
 
   if (items.length === 0)
     return (
       <div className="p-6 text-center text-gray-500">
-        No puzzles yet. Add the first one in the admin panel!
+        {t("noPuzzles")}
       </div>
     );
 

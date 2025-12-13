@@ -1,0 +1,67 @@
+{
+  "common": {
+    "home": "Home",
+    "coloring": "Coloring",
+    "games": "Games",
+    "popular": "Popular",
+    "puzzles": "Puzzles",
+    "admin": "Admin",
+    "login": "Login",
+    "logout": "Logout",
+    "footer": {
+      "copyright": "© {year} Kids Park Club",
+      "tagline": "Coloring pages and games for kids"
+    },
+    "pages": {
+      "miniGames": "Mini Games",
+      "miniGamesDescription": "Simple games to warm up attention and memory.",
+      "popularTitle": "⭐ Popular",
+      "popularDescription": "The most popular coloring pages and games will appear here soon!",
+      "backToHome": "Home"
+    },
+    "adminPanel": {
+      "adminPanel": "Admin Panel",
+      "manageColoring": "Manage Coloring Pages",
+      "managePuzzles": "Manage Puzzles",
+      "backToSite": "← Back to Site",
+      "addNewColoring": "Add New Coloring Page",
+      "addNewPuzzle": "Add New Puzzle",
+      "backToAdmin": "← Back to Admin Panel",
+      "title": "Title",
+      "category": "Category",
+      "subcategory": "Subcategory",
+      "upload": "Upload",
+      "uploadPuzzle": "Upload Puzzle",
+      "titlePlaceholder": "Title",
+      "categoryPlaceholder": "Category (Animals)",
+      "subcategoryPlaceholder": "Subcategory (Cats)",
+      "puzzleTitlePlaceholder": "Title (e.g.: Warsaw)",
+      "puzzleCategoryPlaceholder": "Category (e.g.: Cities)",
+      "puzzleSubcategoryPlaceholder": "Subcategory (e.g.: Europe)"
+    },
+    "auth": {
+      "login": "Login",
+      "register": "Register",
+      "email": "Email",
+      "password": "Password",
+      "loginSuccessful": "Login successful!",
+      "accountCreated": "Account created!",
+      "createAccount": "Create Account",
+      "createAccountLink": "Create account →",
+      "alreadyHaveAccount": "Already have an account? Login →"
+    },
+    "browser": {
+      "noColoringPages": "No coloring pages yet. Add the first one!",
+      "noPuzzles": "No puzzles yet. Add the first one in the admin panel!",
+      "loading": "Loading..."
+    },
+    "toolbar": {
+      "zoom": "Zoom",
+      "brushSize": "Brush Size",
+      "opacity": "Opacity"
+    }
+  },
+  "nav": {
+    "language": "Language"
+  }
+}

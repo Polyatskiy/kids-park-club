@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabaseBrowser } from "@/lib/supabaseClient";
+import { useTranslations, useLocale } from "next-intl";
 
 /* ============================================================
    NAVIGATION HOOK - Shared between Navbar and Mobile Menu
@@ -22,13 +23,6 @@ export type NavLink = {
   label: string;
 };
 
-// Base navigation links
-const BASE_LINKS: NavLink[] = [
-  { href: "/", label: "Home" },
-  { href: "/coloring", label: "Coloring" },
-  { href: "/games", label: "Games" },
-];
-
 // Return type for the hook
 export interface NavigationState {
   user: any;
@@ -41,6 +35,8 @@ export interface NavigationState {
 export function useNavigation(): NavigationState {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const t = useTranslations("common");
+  const locale = useLocale(); // Get current locale to trigger re-render when it changes
 
   useEffect(() => {
     const supabase = supabaseBrowser();
@@ -71,11 +67,20 @@ export function useNavigation(): NavigationState {
   // Check if user is admin
   const isAdmin = user?.email === ADMIN_EMAIL;
 
-  // Build links array (add admin if user is admin)
-  const links: NavLink[] = [...BASE_LINKS];
-  if (isAdmin) {
-    links.push({ href: "/admin", label: "Admin" });
-  }
+  // Build links array with translations (add admin if user is admin)
+  // Use useMemo to rebuild links when locale or isAdmin changes
+  // Note: t() calls are reactive to locale changes automatically via next-intl
+  const links: NavLink[] = useMemo(() => {
+    const navLinks: NavLink[] = [
+      { href: "/", label: t("home") },
+      { href: "/coloring", label: t("coloring") },
+      { href: "/games", label: t("games") },
+    ];
+    if (isAdmin) {
+      navLinks.push({ href: "/admin", label: t("admin") });
+    }
+    return navLinks;
+  }, [locale, isAdmin]); // Rebuild when locale or admin status changes
 
   return {
     user,

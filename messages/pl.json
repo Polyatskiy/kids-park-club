@@ -1,0 +1,67 @@
+{
+  "common": {
+    "home": "Strona główna",
+    "coloring": "Kolorowanki",
+    "games": "Gry",
+    "popular": "Popularne",
+    "puzzles": "Puzzle",
+    "admin": "Administrator",
+    "login": "Zaloguj się",
+    "logout": "Wyloguj się",
+    "footer": {
+      "copyright": "© {year} Kids Park Club",
+      "tagline": "Kolorowanki i gry dla dzieci"
+    },
+    "pages": {
+      "miniGames": "Mini Gry",
+      "miniGamesDescription": "Proste gry do rozgrzania uwagi i pamięci.",
+      "popularTitle": "⭐ Popularne",
+      "popularDescription": "Najpopularniejsze kolorowanki i gry pojawią się tutaj wkrótce!",
+      "backToHome": "Strona główna"
+    },
+    "adminPanel": {
+      "adminPanel": "Panel Administracyjny",
+      "manageColoring": "Zarządzaj Kolorowankami",
+      "managePuzzles": "Zarządzaj Puzzle",
+      "backToSite": "← Wróć do Strony",
+      "addNewColoring": "Dodaj Nową Kolorowankę",
+      "addNewPuzzle": "Dodaj Nowe Puzzle",
+      "backToAdmin": "← Wróć do Panelu Administracyjnego",
+      "title": "Tytuł",
+      "category": "Kategoria",
+      "subcategory": "Podkategoria",
+      "upload": "Prześlij",
+      "uploadPuzzle": "Prześlij Puzzle",
+      "titlePlaceholder": "Tytuł",
+      "categoryPlaceholder": "Kategoria (Zwierzęta)",
+      "subcategoryPlaceholder": "Podkategoria (Koty)",
+      "puzzleTitlePlaceholder": "Tytuł (np.: Warszawa)",
+      "puzzleCategoryPlaceholder": "Kategoria (np.: Miasta)",
+      "puzzleSubcategoryPlaceholder": "Podkategoria (np.: Europa)"
+    },
+    "auth": {
+      "login": "Zaloguj się",
+      "register": "Rejestracja",
+      "email": "Email",
+      "password": "Hasło",
+      "loginSuccessful": "Logowanie zakończone sukcesem!",
+      "accountCreated": "Konto utworzone!",
+      "createAccount": "Utwórz Konto",
+      "createAccountLink": "Utwórz konto →",
+      "alreadyHaveAccount": "Masz już konto? Zaloguj się →"
+    },
+    "browser": {
+      "noColoringPages": "Brak kolorowanek. Dodaj pierwszą!",
+      "noPuzzles": "Brak puzzli. Dodaj pierwsze w panelu administracyjnym!",
+      "loading": "Ładowanie..."
+    },
+    "toolbar": {
+      "zoom": "Powiększenie",
+      "brushSize": "Rozmiar Pędzla",
+      "opacity": "Przezroczystość"
+    }
+  },
+  "nav": {
+    "language": "Język"
+  }
+}

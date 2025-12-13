@@ -69,6 +69,93 @@ Supabase Auth по email/password.
 - Регистрация: `/auth/register`
 - Вход: `/auth/login`
 
+## 🌍 Internationalization (i18n)
+
+This project uses `next-intl` for internationalization with the following setup:
+
+### Supported Locales
+- **English (en)** - Default locale, accessible without prefix (e.g., `/`, `/coloring`)
+- **Polish (pl)** - Accessible at `/pl`, `/pl/coloring`, etc.
+- **Russian (ru)** - Accessible at `/ru`, `/ru/coloring`, etc.
+- **Ukrainian (uk)** - Accessible at `/uk`, `/uk/coloring`, etc.
+
+### How It Works
+- **Locale Detection**: The system detects locale in this order:
+  1. URL prefix (e.g., `/pl/coloring`)
+  2. Cookie (`NEXT_LOCALE`)
+  3. Browser `Accept-Language` header
+  4. Default (English)
+
+- **Routing**: English routes have no prefix, other locales use `/pl`, `/ru`, `/uk` prefixes.
+
+- **Safe Fallbacks**: Missing translation keys automatically fall back to English, preventing blank UI or crashes.
+
+### Adding a New Locale
+
+1. **Add locale to routing config** (`i18n/routing.ts`):
+   ```typescript
+   locales: ['en', 'pl', 'ru', 'uk', 'de'], // Add 'de' for German
+   ```
+
+2. **Create translation file** (`messages/de.json`):
+   ```json
+   {
+     "common": {
+       "home": "Startseite",
+       "coloring": "Ausmalbilder",
+       ...
+     }
+   }
+   ```
+
+3. **Update locale names** in `components/language-switcher.tsx`:
+   ```typescript
+   const LOCALE_NAMES: Record<string, string> = {
+     ...
+     de: "DE",
+   };
+   ```
+
+4. **Add translations**: Copy structure from `messages/en.json` and translate all keys.
+
+### Adding Translation Keys
+
+1. **Add to English** (`messages/en.json`):
+   ```json
+   {
+     "common": {
+       "newKey": "New Text"
+     }
+   }
+   ```
+
+2. **Add to other locales** (`messages/pl.json`, `messages/ru.json`, etc.):
+   ```json
+   {
+     "common": {
+       "newKey": "Nowy Tekst" // Polish translation
+     }
+   }
+   ```
+
+3. **Use in components**:
+   ```typescript
+   import { useTranslations } from "next-intl";
+   
+   const t = useTranslations("common");
+   return <div>{t("newKey")}</div>;
+   ```
+
+### Using Locale-Aware Navigation
+
+Always use the `Link` component from `@/i18n/routing` instead of `next/link`:
+
+```typescript
+import { Link } from "@/i18n/routing";
+
+<Link href="/coloring">Coloring</Link> // Automatically includes locale prefix
+```
+
 ## ☁️ Деплой на Vercel
 
 1. Залей репозиторий на GitHub.
