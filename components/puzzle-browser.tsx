@@ -150,7 +150,7 @@ function SubcategoryBlock({
   items: PuzzleItem[];
 }) {
   const carouselItems = items.map((item) => (
-    <PuzzleCard key={item.id} item={item} />
+          <PuzzleCard key={item.id} item={item} />
   ));
 
   return <CarouselRow title={title} items={carouselItems} />;

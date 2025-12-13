@@ -99,28 +99,28 @@ function SubcategoryBlock({
   items: ColoringItem[];
 }) {
   const carouselItems = items.map((item) => (
-    <Link
-      key={item.id}
-      href={`/coloring/${item.slug}`}
-      className="block p-2 rounded-2xl border border-white/30 bg-white/20 backdrop-blur-md hover:shadow-[0_12px_30px_rgba(0,0,0,0.16)] transition-shadow shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
-    >
-      <div className="w-full relative aspect-[4/3] rounded-xl overflow-hidden bg-white/30">
-        <Image
-          src={item.thumbnail_url ?? "/placeholder.png"}
-          alt={item.title}
-          fill
-          className="object-cover"
+          <Link
+            key={item.id}
+            href={`/coloring/${item.slug}`}
+            className="block p-2 rounded-2xl border border-white/30 bg-white/20 backdrop-blur-md hover:shadow-[0_12px_30px_rgba(0,0,0,0.16)] transition-shadow shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
+          >
+            <div className="w-full relative aspect-[4/3] rounded-xl overflow-hidden bg-white/30">
+              <Image
+                src={item.thumbnail_url ?? "/placeholder.png"}
+                alt={item.title}
+                fill
+                className="object-cover"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-        />
-      </div>
+              />
+            </div>
 
-      <div
-        className="mt-2 text-center text-sm font-semibold text-white"
-        style={{ textShadow: "0 2px 6px rgba(0,0,0,0.25)" }}
-      >
-        {item.title}
-      </div>
-    </Link>
+            <div
+              className="mt-2 text-center text-sm font-semibold text-white"
+              style={{ textShadow: "0 2px 6px rgba(0,0,0,0.25)" }}
+            >
+              {item.title}
+            </div>
+          </Link>
   ));
 
   return <CarouselRow title={title} items={carouselItems} />;

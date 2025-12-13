@@ -126,12 +126,12 @@ export function CarouselRow({ title, items, className = "" }: CarouselRowProps) 
       </h3>
 
       {/* Carousel Container */}
-      <div className="relative group">
+      <div className="relative group px-4 md:px-0">
         {/* Navigation Arrows - Show on hover for desktop, always visible on mobile */}
         {canScrollPrev && (
           <button
             onClick={scrollPrev}
-            className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white transition-all flex items-center justify-center hover:scale-110 active:scale-95 opacity-100 md:opacity-0 md:group-hover:opacity-100"
+            className="absolute -left-3 md:left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white transition-all flex items-center justify-center hover:scale-110 active:scale-95 opacity-100 md:opacity-0 md:group-hover:opacity-100"
             aria-label="Previous"
           >
             <svg
@@ -153,7 +153,7 @@ export function CarouselRow({ title, items, className = "" }: CarouselRowProps) 
         {canScrollNext && (
           <button
             onClick={scrollNext}
-            className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white transition-all flex items-center justify-center hover:scale-110 active:scale-95 opacity-100 md:opacity-0 md:group-hover:opacity-100"
+            className="absolute -right-3 md:right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/90 backdrop-blur-sm shadow-lg hover:bg-white transition-all flex items-center justify-center hover:scale-110 active:scale-95 opacity-100 md:opacity-0 md:group-hover:opacity-100"
             aria-label="Next"
           >
             <svg

@@ -5,7 +5,7 @@ export default function NewItemPage() {
     <div className="p-6 max-w-xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">Добавить новую раскраску</h1>
 
-      <form action={uploadItem} method="post" encType="multipart/form-data" className="space-y-4">
+      <form action={uploadItem} className="space-y-4">
 
         <input
           name="title"
