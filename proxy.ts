@@ -34,26 +34,18 @@ export default async function proxy(req: NextRequest) {
   // Use it as the base for Supabase integration
   let response = i18nResponse;
   
-  // If middleware didn't rewrite and we have a locale in the path, explicitly rewrite it
-  // This handles cases where /uk, /pl, etc. need to match [locale] segment
-  if (response && !response.headers.get('x-middleware-rewrite')) {
+  // Check if we need explicit rewrite for locale routes
+  const needsExplicitRewrite = response && !response.headers.get('x-middleware-rewrite');
+  let localeForRewrite: string | null = null;
+  
+  if (needsExplicitRewrite) {
     const pathname = req.nextUrl.pathname;
     const pathSegments = pathname.split('/').filter(Boolean);
     const firstSegment = pathSegments[0];
     
     // Check if first segment is a valid locale
     if (firstSegment && routing.locales.includes(firstSegment as any)) {
-      // Rewrite /uk to /uk (same path, but explicitly for Next.js routing)
-      // The path already contains the locale, so we rewrite to the same path
-      // This ensures Next.js matches it to [locale] segment
-      const rewriteUrl = new URL(pathname, req.url);
-      response = NextResponse.rewrite(rewriteUrl);
-      // Copy headers from i18nResponse
-      i18nResponse?.headers.forEach((value, key) => {
-        response.headers.set(key, value);
-      });
-      response.headers.set('x-proxy-hit', '1');
-      console.log('Explicit rewrite to:', rewriteUrl.pathname);
+      localeForRewrite = firstSegment;
     }
   }
 
@@ -82,6 +74,51 @@ export default async function proxy(req: NextRequest) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
+
+  // If we need explicit rewrite, do it now (after Supabase client is created)
+  // For localePrefix: 'as-needed', next-intl doesn't rewrite non-default locales
+  // We need to explicitly rewrite /uk to match [locale] segment
+  if (localeForRewrite && !response.headers.get('x-middleware-rewrite')) {
+    const pathname = req.nextUrl.pathname;
+    
+    // For localePrefix: 'as-needed', when a non-default locale is in the URL (e.g., /uk),
+    // we need to rewrite it so Next.js matches it to the [locale] dynamic segment.
+    // The path /uk should match src/app/[locale]/page.tsx where locale=uk
+    // We'll rewrite to the same path but ensure Next.js understands it's a locale segment
+    const rewriteUrl = new URL(pathname, req.url);
+    
+    // Create a new response with rewrite
+    const rewrittenResponse = NextResponse.rewrite(rewriteUrl);
+    
+    // Copy all headers from the original response
+    response.headers.forEach((value, key) => {
+      rewrittenResponse.headers.set(key, value);
+    });
+    
+    // Ensure locale header is set for next-intl - this is critical
+    rewrittenResponse.headers.set('x-next-intl-locale', localeForRewrite);
+    rewrittenResponse.headers.set('x-proxy-hit', '1');
+    
+    // Copy cookies from original response (if cookies exist)
+    if (response.cookies) {
+      response.cookies.getAll().forEach((cookie) => {
+        rewrittenResponse.cookies.set(cookie.name, cookie.value, cookie);
+      });
+    }
+    
+    // Also copy cookies from the request (for Supabase session)
+    req.cookies.getAll().forEach((cookie) => {
+      rewrittenResponse.cookies.set(cookie.name, cookie.value);
+    });
+    
+    // Update response to use the rewritten one
+    response = rewrittenResponse;
+    
+    console.log('Explicit rewrite to:', rewriteUrl.pathname, 'locale:', localeForRewrite);
+    console.log('x-next-intl-locale header:', response.headers.get('x-next-intl-locale'));
+    console.log('x-middleware-rewrite after rewrite:', response.headers.get('x-middleware-rewrite'));
+    console.log('Response status:', response.status);
+  }
 
   // Get the pathname - check the rewritten URL if available
   // The middleware may have rewritten / to /en internally
