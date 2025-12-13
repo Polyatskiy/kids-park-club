@@ -45,7 +45,7 @@ export function Navbar() {
               href="/admin"
               className="text-sm text-white/90 hover:text-white transition-colors drop-shadow-md"
             >
-              Админ
+              Admin
             </Link>
           )}
 
@@ -60,14 +60,14 @@ export function Navbar() {
                     boxShadow: "0 4px 15px rgba(255, 107, 157, 0.4)"
                   }}
                 >
-                  Войти
+                  Login
                 </Link>
               ) : (
                 <button
                   onClick={handleLogout}
                   className="px-4 py-2 md:px-5 md:py-2.5 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-medium rounded-full transition-all text-sm md:text-base"
                 >
-                  Выйти
+                  Logout
                 </button>
               )}
             </>

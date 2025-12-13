@@ -93,12 +93,12 @@ export default function PuzzleBrowser({ serverPuzzles }: PuzzleBrowserProps) {
   }, [serverPuzzles]);
 
   if (loading)
-    return <div className="p-4 text-center text-gray-500">Загрузка...</div>;
+    return <div className="p-4 text-center text-gray-500">Loading...</div>;
 
   if (items.length === 0)
     return (
       <div className="p-6 text-center text-gray-500">
-        Пока нет пазлов. Добавьте первый в админ-панели!
+        No puzzles yet. Add the first one in the admin panel!
       </div>
     );
 
@@ -170,7 +170,7 @@ function PuzzleCard({ item }: { item: PuzzleItem }) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-100">
-            Нет изображения
+            No image
           </div>
         )}
       </div>
@@ -197,7 +197,7 @@ function PuzzleCard({ item }: { item: PuzzleItem }) {
                 {/* Puzzle icon as background */}
                 <Image
                   src="/icons/puzzle.png"
-                  alt={`${opt.pieces} пазлов`}
+                  alt={`${opt.pieces} pieces`}
                   fill
                   className="object-contain drop-shadow-md"
                 />

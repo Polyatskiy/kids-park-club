@@ -10,14 +10,14 @@ export default async function AudioStoriesPage() {
   return (
     <Container className="py-8 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold mb-1">Аудиосказки</h1>
+        <h1 className="text-2xl font-bold mb-1">Audio Stories</h1>
         <p className="text-sm text-gray-600">
-          Включайте сказки и слушайте вместе с ребёнком.
+          Play stories and listen together with your child.
         </p>
       </div>
 
       {list.length === 0 && (
-        <p className="text-sm text-gray-500">Пока нет ни одной сказки.</p>
+        <p className="text-sm text-gray-500">No stories yet.</p>
       )}
 
       <div className="grid gap-4 md:grid-cols-2">

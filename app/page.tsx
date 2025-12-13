@@ -3,28 +3,28 @@ import { HomeTile } from "@/components/home-tile";
 const tiles = [
   {
     icon: "/assets/icon-crayons.png",
-    label: "Разукрашки",
+    label: "Coloring",
     href: "/coloring",
     bgColor: "rgba(155, 140, 217, 0.65)", // Purple with transparency
     glowColor: "rgba(155, 140, 217, 0.4)",
   },
   {
     icon: "/icons/puzzle.png",
-    label: "Пазлы",
+    label: "Puzzles",
     href: "/games/jigsaw/gallery",
     bgColor: "rgba(245, 200, 66, 0.65)", // Yellow with transparency
     glowColor: "rgba(245, 200, 66, 0.4)",
   },
   {
     icon: "/assets/icon-gamepad.png",
-    label: "Игры",
+    label: "Games",
     href: "/games",
     bgColor: "rgba(91, 168, 229, 0.65)", // Blue with transparency
     glowColor: "rgba(91, 168, 229, 0.4)",
   },
   {
     icon: "/assets/icon-star.png",
-    label: "Популярное",
+    label: "Popular",
     href: "/popular",
     bgColor: "rgba(245, 166, 35, 0.65)", // Orange with transparency
     glowColor: "rgba(245, 166, 35, 0.4)",

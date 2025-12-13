@@ -18,13 +18,13 @@ export default async function EditColoringPage({
 
   if (error || !data) {
     console.error(error);
-    return <div className="p-6">Ошибка загрузки данных.</div>;
+    return <div className="p-6">Error loading data.</div>;
   }
 
   return (
     <div className="p-6 max-w-xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">
-        Редактировать: {data.title}
+        Edit: {data.title}
       </h1>
 
       <form
@@ -57,7 +57,7 @@ export default async function EditColoringPage({
         />
 
         <div>
-          <div className="text-sm text-gray-700 mb-1">Текущая миниатюра:</div>
+          <div className="text-sm text-gray-700 mb-1">Current thumbnail:</div>
           <div className="w-24 h-24 bg-white border rounded flex items-center justify-center overflow-hidden">
             <img
               src={data.thumbnail_url}
@@ -67,7 +67,7 @@ export default async function EditColoringPage({
           </div>
         </div>
 
-        <div className="text-gray-700 text-sm">Заменить изображение:</div>
+        <div className="text-gray-700 text-sm">Replace image:</div>
         <input
           type="file"
           name="file"
@@ -79,7 +79,7 @@ export default async function EditColoringPage({
           type="submit"
           className="px-4 py-2 bg-blue-600 text-white rounded"
         >
-          💾 Сохранить изменения
+          💾 Save Changes
         </button>
       </form>
     </div>

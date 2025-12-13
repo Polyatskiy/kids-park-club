@@ -12,17 +12,17 @@ export default function PopularPage() {
             className="text-3xl md:text-4xl font-bold text-white mb-4"
             style={{ textShadow: "0 2px 8px rgba(0,0,0,0.25)" }}
           >
-            ⭐ Популярное
+            ⭐ Popular
           </h1>
           <p className="text-white/90 text-lg mb-8">
-            Скоро здесь появятся самые популярные разукраски и игры!
+            The most popular coloring pages and games will appear here soon!
           </p>
           <Link
             href="/"
             className="inline-block px-6 py-3 bg-white/25 border border-white/40 hover:bg-white/35 text-white font-semibold rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.16)] transition-all hover:shadow-[0_12px_28px_rgba(0,0,0,0.2)]"
             style={{ textShadow: "0 2px 6px rgba(0,0,0,0.25)" }}
           >
-            На главную
+            Home
           </Link>
         </div>
       </Container>

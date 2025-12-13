@@ -6,7 +6,7 @@ import { BackArrow } from "@/components/back-arrow";
 
 export default function ReactionGamePage() {
   const [status, setStatus] = useState<"idle" | "wait" | "go">("idle");
-  const [message, setMessage] = useState("Нажмите «Старт», чтобы начать.");
+  const [message, setMessage] = useState("Click «Start» to begin.");
   const [startTime, setStartTime] = useState<number | null>(null);
   const [result, setResult] = useState<number | null>(null);
   const [timeoutId, setTimeoutId] = useState<ReturnType<typeof setTimeout> | null>(null);
@@ -14,11 +14,11 @@ export default function ReactionGamePage() {
   const start = () => {
     setResult(null);
     setStatus("wait");
-    setMessage("Ждите зелёный цвет...");
+    setMessage("Wait for green...");
     const delay = 1000 + Math.random() * 3000;
     const id = setTimeout(() => {
       setStatus("go");
-      setMessage("Жми!");
+      setMessage("Click!");
       setStartTime(performance.now());
     }, delay);
     setTimeoutId(id);
@@ -28,12 +28,12 @@ export default function ReactionGamePage() {
     if (status === "wait") {
       if (timeoutId) clearTimeout(timeoutId);
       setStatus("idle");
-      setMessage("Рано! Попробуйте ещё раз.");
+      setMessage("Too early! Try again.");
     } else if (status === "go" && startTime) {
       const elapsed = performance.now() - startTime;
       setResult(elapsed);
       setStatus("idle");
-      setMessage("Нажмите «Старт», чтобы сыграть ещё.");
+      setMessage("Click «Start» to play again.");
     }
   };
 
@@ -47,16 +47,16 @@ export default function ReactionGamePage() {
     <>
       <BackArrow />
       <Container className="pt-16 md:pt-20 pb-8 space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Игра на реакцию</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Reaction Game</h1>
         <p className="text-sm text-gray-600">
-          Нажмите кнопку, как только она станет зелёной.
+          Click the button as soon as it turns green.
         </p>
         <div className="space-y-4">
           <button
             onClick={start}
             className="px-5 py-3 rounded-2xl bg-secondary font-semibold"
           >
-            Старт
+            Start
           </button>
           <div
             onClick={handleClick}
@@ -69,12 +69,12 @@ export default function ReactionGamePage() {
                 : "bg-gray-200")
             }
           >
-            {status === "go" ? "Жми!" : status === "wait" ? "Жди..." : "Нажми, когда будет зелёным"}
+            {status === "go" ? "Click!" : status === "wait" ? "Wait..." : "Click when green"}
           </div>
           <p className="text-sm text-gray-700">{message}</p>
           {result && (
             <p className="text-lg font-semibold">
-              Ваша реакция: {Math.round(result)} мс
+              Your reaction: {Math.round(result)} ms
             </p>
           )}
         </div>

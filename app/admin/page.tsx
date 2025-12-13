@@ -3,18 +3,18 @@ import Link from "next/link";
 export default function AdminPage() {
   return (
     <div className="p-10 flex flex-col gap-6 text-xl">
-      <h1 className="text-3xl font-bold">Админ-панель</h1>
+      <h1 className="text-3xl font-bold">Admin Panel</h1>
 
       <Link href="/admin/coloring" className="underline">
-        Управление разукрасками
+        Manage Coloring Pages
       </Link>
 
       <Link href="/admin/puzzles" className="underline">
-        Управление пазлами
+        Manage Puzzles
       </Link>
 
       <Link href="/" className="underline">
-        ← Вернуться на сайт
+        ← Back to Site
       </Link>
     </div>
   );

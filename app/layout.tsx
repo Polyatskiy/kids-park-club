@@ -5,11 +5,11 @@ import { Footer } from "@/components/footer";
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata: Metadata = {
-  title: "Kids Park Club – разукраски и игры",
-  description: "Детская платформа с разукрасками и мини-играми.",
+  title: "Kids Park Club – Coloring Pages and Games",
+  description: "Kids platform with coloring pages and mini-games.",
   openGraph: {
     title: "Kids Park Club",
-    description: "Разукраски и игры в одном месте.",
+    description: "Coloring pages and games in one place.",
     type: "website"
   }
 };
@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ru">
+    <html lang="en">
       <body className="min-h-screen flex flex-col app-background">
         <Navbar />
         <main className="flex-1 relative">{children}</main>

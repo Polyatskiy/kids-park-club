@@ -25,7 +25,7 @@ export default function LoginPage() {
       return;
     }
 
-    setMessage("Успешный вход!");
+    setMessage("Login successful!");
 
     // РЕДИРЕКТ через 0.5 сек
     setTimeout(() => {
@@ -35,7 +35,7 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-md mx-auto mt-14">
-      <h1 className="text-2xl font-bold mb-6">Вход</h1>
+      <h1 className="text-2xl font-bold mb-6">Login</h1>
       <form onSubmit={handleLogin} className="flex flex-col gap-4">
         <input
           type="email"
@@ -47,21 +47,21 @@ export default function LoginPage() {
 
         <input
           type="password"
-          placeholder="Пароль"
+          placeholder="Password"
           className="p-3 rounded-lg border"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
         <button className="bg-blue-500 text-white p-3 rounded-lg">
-          Войти
+          Login
         </button>
       </form>
 
       <p className="mt-3 text-sm text-red-600">{message}</p>
 
       <a href="/auth/register" className="block mt-5 text-blue-600">
-        Создать аккаунт →
+        Create account →
       </a>
     </div>
   );

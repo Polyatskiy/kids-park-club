@@ -747,7 +747,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
       {/* Difficulty section */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9', marginBottom: 12, textAlign: 'center' }}>
-          Сложность
+          Difficulty
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: difficultyColumns, gap: 12, justifyItems: 'center' }}>
           {JIGSAW_OPTIONS.map((opt) => {
@@ -822,7 +822,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
             transition: 'all 0.2s ease',
           }}
         >
-          {showHint ? '🔍 Скрыть подсказку' : '🔍 Показать подсказку'}
+          {showHint ? '🔍 Hide Hint' : '🔍 Show Hint'}
         </button>
 
         <button
@@ -840,17 +840,17 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
             transition: 'all 0.2s ease',
           }}
         >
-          🔄 Новая игра
+          🔄 New Game
         </button>
       </div>
 
       {/* Stats */}
       <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
         <span style={{ padding: '8px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.1)', color: '#f1f5f9', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          Ходы: <strong>{moves}</strong>
+          Moves: <strong>{moves}</strong>
         </span>
         <span style={{ padding: '8px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.1)', color: '#f1f5f9', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          Пазлов: <strong>{totalPieces}</strong>
+          Pieces: <strong>{totalPieces}</strong>
         </span>
       </div>
     </div>
@@ -992,7 +992,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     <button
       type="button"
       onClick={() => setIsMenuOpen((v) => !v)}
-      aria-label={isMenuOpen ? 'Закрыть меню' : 'Открыть меню'}
+      aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
       style={{
         position: 'fixed',
         top: isMobile ? 16 : 20,

@@ -83,9 +83,9 @@ export default function PuzzleGamePage() {
     <>
       <BackArrow />
       <Container className="pt-16 md:pt-20 pb-8 space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Мини-пазл</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Mini Puzzle</h1>
         <p className="text-sm text-gray-600">
-          Открывай карточки и находи пары.
+          Open cards and find pairs.
         </p>
         <div className="grid grid-cols-4 gap-3 max-w-xs">
           {cards.map((card) => (
@@ -105,17 +105,17 @@ export default function PuzzleGamePage() {
             </button>
           ))}
         </div>
-        <p className="text-sm text-gray-700">Ходы: {moves}</p>
+        <p className="text-sm text-gray-700">Moves: {moves}</p>
         {allMatched && (
           <p className="text-lg font-semibold text-primary">
-            Молодец! Ты нашёл все пары!
+            Great! You found all pairs!
           </p>
         )}
         <button
           onClick={reset}
           className="px-4 py-2 rounded-2xl bg-primary font-semibold"
         >
-          Сыграть ещё
+          Play Again
         </button>
       </Container>
     </>

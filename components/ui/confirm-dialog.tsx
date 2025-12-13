@@ -24,10 +24,10 @@ export function useConfirmDialog() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[9999]">
           <div className="bg-white rounded-2xl shadow-xl p-5 w-[85%] max-w-[380px] text-center">
             <div className="text-lg font-semibold mb-2">
-              Очистить рисунок?
+              Clear drawing?
             </div>
             <p className="text-sm text-gray-600 mb-4">
-              Это действие нельзя отменить.
+              This action cannot be undone.
             </p>
 
             <div className="flex justify-center gap-3">
@@ -35,13 +35,13 @@ export function useConfirmDialog() {
                 onClick={() => handle(false)}
                 className="px-4 py-2 rounded-xl bg-gray-200 hover:bg-gray-300"
               >
-                Отмена
+                Cancel
               </button>
               <button
                 onClick={() => handle(true)}
                 className="px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600"
               >
-                Очистить
+                Clear
               </button>
             </div>
           </div>

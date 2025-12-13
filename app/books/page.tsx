@@ -10,14 +10,14 @@ export default async function BooksPage() {
   return (
     <Container className="py-8 space-y-6">
       <div>
-        <h1 className="text-2xl font-bold mb-1">Книги</h1>
+        <h1 className="text-2xl font-bold mb-1">Books</h1>
         <p className="text-sm text-gray-600">
-          Короткие сказки и истории для совместного чтения.
+          Short stories and tales for reading together.
         </p>
       </div>
 
       {books.length === 0 && (
-        <p className="text-sm text-gray-500">Пока нет ни одной книги.</p>
+        <p className="text-sm text-gray-500">No books yet.</p>
       )}
 
       <div className="grid gap-4 md:grid-cols-2">

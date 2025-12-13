@@ -24,9 +24,9 @@ export type NavLink = {
 
 // Base navigation links
 const BASE_LINKS: NavLink[] = [
-  { href: "/", label: "Главная" },
-  { href: "/coloring", label: "Разукраски" },
-  { href: "/games", label: "Игры" },
+  { href: "/", label: "Home" },
+  { href: "/coloring", label: "Coloring" },
+  { href: "/games", label: "Games" },
 ];
 
 // Return type for the hook
@@ -74,7 +74,7 @@ export function useNavigation(): NavigationState {
   // Build links array (add admin if user is admin)
   const links: NavLink[] = [...BASE_LINKS];
   if (isAdmin) {
-    links.push({ href: "/admin", label: "Админ" });
+    links.push({ href: "/admin", label: "Admin" });
   }
 
   return {

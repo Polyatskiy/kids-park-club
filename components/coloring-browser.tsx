@@ -42,12 +42,12 @@ export default function ColoringBrowser() {
   }, []);
 
   if (loading)
-    return <div className="p-4 text-center text-gray-500">Загрузка...</div>;
+    return <div className="p-4 text-center text-gray-500">Loading...</div>;
 
   if (items.length === 0)
     return (
       <div className="p-6 text-center text-gray-500">
-        Пока нет раскрасок. Добавьте первую!
+        No coloring pages yet. Add the first one!
       </div>
     );
 

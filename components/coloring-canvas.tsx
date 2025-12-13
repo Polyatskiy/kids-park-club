@@ -105,7 +105,7 @@ function ColoringToolbar({
           {/* Brush Settings */}
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-2">
-              <label className="text-xs text-gray-600 whitespace-nowrap">Толщина</label>
+              <label className="text-xs text-gray-600 whitespace-nowrap">Brush Size</label>
               <input
                 type="range"
                 min={5}
@@ -117,7 +117,7 @@ function ColoringToolbar({
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-xs text-gray-600 whitespace-nowrap">Прозрачность</label>
+              <label className="text-xs text-gray-600 whitespace-nowrap">Opacity</label>
               <input
                 type="range"
                 min={0.1}
@@ -132,7 +132,7 @@ function ColoringToolbar({
 
           {/* Full Color Palette (Desktop) */}
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Палитра</label>
+            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Palette</label>
             <FullColorPalette
               color={color}
               setColor={handleColorSelect}
@@ -380,7 +380,7 @@ function MobileMenu({
               border: 'none',
               cursor: 'pointer'
             }}
-            aria-label="Закрыть меню"
+            aria-label="Close menu"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" />
@@ -423,19 +423,19 @@ function MobileMenu({
                 <span style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
                   <MenuIcon href="/" />
                 </span>
-                Главная
+                Home
               </Link>
               <Link href="/coloring" onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px', color: '#374151', fontWeight: '500', fontSize: '16px', textDecoration: 'none' }}>
                 <span style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
                   <MenuIcon href="/coloring" />
                 </span>
-                Разукраски
+                Coloring
               </Link>
               <Link href="/games" onClick={onClose} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px', color: '#374151', fontWeight: '500', fontSize: '16px', textDecoration: 'none' }}>
                 <span style={{ width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
                   <MenuIcon href="/games" />
                 </span>
-                Игры
+                Games
               </Link>
             </>
           )}
@@ -444,7 +444,7 @@ function MobileMenu({
         {/* Auth section - Login/Logout at bottom */}
         <div style={{ marginTop: 'auto', padding: '12px', borderTop: '1px solid #e5e7eb' }}>
           {loading ? (
-            <div style={{ padding: '16px', color: '#9ca3af', textAlign: 'center' }}>Загрузка...</div>
+            <div style={{ padding: '16px', color: '#9ca3af', textAlign: 'center' }}>Loading...</div>
           ) : user ? (
             <button
               onClick={onLogoutClick}
@@ -471,7 +471,7 @@ function MobileMenu({
                   <line x1="21" y1="12" x2="9" y2="12" />
                 </svg>
               </span>
-              Выйти
+              Logout
             </button>
           ) : (
             <Link
@@ -496,7 +496,7 @@ function MobileMenu({
                   <line x1="15" y1="12" x2="3" y2="12" />
                 </svg>
               </span>
-              Войти
+              Login
             </Link>
           )}
         </div>
@@ -674,7 +674,7 @@ function ZoomPopover({
   buttonRef: React.RefObject<HTMLButtonElement | null>;
 }) {
   return (
-    <SliderPopover isOpen={isOpen} onClose={onClose} title="Масштаб" buttonRef={buttonRef}>
+    <SliderPopover isOpen={isOpen} onClose={onClose} title="Zoom" buttonRef={buttonRef}>
       <div className="flex flex-col items-center gap-2">
         <input
           type="range"
@@ -716,7 +716,7 @@ function BrushPopover({
   buttonRef: React.RefObject<HTMLButtonElement | null>;
 }) {
   return (
-    <SliderPopover isOpen={isOpen} onClose={onClose} title="Толщина" buttonRef={buttonRef}>
+    <SliderPopover isOpen={isOpen} onClose={onClose} title="Brush Size" buttonRef={buttonRef}>
       <div className="flex flex-col items-center gap-2">
         <input
           type="range"
@@ -757,7 +757,7 @@ function OpacityPopover({
   buttonRef: React.RefObject<HTMLButtonElement | null>;
 }) {
   return (
-    <SliderPopover isOpen={isOpen} onClose={onClose} title="Прозрачность" buttonRef={buttonRef}>
+    <SliderPopover isOpen={isOpen} onClose={onClose} title="Opacity" buttonRef={buttonRef}>
       <div className="flex flex-col items-center gap-2">
         <input
           type="range"
@@ -2168,10 +2168,10 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
         isOpen={showClearModal}
         onClose={() => setShowClearModal(false)}
         onConfirm={clearCanvas}
-        title="Очистить рисунок?"
-        message="Вы уверены, что хотите очистить весь рисунок?"
-        confirmText="Очистить"
-        cancelText="Отмена"
+        title="Clear drawing?"
+        message="Are you sure you want to clear the entire drawing?"
+        confirmText="Clear"
+        cancelText="Cancel"
       />
 
       {/* MAIN LAYOUT */}
@@ -2207,9 +2207,9 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
                 className="absolute top-2 left-2 z-40 flex items-center justify-center 
                            w-9 h-9 rounded-full border border-gray-300 text-lg leading-none 
                            hover:bg-gray-100 bg-white shadow-sm transition-all duration-150 hover:scale-105 active:scale-95"
-                aria-label="Закрыть"
+                aria-label="Close"
               >
-                <img src="../icons/close.svg" alt="Закрыть" className="w-9 h-9" />
+                <img src="../icons/close.svg" alt="Close" className="w-9 h-9" />
               </button>
             )}
 
@@ -2312,7 +2312,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
                   onClick={handleClose}
                   className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 
                              bg-white shadow-md transition-all duration-150 hover:scale-105 active:scale-95"
-                  aria-label="Закрыть"
+                  aria-label="Close"
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M18 6L6 18M6 6l12 12" />
@@ -2325,7 +2325,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
                 onClick={() => setShowMobileMenu(true)}
                 className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 
                            bg-white shadow-md transition-all duration-150 hover:scale-105 active:scale-95"
-                aria-label="Меню"
+                aria-label="Menu"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M3 12h18M3 6h18M3 18h18" />

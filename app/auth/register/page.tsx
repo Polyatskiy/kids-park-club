@@ -25,7 +25,7 @@ export default function RegisterPage() {
       return;
     }
 
-    setMessage("Аккаунт создан!");
+    setMessage("Account created!");
 
     setTimeout(() => {
       router.push("/auth/login");
@@ -34,7 +34,7 @@ export default function RegisterPage() {
 
   return (
     <div className="max-w-md mx-auto mt-14">
-      <h1 className="text-2xl font-bold mb-6">Регистрация</h1>
+      <h1 className="text-2xl font-bold mb-6">Register</h1>
       <form onSubmit={handleRegister} className="flex flex-col gap-4">
         <input
           type="email"
@@ -46,21 +46,21 @@ export default function RegisterPage() {
 
         <input
           type="password"
-          placeholder="Пароль"
+          placeholder="Password"
           className="p-3 rounded-lg border"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
 
         <button className="bg-green-500 text-white p-3 rounded-lg">
-          Создать аккаунт
+          Create Account
         </button>
       </form>
 
       <p className="mt-3 text-sm text-red-600">{message}</p>
 
       <a href="/auth/login" className="block mt-5 text-blue-600">
-        Уже есть аккаунт? Войти →
+        Already have an account? Login →
       </a>
     </div>
   );

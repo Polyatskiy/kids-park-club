@@ -25,7 +25,7 @@ export async function uploadItem(formData: FormData) {
   const file = formData.get("file") as File;
 
   if (!title || !category || !subcategory || !file) {
-    throw new Error("Не все данные переданы.");
+    throw new Error("Not all data provided.");
   }
 
   // Создаём slug
@@ -61,7 +61,7 @@ export async function uploadItem(formData: FormData) {
 
   if (uploadErr1) {
     console.error(uploadErr1);
-    throw new Error("Ошибка загрузки основного файла.");
+    throw new Error("Error uploading main file.");
   }
 
   // ------------------ ЗАГРУЗКА МИНИАТЮРЫ ------------------
@@ -74,7 +74,7 @@ export async function uploadItem(formData: FormData) {
 
   if (uploadErr2) {
     console.error(uploadErr2);
-    throw new Error("Ошибка загрузки миниатюры.");
+    throw new Error("Error uploading thumbnail.");
   }
 
   const image_url = supabase.storage
@@ -99,7 +99,7 @@ export async function uploadItem(formData: FormData) {
 
   if (dbError) {
     console.error(dbError);
-    throw new Error("Ошибка записи в базу данных.");
+    throw new Error("Error writing to database.");
   }
 }
 // =============================================
@@ -107,7 +107,7 @@ export async function uploadItem(formData: FormData) {
 // =============================================
 export async function deleteItem(formData: FormData) {
   const id = formData.get("id")?.toString();
-  if (!id) throw new Error("Нет ID");
+  if (!id) throw new Error("No ID provided");
 
   const supabase = supabaseServer();
 
@@ -117,7 +117,7 @@ export async function deleteItem(formData: FormData) {
     .eq("id", id)
     .single();
 
-  if (error || !data) throw new Error("Элемент не найден");
+  if (error || !data) throw new Error("Item not found");
 
   // Удаляем файлы
   const mainPath = data.image_url.split("/storage/v1/object/public/coloring/")[1];
@@ -150,7 +150,7 @@ export async function updateItem(formData: FormData) {
     .eq("id", id)
     .single();
 
-  if (error || !data) throw new Error("Элемент не найден");
+  if (error || !data) throw new Error("Item not found");
 
   let image_url = data.image_url;
   let thumbnail_url = data.thumbnail_url;
@@ -196,7 +196,7 @@ export async function uploadPuzzle(formData: FormData) {
   const file = formData.get("file") as File;
 
   if (!title || !category || !subcategory || !file) {
-    throw new Error("Не все данные переданы.");
+    throw new Error("Not all data provided.");
   }
 
   // Создаём slug
@@ -232,7 +232,7 @@ export async function uploadPuzzle(formData: FormData) {
 
   if (uploadErr1) {
     console.error(uploadErr1);
-    throw new Error("Ошибка загрузки основного файла пазла.");
+    throw new Error("Error uploading puzzle main file.");
   }
 
   // ------------------ ЗАГРУЗКА МИНИАТЮРЫ ------------------
@@ -245,7 +245,7 @@ export async function uploadPuzzle(formData: FormData) {
 
   if (uploadErr2) {
     console.error(uploadErr2);
-    throw new Error("Ошибка загрузки миниатюры пазла.");
+    throw new Error("Error uploading puzzle thumbnail.");
   }
 
   const image_url = supabase.storage
@@ -270,7 +270,7 @@ export async function uploadPuzzle(formData: FormData) {
 
   if (dbError) {
     console.error(dbError);
-    throw new Error("Ошибка записи пазла в базу данных.");
+    throw new Error("Error writing puzzle to database.");
   }
 }
 
@@ -279,7 +279,7 @@ export async function uploadPuzzle(formData: FormData) {
 // =============================================
 export async function deletePuzzle(formData: FormData) {
   const id = formData.get("id")?.toString();
-  if (!id) throw new Error("Нет ID");
+  if (!id) throw new Error("No ID provided");
 
   const supabase = supabaseServer();
 
@@ -289,7 +289,7 @@ export async function deletePuzzle(formData: FormData) {
     .eq("id", id)
     .single();
 
-  if (error || !data) throw new Error("Пазл не найден");
+  if (error || !data) throw new Error("Puzzle not found");
 
   // Удаляем файлы
   const mainPath = data.image_url.split("/storage/v1/object/public/puzzles/")[1];
@@ -321,7 +321,7 @@ export async function updatePuzzle(formData: FormData) {
     .eq("id", id)
     .single();
 
-  if (error || !data) throw new Error("Пазл не найден");
+  if (error || !data) throw new Error("Puzzle not found");
 
   let image_url = data.image_url;
   let thumbnail_url = data.thumbnail_url;

@@ -22,7 +22,7 @@ export default async function AudioStoryDetailPage({ params }: Props) {
         src={story.audioUrl}
         className="w-full mt-4 rounded-2xl"
       >
-        Ваш браузер не поддерживает аудио.
+        Your browser does not support audio.
       </audio>
     </Container>
   );

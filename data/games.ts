@@ -3,23 +3,23 @@ import { GameMeta } from "@/types/content";
 export const gamesSeed: GameMeta[] = [
   {
     id: "1",
-    title: "Игра на реакцию",
+    title: "Reaction Game",
     slug: "reaction",
-    description: "Нажми на кнопку, когда она загорится!",
+    description: "Click the button when it lights up!",
     type: "reaction"
   },
   {
     id: "2",
-    title: "Мини-пазл",
+    title: "Mini Puzzle",
     slug: "puzzle",
-    description: "Соедини пары картинок.",
+    description: "Match pairs of pictures.",
     type: "puzzle"
   },
   {
     id: "3",
-    title: "Пазлы",
+    title: "Puzzles",
     slug: "jigsaw/gallery",
-    description: "Собери пазл из картинок.",
+    description: "Assemble puzzles from pictures.",
     type: "jigsaw"
   }
 ];
