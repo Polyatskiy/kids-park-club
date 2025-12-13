@@ -103,10 +103,9 @@ export function CarouselRow({ title, items, className = "" }: CarouselRowProps) 
     emblaApi.on("scroll", handleScroll);
     emblaApi.on("settle", handleScroll);
     
-    // Listen to various interaction events (catches drag/swipe)
+    // Listen to pointerDown event (catches both touch and mouse interactions)
+    // pointerDown covers both touchstart and mousedown events
     emblaApi.on("pointerDown", handleInteraction);
-    emblaApi.on("touchStart", handleInteraction);
-    emblaApi.on("dragStart", handleInteraction);
 
     return () => {
       emblaApi.off("select", onSelect);
@@ -114,8 +113,6 @@ export function CarouselRow({ title, items, className = "" }: CarouselRowProps) 
       emblaApi.off("scroll", handleScroll);
       emblaApi.off("settle", handleScroll);
       emblaApi.off("pointerDown", handleInteraction);
-      emblaApi.off("touchStart", handleInteraction);
-      emblaApi.off("dragStart", handleInteraction);
     };
   }, [emblaApi, onSelect, autoplayActive, stopAutoplay]);
 
