@@ -7,6 +7,7 @@ import React, {
   useCallback,
 } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useNavigation } from "@/lib/useNavigation";
 
 /* ============================================================
@@ -1133,6 +1134,7 @@ interface ColoringCanvasProps {
 }
 
 export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) {
+  const router = useRouter();
   const [color, setColor] = useState("#FF1744");
   const [opacity, setOpacity] = useState(1);
   const [brushSize, setBrushSize] = useState(40);
@@ -1144,6 +1146,15 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   const [isMobile, setIsMobile] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false); /* Mobile navigation menu */
+
+  /* Close handler - uses replace to avoid history loop */
+  const handleClose = useCallback(() => {
+    if (closeHref) {
+      router.replace(closeHref);
+    } else {
+      router.back();
+    }
+  }, [closeHref, router]);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -2151,7 +2162,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   ============================================================= */
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-[#f7f7f7] select-none">
+    <div className="w-full h-full flex flex-col overflow-hidden bg-[#f7f7f7] select-none" style={{ height: '100vh', minHeight: '100vh' }}>
       {/* CONFIRM MODAL */}
       <ConfirmModal
         isOpen={showClearModal}
@@ -2191,15 +2202,15 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
             }}
           >
             {closeHref && (
-              <Link
-                href={closeHref}
+              <button
+                onClick={handleClose}
                 className="absolute top-2 left-2 z-40 flex items-center justify-center 
                            w-9 h-9 rounded-full border border-gray-300 text-lg leading-none 
                            hover:bg-gray-100 bg-white shadow-sm transition-all duration-150 hover:scale-105 active:scale-95"
                 aria-label="Закрыть"
               >
                 <img src="../icons/close.svg" alt="Закрыть" className="w-9 h-9" />
-              </Link>
+              </button>
             )}
 
             {/* SCROLL WRAPPER - Desktop */}
@@ -2297,8 +2308,8 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
             <div className="absolute top-0 left-0 right-0 z-40 flex items-center justify-between p-2">
               {/* Close button - LEFT */}
               {closeHref && (
-                <Link
-                  href={closeHref}
+                <button
+                  onClick={handleClose}
                   className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 
                              bg-white shadow-md transition-all duration-150 hover:scale-105 active:scale-95"
                   aria-label="Закрыть"
@@ -2306,7 +2317,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M18 6L6 18M6 6l12 12" />
                   </svg>
-                </Link>
+                </button>
               )}
               
               {/* Hamburger menu button - RIGHT */}

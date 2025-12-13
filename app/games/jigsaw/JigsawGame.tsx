@@ -773,7 +773,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
               >
                 {/* Puzzle icon as background */}
                 <img 
-                  src="/assets/icon-puzzle.png" 
+                  src="/icons/puzzle.png" 
                   alt="" 
                   style={{ 
                     width: '100%', 
@@ -791,7 +791,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
                     transform: 'translate(-50%, -50%)',
                     fontSize: fontSize,
                     fontWeight: 800,
-                    color: '#0B1F3B',
+                    color: '#1E3A8A',
                     textShadow: '0 1px 2px rgba(255,255,255,0.3)',
                     lineHeight: 1,
                     letterSpacing: '-0.5px',

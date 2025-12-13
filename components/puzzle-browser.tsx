@@ -199,7 +199,7 @@ function PuzzleCard({ item }: { item: PuzzleItem }) {
               >
                 {/* Puzzle icon as background */}
                 <Image
-                  src="/assets/icon-puzzle.png"
+                  src="/icons/puzzle.png"
                   alt={`${opt.pieces} пазлов`}
                   fill
                   className="object-contain drop-shadow-md"
@@ -209,7 +209,7 @@ function PuzzleCard({ item }: { item: PuzzleItem }) {
                   className="absolute inset-0 flex items-center justify-center font-extrabold"
                   style={{
                     fontSize: fontSize,
-                    color: '#0B1F3B',
+                    color: '#1E3A8A',
                     textShadow: '0 1px 2px rgba(255,255,255,0.4)',
                     letterSpacing: '-0.5px',
                   }}

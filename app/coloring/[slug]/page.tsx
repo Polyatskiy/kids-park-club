@@ -34,7 +34,7 @@ export default async function ColoringPage({ params }: Props) {
   }
 
   return (
-    <div className="coloring-page-container flex flex-col w-full overflow-hidden">
+    <div className="flex flex-col w-full overflow-hidden" style={{ height: '100vh', minHeight: '100vh' }}>
       <ColoringCanvas src={imageUrl} closeHref="/coloring" />
     </div>
   );

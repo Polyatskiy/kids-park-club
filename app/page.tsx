@@ -9,7 +9,7 @@ const tiles = [
     glowColor: "rgba(155, 140, 217, 0.4)",
   },
   {
-    icon: "/assets/icon-puzzle.png",
+    icon: "/icons/puzzle.png",
     label: "Пазлы",
     href: "/games/jigsaw/gallery",
     bgColor: "rgba(245, 200, 66, 0.65)", // Yellow with transparency
