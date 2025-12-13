@@ -10,6 +10,9 @@ const ADMIN_EMAIL = "polyatskiy@gmail.com";
 const handleI18nRouting = createMiddleware(routing);
 
 export default async function proxy(req: NextRequest) {
+  // Debug: Confirm proxy executes
+  console.log('Proxy hit!', req.nextUrl.pathname);
+  
   // First, handle i18n routing - this handles locale detection, rewriting, and redirects
   // The middleware always returns a response
   const i18nResponse = handleI18nRouting(req);
@@ -17,6 +20,8 @@ export default async function proxy(req: NextRequest) {
   // Debug: Confirm proxy executes
   if (i18nResponse) {
     i18nResponse.headers.set('x-proxy-hit', '1');
+    console.log('i18nResponse status:', i18nResponse.status);
+    console.log('x-middleware-rewrite:', i18nResponse.headers.get('x-middleware-rewrite'));
   }
   
   // If i18n middleware returns a redirect (for locale switching), return it immediately
