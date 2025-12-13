@@ -186,25 +186,39 @@ function PuzzleCard({ item }: { item: PuzzleItem }) {
           {item.title}
         </h2>
 
-        <div className="flex flex-wrap gap-3">
-          {JIGSAW_OPTIONS.map((opt) => (
-            <Link
-              key={opt.pieces}
-              href={`/games/jigsaw?imageId=${item.id}&size=${opt.pieces}`}
-              className="inline-flex items-center gap-2 rounded-[20px] border border-white/40 px-3 py-2 text-sm font-semibold bg-white/30 backdrop-blur-md text-white hover:bg-white/45 transition-all shadow-[0_10px_24px_rgba(0,0,0,0.14)] hover:shadow-[0_12px_28px_rgba(0,0,0,0.18)] hover:scale-[1.03]"
-              style={{ textShadow: "0 2px 6px rgba(0,0,0,0.25)" }}
-            >
-              <span>{opt.pieces}</span>
-              <span className="relative w-4 h-4 inline-block">
+        <div className="flex flex-wrap gap-2">
+          {JIGSAW_OPTIONS.map((opt) => {
+            // Dynamic font size based on digit count
+            const fontSize = opt.pieces >= 100 ? 12 : opt.pieces >= 10 ? 14 : 16;
+            return (
+              <Link
+                key={opt.pieces}
+                href={`/games/jigsaw?imageId=${item.id}&size=${opt.pieces}`}
+                className="relative transition-transform hover:scale-110"
+                style={{ width: 44, height: 44 }}
+              >
+                {/* Puzzle icon as background */}
                 <Image
                   src="/assets/icon-puzzle.png"
-                  alt="puzzle"
+                  alt={`${opt.pieces} пазлов`}
                   fill
-                  className="object-contain"
+                  className="object-contain drop-shadow-md"
                 />
-              </span>
-            </Link>
-          ))}
+                {/* Number overlay centered on icon */}
+                <span
+                  className="absolute inset-0 flex items-center justify-center font-extrabold"
+                  style={{
+                    fontSize: fontSize,
+                    color: '#0B1F3B',
+                    textShadow: '0 1px 2px rgba(255,255,255,0.4)',
+                    letterSpacing: '-0.5px',
+                  }}
+                >
+                  {opt.pieces}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </article>

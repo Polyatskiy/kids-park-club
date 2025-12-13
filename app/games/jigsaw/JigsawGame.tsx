@@ -749,35 +749,56 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
         <div style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9', marginBottom: 12, textAlign: 'center' }}>
           Сложность
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: difficultyColumns, gap: 10, justifyItems: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: difficultyColumns, gap: 12, justifyItems: 'center' }}>
           {JIGSAW_OPTIONS.map((opt) => {
             const active = opt.pieces === selectedOption.pieces;
+            // Dynamic font size based on digit count
+            const fontSize = opt.pieces >= 100 ? 18 : opt.pieces >= 10 ? 22 : 26;
             return (
               <button
                 key={opt.pieces}
                 type="button"
                 onClick={() => newGame({ option: opt })}
                 style={{
+                  position: 'relative',
                   width: 56,
-                  height: 36,
-                  fontSize: 13,
-                  borderRadius: 9999,
-                  border: active ? '2px solid rgba(255,255,255,0.85)' : '1px solid rgba(255,255,255,0.35)',
-                  background: active ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.1)',
-                  color: '#f1f5f9',
-                  fontWeight: 700,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
+                  height: 56,
+                  padding: 0,
+                  border: 'none',
+                  background: 'transparent',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
+                  transition: 'transform 0.2s ease',
+                  transform: active ? 'scale(1.1)' : 'scale(1)',
                 }}
               >
-                <span style={{ width: 16, height: 16, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <img src="/assets/icon-puzzle.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'brightness(1.2)' }} />
+                {/* Puzzle icon as background */}
+                <img 
+                  src="/assets/icon-puzzle.png" 
+                  alt="" 
+                  style={{ 
+                    width: '100%', 
+                    height: '100%', 
+                    objectFit: 'contain',
+                    filter: active ? 'brightness(1.15) drop-shadow(0 2px 6px rgba(255,255,255,0.3))' : 'brightness(1)',
+                  }} 
+                />
+                {/* Number overlay centered on icon */}
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    fontSize: fontSize,
+                    fontWeight: 800,
+                    color: '#0B1F3B',
+                    textShadow: '0 1px 2px rgba(255,255,255,0.3)',
+                    lineHeight: 1,
+                    letterSpacing: '-0.5px',
+                  }}
+                >
+                  {opt.pieces}
                 </span>
-                {opt.pieces}
               </button>
             );
           })}

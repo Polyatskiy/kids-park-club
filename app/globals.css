@@ -126,7 +126,8 @@ body.coloring-mobile-fullscreen main {
 /* ============================================================
    JIGSAW GAME VIEW
 ============================================================ */
-body[data-jigsaw-gameplay="true"] .navbar-logo { display: none !important; }
+body[data-jigsaw-gameplay="true"] nav { display: none !important; }
+body[data-jigsaw-gameplay="true"] footer { display: none !important; }
 
 /* Mobile toolbar safe area for bottom navigation bar */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
