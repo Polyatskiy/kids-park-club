@@ -32,7 +32,30 @@ export default async function proxy(req: NextRequest) {
 
   // The middleware always returns a response (either a rewrite or next())
   // Use it as the base for Supabase integration
-  const response = i18nResponse;
+  let response = i18nResponse;
+  
+  // If middleware didn't rewrite and we have a locale in the path, explicitly rewrite it
+  // This handles cases where /uk, /pl, etc. need to match [locale] segment
+  if (response && !response.headers.get('x-middleware-rewrite')) {
+    const pathname = req.nextUrl.pathname;
+    const pathSegments = pathname.split('/').filter(Boolean);
+    const firstSegment = pathSegments[0];
+    
+    // Check if first segment is a valid locale
+    if (firstSegment && routing.locales.includes(firstSegment as any)) {
+      // Rewrite /uk to /uk (same path, but explicitly for Next.js routing)
+      // The path already contains the locale, so we rewrite to the same path
+      // This ensures Next.js matches it to [locale] segment
+      const rewriteUrl = new URL(pathname, req.url);
+      response = NextResponse.rewrite(rewriteUrl);
+      // Copy headers from i18nResponse
+      i18nResponse?.headers.forEach((value, key) => {
+        response.headers.set(key, value);
+      });
+      response.headers.set('x-proxy-hit', '1');
+      console.log('Explicit rewrite to:', rewriteUrl.pathname);
+    }
+  }
 
   // Create Supabase client using the response from i18n middleware
   const supabase = createServerClient(

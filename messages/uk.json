@@ -1,0 +1,33 @@
+{
+  "common": {
+    "home": "Головна",
+    "coloring": "Розмальовки",
+    "games": "Ігри",
+    "popular": "Популярне",
+    "puzzles": "Пазли",
+    "admin": "Адмін",
+    "login": "Увійти",
+    "logout": "Вийти",
+    "loading": "Завантаження...",
+    "close": "Закрити",
+    "menu": "Меню",
+    "cancel": "Скасувати",
+    "save": "Зберегти",
+    "upload": "Завантажити"
+  },
+  "nav": {
+    "home": "Головна",
+    "coloring": "Розмальовки",
+    "games": "Ігри"
+  },
+  "footer": {
+    "copyright": "© {year} Kids Park Club",
+    "tagline": "Розмальовки та ігри для дітей"
+  },
+  "home": {
+    "coloring": "Розмальовки",
+    "puzzles": "Пазли",
+    "games": "Ігри",
+    "popular": "Популярне"
+  }
+}

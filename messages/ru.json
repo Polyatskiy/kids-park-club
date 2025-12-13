@@ -1,0 +1,33 @@
+{
+  "common": {
+    "home": "Главная",
+    "coloring": "Разукраски",
+    "games": "Игры",
+    "popular": "Популярное",
+    "puzzles": "Пазлы",
+    "admin": "Админ",
+    "login": "Войти",
+    "logout": "Выйти",
+    "loading": "Загрузка...",
+    "close": "Закрыть",
+    "menu": "Меню",
+    "cancel": "Отмена",
+    "save": "Сохранить",
+    "upload": "Загрузить"
+  },
+  "nav": {
+    "home": "Главная",
+    "coloring": "Разукраски",
+    "games": "Игры"
+  },
+  "footer": {
+    "copyright": "© {year} Kids Park Club",
+    "tagline": "Разукраски и игры для детей"
+  },
+  "home": {
+    "coloring": "Разукраски",
+    "puzzles": "Пазлы",
+    "games": "Игры",
+    "popular": "Популярное"
+  }
+}

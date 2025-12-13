@@ -1,0 +1,33 @@
+{
+  "common": {
+    "home": "Home",
+    "coloring": "Coloring",
+    "games": "Games",
+    "popular": "Popular",
+    "puzzles": "Puzzles",
+    "admin": "Admin",
+    "login": "Login",
+    "logout": "Logout",
+    "loading": "Loading...",
+    "close": "Close",
+    "menu": "Menu",
+    "cancel": "Cancel",
+    "save": "Save",
+    "upload": "Upload"
+  },
+  "nav": {
+    "home": "Home",
+    "coloring": "Coloring",
+    "games": "Games"
+  },
+  "footer": {
+    "copyright": "© {year} Kids Park Club",
+    "tagline": "Coloring pages and games for kids"
+  },
+  "home": {
+    "coloring": "Coloring",
+    "puzzles": "Puzzles",
+    "games": "Games",
+    "popular": "Popular"
+  }
+}

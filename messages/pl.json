@@ -1,0 +1,33 @@
+{
+  "common": {
+    "home": "Strona główna",
+    "coloring": "Kolorowanki",
+    "games": "Gry",
+    "popular": "Popularne",
+    "puzzles": "Puzzle",
+    "admin": "Admin",
+    "login": "Zaloguj się",
+    "logout": "Wyloguj się",
+    "loading": "Ładowanie...",
+    "close": "Zamknij",
+    "menu": "Menu",
+    "cancel": "Anuluj",
+    "save": "Zapisz",
+    "upload": "Prześlij"
+  },
+  "nav": {
+    "home": "Strona główna",
+    "coloring": "Kolorowanki",
+    "games": "Gry"
+  },
+  "footer": {
+    "copyright": "© {year} Kids Park Club",
+    "tagline": "Kolorowanki i gry dla dzieci"
+  },
+  "home": {
+    "coloring": "Kolorowanki",
+    "puzzles": "Puzzle",
+    "games": "Gry",
+    "popular": "Popularne"
+  }
+}
