@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 import { JIGSAW_OPTIONS } from "@/app/games/jigsaw/jigsawConfig";
 import type { PuzzleImage } from "@/types/content";
+import { CarouselRow } from "@/components/carousel-row";
 
 type PuzzleItem = {
   id: string;
@@ -126,7 +127,9 @@ function CategoryBlock({
 
   return (
     <div className="mb-10">
-      <h2 className="text-2xl font-bold mb-4">{title}</h2>
+      <h2 className="inline-block text-2xl font-bold mb-4 px-3 py-1 rounded-xl bg-white/35 backdrop-blur-[12px] text-[#222] shadow-[0_2px_8px_rgba(0,0,0,0.18)]">
+        {title}
+      </h2>
 
       {subcats.map((sub) => (
         <SubcategoryBlock
@@ -146,17 +149,11 @@ function SubcategoryBlock({
   title: string;
   items: PuzzleItem[];
 }) {
-  return (
-    <div className="mb-6">
-      <h3 className="text-xl font-semibold mb-3">{title}</h3>
+  const carouselItems = items.map((item) => (
+    <PuzzleCard key={item.id} item={item} />
+  ));
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {items.map((item) => (
-          <PuzzleCard key={item.id} item={item} />
-        ))}
-      </div>
-    </div>
-  );
+  return <CarouselRow title={title} items={carouselItems} />;
 }
 
 function PuzzleCard({ item }: { item: PuzzleItem }) {

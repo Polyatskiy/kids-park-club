@@ -360,3 +360,32 @@ canvas {
   filter: brightness(1.05);
 }
 
+/* ============================================================
+   CAROUSEL ROW STYLES
+============================================================ */
+
+/* Mobile: 2 items per row (50% each minus gap) */
+.carousel-slide {
+  flex: 0 0 calc((100% - 1rem) / 2) !important;
+  min-width: calc((100% - 1rem) / 2) !important;
+  max-width: calc((100% - 1rem) / 2) !important;
+}
+
+/* Tablet: 3 items per row */
+@media (min-width: 640px) {
+  .carousel-slide {
+    flex: 0 0 calc((100% - 2rem) / 3) !important;
+    min-width: calc((100% - 2rem) / 3) !important;
+    max-width: calc((100% - 2rem) / 3) !important;
+  }
+}
+
+/* Desktop: 4 items per row */
+@media (min-width: 1024px) {
+  .carousel-slide {
+    flex: 0 0 calc((100% - 3rem) / 4) !important;
+    min-width: calc((100% - 3rem) / 4) !important;
+    max-width: calc((100% - 3rem) / 4) !important;
+  }
+}
+
