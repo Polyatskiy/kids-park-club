@@ -163,7 +163,15 @@ function ColoringToolbar({
 
   // Mobile: compact 2-row bottom toolbar with popovers
   return (
-    <div className="bg-white border-t border-gray-200 flex-shrink-0 shadow-lg mobile-toolbar-safe">
+    <div 
+      className="bg-white border-t border-gray-200 flex-shrink-0 shadow-lg mobile-toolbar-safe"
+      style={{
+        position: 'relative',
+        zIndex: 10,
+        paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 20px)',
+        marginBottom: 0
+      }}
+    >
       {/* Popovers (rendered above toolbar) */}
       <ZoomPopover
         isOpen={openPanel === "zoom"}
@@ -2166,7 +2174,11 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   ============================================================= */
 
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden bg-[#f7f7f7] select-none" style={{ height: '100vh', minHeight: '100vh' }}>
+    <div className="w-full h-full flex flex-col overflow-hidden bg-[#f7f7f7] select-none" style={{ 
+      height: isMobile ? '100dvh' : '100vh', 
+      minHeight: isMobile ? '100dvh' : '100vh',
+      maxHeight: isMobile ? '100dvh' : '100vh'
+    }}>
       {/* CONFIRM MODAL */}
       <ConfirmModal
         isOpen={showClearModal}
@@ -2290,7 +2302,12 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
         </div>
       ) : (
         /* MOBILE LAYOUT (< 900px) */
-        <div className="flex flex-1 overflow-hidden flex-col" style={{ minHeight: 0 }}>
+        <div className="flex flex-1 overflow-hidden flex-col" style={{ 
+          minHeight: 0,
+          height: '100%',
+          maxHeight: '100%',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+        }}>
           {/* MOBILE MENU */}
           <MobileMenu isOpen={showMobileMenu} onClose={() => setShowMobileMenu(false)} />
 
