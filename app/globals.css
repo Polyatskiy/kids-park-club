@@ -161,6 +161,23 @@ body[data-jigsaw-gameplay="true"] footer { display: none !important; }
   }
 }
 
+/* Home page tiles safe area - ensures cards are always fully visible */
+.home-tiles-container {
+  padding-bottom: 6rem; /* 24 * 0.25rem = 6rem = 96px */
+}
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .home-tiles-container {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 6rem);
+  }
+}
+
+@media (min-width: 768px) {
+  .home-tiles-container {
+    padding-bottom: 4rem; /* 16 * 0.25rem = 4rem = 64px */
+  }
+}
+
 /* ============================================================
    MOBILE MENU DRAWER
 ============================================================ */

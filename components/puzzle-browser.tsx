@@ -178,7 +178,7 @@ function PuzzleCard({ item }: { item: PuzzleItem }) {
         )}
       </div>
 
-      <div className="p-4 flex flex-col gap-3">
+      <div className="p-3 md:p-4 flex flex-col gap-2 md:gap-3">
         <h2
           className="text-base font-semibold text-white"
           style={{ textShadow: "0 2px 6px rgba(0,0,0,0.25)" }}
@@ -186,7 +186,7 @@ function PuzzleCard({ item }: { item: PuzzleItem }) {
           {item.title}
         </h2>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-3 gap-1.5 md:flex md:flex-wrap md:gap-2">
           {JIGSAW_OPTIONS.map((opt) => {
             // Dynamic font size based on digit count
             const fontSize = opt.pieces >= 100 ? 12 : opt.pieces >= 10 ? 14 : 16;
@@ -194,8 +194,7 @@ function PuzzleCard({ item }: { item: PuzzleItem }) {
               <Link
                 key={opt.pieces}
                 href={`/games/jigsaw?imageId=${item.id}&size=${opt.pieces}`}
-                className="relative transition-transform hover:scale-110"
-                style={{ width: 44, height: 44 }}
+                className="relative transition-transform hover:scale-110 w-full aspect-square md:w-11 md:h-11"
               >
                 {/* Puzzle icon as background */}
                 <Image

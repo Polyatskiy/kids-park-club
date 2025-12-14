@@ -51,7 +51,7 @@ export default async function HomePage({
     },
   ];
   return (
-    <div className="min-h-screen flex items-end md:items-center justify-center md:justify-end px-4 pb-8 md:pb-0 md:px-8 lg:px-12 pt-24 md:pt-0">
+    <div className="min-h-screen flex items-center justify-center md:justify-end px-4 md:px-8 lg:px-12 pt-24 md:pt-0 home-tiles-container">
       {/* Tiles Grid - positioned to avoid overlapping the girl */}
       <div className="w-full max-w-[320px] md:max-w-[400px] lg:max-w-[440px] md:mr-4 lg:mr-8 xl:mr-16">
         <div className="grid grid-cols-2 gap-3 md:gap-4">
