@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="#38BDF8"/>
+  
+  <!-- Balloon shape -->
+  <path d="M 256 120 Q 180 120 120 180 Q 120 240 180 300 Q 240 360 256 360 Q 272 360 332 300 Q 392 240 392 180 Q 392 120 332 120 Q 272 120 256 120 Z" fill="#F43F5E"/>
+  
+  <!-- Balloon highlight/shine -->
+  <ellipse cx="240" cy="200" rx="60" ry="80" fill="rgba(255,255,255,0.3)"/>
+  
+  <!-- String -->
+  <line x1="256" y1="360" x2="256" y2="440" stroke="#111827" stroke-width="12" stroke-linecap="round"/>
+  
+  <!-- String tie/knot at bottom -->
+  <circle cx="256" cy="440" r="8" fill="#111827"/>
+</svg>

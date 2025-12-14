@@ -16,11 +16,17 @@ export function Navbar() {
   const navPaddingX = isJigsawRoute ? "px-4 md:px-6" : "px-5 md:px-8";
   const navPaddingY = isJigsawRoute ? "py-3 md:py-4" : "py-4 md:py-5";
   const rightClasses = isJigsawRoute ? "flex items-center gap-3 md:gap-4 absolute right-4 top-3 md:right-6 md:top-4 z-50" : "flex items-center gap-3 md:gap-4";
-  const containerPadding = isJigsawRoute ? "pl-4 md:pl-6" : "pl-12 md:pl-16";
+  // Logo positioned next to back arrow - same close distance on all screen sizes
+  // Mobile: pl-29 (116px), md+: same relative distance to maintain same visual gap
+  const containerPadding = isJigsawRoute ? "pl-4 md:pl-6" : "pl-29 md:pl-29";
+  // Logo sizes increased by 30% (1.3x scale)
+  // Regular: 130*1.3=169, 52*1.3=68, md: 200*1.3=260, 72*1.3=94
+  // Jigsaw: 150*1.3=195, 60*1.3=78, md: 220*1.3=286, 82*1.3=107
   const logoWrapperClasses = isJigsawRoute
-    ? "relative w-[150px] h-[60px] md:w-[220px] md:h-[82px] drop-shadow-lg"
-    : "relative w-[130px] h-[52px] md:w-[200px] md:h-[72px] drop-shadow-lg";
-  const logoOffset = isJigsawRoute ? "-ml-1" : "";
+    ? "relative w-[195px] h-[78px] md:w-[286px] md:h-[107px] drop-shadow-lg"
+    : "relative w-[169px] h-[68px] md:w-[260px] md:h-[94px] drop-shadow-lg";
+  // Remove left offset/margin to eliminate empty space - logo starts immediately
+  const logoOffset = "";
   const logoLift = isJigsawRoute ? "-translate-y-[4px]" : "";
 
   return (
@@ -35,7 +41,7 @@ export function Navbar() {
               fill
               className="object-contain drop-shadow-lg"
               priority
-              sizes="200px"
+              sizes="(max-width: 768px) 195px, 286px"
             />
           </div>
         </Link>
