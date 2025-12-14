@@ -59,6 +59,45 @@
       "zoom": "Powiększenie",
       "brushSize": "Rozmiar Pędzla",
       "opacity": "Przezroczystość"
+    },
+    "jigsaw": {
+      "difficulty": "Trudność",
+      "newGame": "🔄 Nowa Gra",
+      "backToGallery": "Wróć do Galerii",
+      "showHint": "🔍 Pokaż Podpowiedź",
+      "hideHint": "🔍 Ukryj Podpowiedź",
+      "moves": "Ruchy",
+      "pieces": "Elementy"
+    },
+    "gameDetails": {
+      "reaction": {
+        "title": "Gra na Reakcję",
+        "description": "Kliknij przycisk, gdy się zaświeci!",
+        "pageTitle": "Gra na Reakcję",
+        "pageDescription": "Kliknij przycisk, gdy tylko zmieni kolor na zielony.",
+        "clickStart": "Kliknij «Start», aby rozpocząć.",
+        "waitForGreen": "Czekaj na zielony...",
+        "click": "Kliknij!",
+        "wait": "Czekaj...",
+        "clickWhenGreen": "Kliknij, gdy będzie zielony",
+        "tooEarly": "Za wcześnie! Spróbuj ponownie.",
+        "clickStartAgain": "Kliknij «Start», aby zagrać ponownie.",
+        "yourReaction": "Twoja reakcja: {ms} ms",
+        "start": "Start"
+      },
+      "puzzle": {
+        "title": "Mini Puzzle",
+        "description": "Dopasuj pary obrazków.",
+        "pageTitle": "Mini Puzzle",
+        "pageDescription": "Otwórz karty i znajdź pary.",
+        "moves": "Ruchy: {count}",
+        "greatJob": "Świetnie! Znalazłeś wszystkie pary!",
+        "playAgain": "Zagraj Ponownie"
+      },
+      "jigsaw": {
+        "title": "Puzzle",
+        "description": "Ułóż puzzle z obrazków."
+      }
     }
   },
   "nav": {

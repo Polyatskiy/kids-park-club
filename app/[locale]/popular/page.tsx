@@ -1,10 +1,21 @@
 import { Container } from "@/ui/container";
 import { Link } from "@/i18n/routing";
 import { BackArrow } from "@/components/back-arrow";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { routing } from "@/i18n/routing";
 
-export default async function PopularPage() {
-  const t = await getTranslations("common.pages");
+export default async function PopularPage({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const validLocale = routing.locales.includes(locale as any) 
+    ? locale 
+    : routing.defaultLocale;
+  setRequestLocale(validLocale);
+  
+  const t = await getTranslations({ locale: validLocale, namespace: "common.pages" });
   return (
     <>
       <BackArrow />

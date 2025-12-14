@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Container } from "@/ui/container";
 import { BackArrow } from "@/components/back-arrow";
+import { useTranslations } from "next-intl";
 
 type Card = {
   id: number;
@@ -26,6 +27,7 @@ function createDeck(): Card[] {
 }
 
 export default function PuzzleGamePage() {
+  const t = useTranslations("common.gameDetails.puzzle");
   const [cards, setCards] = useState<Card[]>(() => createDeck());
   const [openedIds, setOpenedIds] = useState<number[]>([]);
   const [moves, setMoves] = useState(0);
@@ -83,9 +85,9 @@ export default function PuzzleGamePage() {
     <>
       <BackArrow />
       <Container className="pt-16 md:pt-20 pb-8 space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Mini Puzzle</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t("pageTitle")}</h1>
         <p className="text-sm text-gray-600">
-          Open cards and find pairs.
+          {t("pageDescription")}
         </p>
         <div className="grid grid-cols-4 gap-3 max-w-xs">
           {cards.map((card) => (
@@ -105,17 +107,17 @@ export default function PuzzleGamePage() {
             </button>
           ))}
         </div>
-        <p className="text-sm text-gray-700">Moves: {moves}</p>
+        <p className="text-sm text-gray-700">{t("moves", { count: moves })}</p>
         {allMatched && (
           <p className="text-lg font-semibold text-primary">
-            Great! You found all pairs!
+            {t("greatJob")}
           </p>
         )}
         <button
           onClick={reset}
           className="px-4 py-2 rounded-2xl bg-primary font-semibold"
         >
-          Play Again
+          {t("playAgain")}
         </button>
       </Container>
     </>

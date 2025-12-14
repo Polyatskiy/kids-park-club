@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import { Container } from "@/ui/container";
 import { BackArrow } from "@/components/back-arrow";
+import { useTranslations } from "next-intl";
 
 export default function ReactionGamePage() {
+  const t = useTranslations("common.gameDetails.reaction");
   const [status, setStatus] = useState<"idle" | "wait" | "go">("idle");
-  const [message, setMessage] = useState("Click «Start» to begin.");
+  const [message, setMessage] = useState(t("clickStart"));
   const [startTime, setStartTime] = useState<number | null>(null);
   const [result, setResult] = useState<number | null>(null);
   const [timeoutId, setTimeoutId] = useState<ReturnType<typeof setTimeout> | null>(null);
@@ -14,11 +16,11 @@ export default function ReactionGamePage() {
   const start = () => {
     setResult(null);
     setStatus("wait");
-    setMessage("Wait for green...");
+    setMessage(t("waitForGreen"));
     const delay = 1000 + Math.random() * 3000;
     const id = setTimeout(() => {
       setStatus("go");
-      setMessage("Click!");
+      setMessage(t("click"));
       setStartTime(performance.now());
     }, delay);
     setTimeoutId(id);
@@ -28,12 +30,12 @@ export default function ReactionGamePage() {
     if (status === "wait") {
       if (timeoutId) clearTimeout(timeoutId);
       setStatus("idle");
-      setMessage("Too early! Try again.");
+      setMessage(t("tooEarly"));
     } else if (status === "go" && startTime) {
       const elapsed = performance.now() - startTime;
       setResult(elapsed);
       setStatus("idle");
-      setMessage("Click «Start» to play again.");
+      setMessage(t("clickStartAgain"));
     }
   };
 
@@ -47,16 +49,16 @@ export default function ReactionGamePage() {
     <>
       <BackArrow />
       <Container className="pt-16 md:pt-20 pb-8 space-y-6">
-        <h1 className="text-2xl font-bold text-gray-900">Reaction Game</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t("pageTitle")}</h1>
         <p className="text-sm text-gray-600">
-          Click the button as soon as it turns green.
+          {t("pageDescription")}
         </p>
         <div className="space-y-4">
           <button
             onClick={start}
             className="px-5 py-3 rounded-2xl bg-secondary font-semibold"
           >
-            Start
+            {t("start")}
           </button>
           <div
             onClick={handleClick}
@@ -69,12 +71,12 @@ export default function ReactionGamePage() {
                 : "bg-gray-200")
             }
           >
-            {status === "go" ? "Click!" : status === "wait" ? "Wait..." : "Click when green"}
+            {status === "go" ? t("click") : status === "wait" ? t("wait") : t("clickWhenGreen")}
           </div>
           <p className="text-sm text-gray-700">{message}</p>
           {result && (
             <p className="text-lg font-semibold">
-              Your reaction: {Math.round(result)} ms
+              {t("yourReaction", { ms: Math.round(result) })}
             </p>
           )}
         </div>

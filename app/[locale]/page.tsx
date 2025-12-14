@@ -1,9 +1,24 @@
 import { HomeTile } from "@/components/home-tile";
-import { useTranslations } from "next-intl";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { routing } from "@/i18n/routing";
 
-export default async function HomePage() {
-  const t = await getTranslations("common");
+export default async function HomePage({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  
+  // Ensure locale is valid
+  const validLocale = routing.locales.includes(locale as any) 
+    ? locale 
+    : routing.defaultLocale;
+  
+  // Set request locale for server components
+  setRequestLocale(validLocale);
+  
+  // Explicitly pass locale to ensure correct translations are loaded
+  const t = await getTranslations({ locale: validLocale, namespace: "common" });
   
   const tiles = [
     {

@@ -2,11 +2,22 @@ import { Container } from "@/ui/container";
 import { getGames } from "@/lib/content-repository";
 import { GameCard } from "@/components/game-card";
 import { BackArrow } from "@/components/back-arrow";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { routing } from "@/i18n/routing";
 
-export default async function GamesPage() {
+export default async function GamesPage({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const validLocale = routing.locales.includes(locale as any) 
+    ? locale 
+    : routing.defaultLocale;
+  setRequestLocale(validLocale);
+  
   const games = await getGames();
-  const t = await getTranslations("common.pages");
+  const t = await getTranslations({ locale: validLocale, namespace: "common.pages" });
   return (
     <>
       <BackArrow />

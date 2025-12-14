@@ -59,6 +59,45 @@
       "zoom": "Zoom",
       "brushSize": "Brush Size",
       "opacity": "Opacity"
+    },
+    "jigsaw": {
+      "difficulty": "Difficulty",
+      "newGame": "🔄 New Game",
+      "backToGallery": "Back to Gallery",
+      "showHint": "🔍 Show Hint",
+      "hideHint": "🔍 Hide Hint",
+      "moves": "Moves",
+      "pieces": "Pieces"
+    },
+    "gameDetails": {
+      "reaction": {
+        "title": "Reaction Game",
+        "description": "Click the button when it lights up!",
+        "pageTitle": "Reaction Game",
+        "pageDescription": "Click the button as soon as it turns green.",
+        "clickStart": "Click «Start» to begin.",
+        "waitForGreen": "Wait for green...",
+        "click": "Click!",
+        "wait": "Wait...",
+        "clickWhenGreen": "Click when green",
+        "tooEarly": "Too early! Try again.",
+        "clickStartAgain": "Click «Start» to play again.",
+        "yourReaction": "Your reaction: {ms} ms",
+        "start": "Start"
+      },
+      "puzzle": {
+        "title": "Mini Puzzle",
+        "description": "Match pairs of pictures.",
+        "pageTitle": "Mini Puzzle",
+        "pageDescription": "Open cards and find pairs.",
+        "moves": "Moves: {count}",
+        "greatJob": "Great! You found all pairs!",
+        "playAgain": "Play Again"
+      },
+      "jigsaw": {
+        "title": "Puzzles",
+        "description": "Assemble puzzles from pictures."
+      }
     }
   },
   "nav": {

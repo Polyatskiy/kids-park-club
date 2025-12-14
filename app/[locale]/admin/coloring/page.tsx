@@ -1,9 +1,20 @@
 import { uploadItem } from "../admin-actions";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/routing";
+import { routing } from "@/i18n/routing";
 
-export default async function NewItemPage() {
-  const t = await getTranslations("common.adminPanel");
+export default async function NewItemPage({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const validLocale = routing.locales.includes(locale as any) 
+    ? locale 
+    : routing.defaultLocale;
+  setRequestLocale(validLocale);
+  
+  const t = await getTranslations({ locale: validLocale, namespace: "common.adminPanel" });
   return (
     <div className="p-6 max-w-xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">{t("addNewColoring")}</h1>

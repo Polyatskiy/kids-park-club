@@ -16,6 +16,7 @@ import {
   type JigsawOption,
 } from './jigsawConfig';
 import { useContainerSize } from '@/lib/useContainerSize';
+import { useTranslations } from 'next-intl';
 
 const IMAGES = JIGSAW_IMAGES;
 
@@ -415,6 +416,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   puzzleImageUrl,
   puzzleTitle,
 }) => {
+  const t = useTranslations("common.jigsaw");
   const isSupabasePuzzle = Boolean(puzzleImageUrl);
   
   const normalizePieces = (value?: number): number => {
@@ -747,7 +749,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
       {/* Difficulty section */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: '#f1f5f9', marginBottom: 12, textAlign: 'center' }}>
-          Difficulty
+          {t("difficulty")}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: difficultyColumns, gap: 12, justifyItems: 'center' }}>
           {JIGSAW_OPTIONS.map((opt) => {
@@ -822,7 +824,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
             transition: 'all 0.2s ease',
           }}
         >
-          {showHint ? '🔍 Hide Hint' : '🔍 Show Hint'}
+          {showHint ? t("hideHint") : t("showHint")}
         </button>
 
         <button
@@ -840,17 +842,17 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
             transition: 'all 0.2s ease',
           }}
         >
-          🔄 New Game
+          {t("newGame")}
         </button>
       </div>
 
       {/* Stats */}
       <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
         <span style={{ padding: '8px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.1)', color: '#f1f5f9', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          Moves: <strong>{moves}</strong>
+          {t("moves")}: <strong>{moves}</strong>
         </span>
         <span style={{ padding: '8px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.1)', color: '#f1f5f9', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          Pieces: <strong>{totalPieces}</strong>
+          {t("pieces")}: <strong>{totalPieces}</strong>
         </span>
       </div>
     </div>
