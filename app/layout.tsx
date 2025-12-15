@@ -12,10 +12,8 @@ export default async function RootLayout({
   
   return (
     <html lang={locale}>
-      <head>
-        <GtagScript />
-      </head>
       <body className="min-h-screen flex flex-col app-background">
+        <GtagScript />
         {children}
       </body>
     </html>

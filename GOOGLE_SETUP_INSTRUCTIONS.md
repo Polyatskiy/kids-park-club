@@ -42,11 +42,14 @@ The code is already set up and ready:
 
 ### Step 4: Verify GA4 is Working
 
-1. Visit your site: https://kids-park.club
+**IMPORTANT:** Make sure you've completed Steps 2 and 3 (added env variable and redeployed) before verifying!
+
+1. Visit your site: https://kids-park.club (or https://www.kids-park.club if that's your primary domain)
 2. Open browser DevTools (F12) → **Network** tab
 3. Filter by "gtag" or "collect"
 4. You should see requests to `google-analytics.com` and `googletagmanager.com`
 5. In GA4 dashboard, go to **Reports** → **Realtime** to see live visitors
+6. **Check the HTML source:** View page source (Ctrl+U) and search for "G-BZG7RNLBN0" - you should see the gtag script
 
 ### How It Works
 
@@ -155,12 +158,32 @@ Your sitemap includes:
 
 ## Troubleshooting
 
-### GA4 Not Tracking
+### GA4 Not Tracking / "Google tag wasn't detected"
 
-- ✅ Check `NEXT_PUBLIC_GA_ID` is set in Vercel environment variables
-- ✅ Verify the value starts with `G-` (not `UA-` which is Universal Analytics)
-- ✅ Check browser console for errors
-- ✅ Use GA4 DebugView: In GA4, go to **Admin** → **DebugView** to see real-time events
+**Most Common Issues:**
+
+1. **Environment Variable Not Set or Not Redeployed:**
+   - ✅ Go to Vercel → Settings → Environment Variables
+   - ✅ Verify `NEXT_PUBLIC_GA_ID` exists with value `G-BZG7RNLBN0`
+   - ✅ **CRITICAL:** After adding/updating env variable, you MUST redeploy!
+   - ✅ Go to Deployments → Click ⋯ on latest deployment → Redeploy
+
+2. **www vs non-www Domain Mismatch:**
+   - Google might check `www.kids-park.club` but your site is on `kids-park.club` (or vice versa)
+   - ✅ In Google Analytics, make sure you're checking the correct domain (with or without www)
+   - ✅ Test both: Visit `https://kids-park.club` and `https://www.kids-park.club` and check if GA loads
+   - ✅ In GA4 property settings, verify the website URL matches your actual domain
+
+3. **Script Not Loading:**
+   - ✅ Check browser console (F12) for JavaScript errors
+   - ✅ View page source (Ctrl+U) and search for "G-BZG7RNLBN0" - should appear in gtag script
+   - ✅ Check Network tab for requests to `googletagmanager.com` and `google-analytics.com`
+   - ✅ Verify the value starts with `G-` (not `UA-` which is Universal Analytics)
+
+4. **Debugging:**
+   - ✅ Use GA4 DebugView: In GA4, go to **Admin** → **DebugView** to see real-time events
+   - ✅ Install [Google Tag Assistant](https://tagassistant.google.com/) Chrome extension
+   - ✅ Check if ad blockers are interfering (try incognito mode)
 
 ### GSC Verification Fails
 
