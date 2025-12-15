@@ -60,6 +60,12 @@
       "brushSize": "Rozmiar Pędzla",
       "opacity": "Przezroczystość"
     },
+    "canvas": {
+      "clearDrawingTitle": "Wyczyścić rysunek?",
+      "clearDrawingMessage": "Czy na pewno chcesz wyczyścić cały rysunek?",
+      "clear": "Wyczyść",
+      "cancel": "Anuluj"
+    },
     "jigsaw": {
       "difficulty": "Trudność",
       "newGame": "🔄 Nowa Gra",

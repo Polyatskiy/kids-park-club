@@ -60,6 +60,12 @@
       "brushSize": "Brush Size",
       "opacity": "Opacity"
     },
+    "canvas": {
+      "clearDrawingTitle": "Clear drawing?",
+      "clearDrawingMessage": "Are you sure you want to clear the entire drawing?",
+      "clear": "Clear",
+      "cancel": "Cancel"
+    },
     "jigsaw": {
       "difficulty": "Difficulty",
       "newGame": "🔄 New Game",

@@ -1147,6 +1147,7 @@ interface ColoringCanvasProps {
 
 export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) {
   const router = useRouter();
+  const tCanvas = useTranslations("common.canvas");
   const [color, setColor] = useState("#FF1744");
   const [opacity, setOpacity] = useState(1);
   const [brushSize, setBrushSize] = useState(40);
@@ -2184,10 +2185,10 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
         isOpen={showClearModal}
         onClose={() => setShowClearModal(false)}
         onConfirm={clearCanvas}
-        title="Clear drawing?"
-        message="Are you sure you want to clear the entire drawing?"
-        confirmText="Clear"
-        cancelText="Cancel"
+        title={tCanvas("clearDrawingTitle")}
+        message={tCanvas("clearDrawingMessage")}
+        confirmText={tCanvas("clear")}
+        cancelText={tCanvas("cancel")}
       />
 
       {/* MAIN LAYOUT */}
@@ -2225,7 +2226,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
                            hover:bg-gray-100 bg-white shadow-sm transition-all duration-150 hover:scale-105 active:scale-95"
                 aria-label="Close"
               >
-                <img src="../icons/close.svg" alt="Close" className="w-9 h-9" />
+                <img src="/icons/close.svg" alt="Close" className="w-9 h-9" />
               </button>
             )}
 

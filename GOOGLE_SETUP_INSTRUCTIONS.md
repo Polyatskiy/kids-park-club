@@ -23,6 +23,8 @@ The code is already set up and ready:
 
 ### Step 2: Add Environment Variable in Vercel
 
+**⚠️ CRITICAL:** You MUST add this variable for **Production** environment, not just Preview!
+
 1. Go to your Vercel project dashboard: https://vercel.com/dashboard
 2. Select your **kids-park-club** project
 3. Go to **Settings** → **Environment Variables**
@@ -30,8 +32,13 @@ The code is already set up and ready:
 5. Add the following:
    - **Name**: `NEXT_PUBLIC_GA_ID`
    - **Value**: `G-BZG7RNLBN0` (your GA4 Measurement ID)
-   - **Environment**: Select all (Production, Preview, Development)
+   - **Environment**: ⚠️ **MUST SELECT "Production"** (you can also select Preview and Development, but Production is required!)
 6. Click **Save**
+
+**Important:** If you already added it for Preview only:
+- Edit the existing variable
+- Make sure **Production** is checked in the Environment dropdown
+- Or delete it and add a new one with Production selected
 
 ### Step 3: Redeploy
 
@@ -162,11 +169,13 @@ Your sitemap includes:
 
 **Most Common Issues:**
 
-1. **Environment Variable Not Set or Not Redeployed:**
+1. **Environment Variable Not Set for Production:**
    - ✅ Go to Vercel → Settings → Environment Variables
    - ✅ Verify `NEXT_PUBLIC_GA_ID` exists with value `G-BZG7RNLBN0`
-   - ✅ **CRITICAL:** After adding/updating env variable, you MUST redeploy!
-   - ✅ Go to Deployments → Click ⋯ on latest deployment → Redeploy
+   - ✅ **CRITICAL:** Check that the variable is set for **Production** environment (not just Preview!)
+   - ✅ If it's only set for Preview, edit it and add Production, or create a new one with Production selected
+   - ✅ **CRITICAL:** After adding/updating env variable, you MUST redeploy Production!
+   - ✅ Go to Deployments → Click ⋯ on latest Production deployment → Redeploy
 
 2. **www vs non-www Domain Mismatch:**
    - Google might check `www.kids-park.club` but your site is on `kids-park.club` (or vice versa)
