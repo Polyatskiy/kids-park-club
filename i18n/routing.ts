@@ -9,8 +9,9 @@ export const routing = defineRouting({
   defaultLocale: 'en',
 
   // The `localePrefix` strategy
-  // 'as-needed' means: en has no prefix, others have /pl, /ru, /uk
-  localePrefix: 'as-needed'
+  // 'always' means: all locales including 'en' have prefix (/en, /pl, /ru, /uk)
+  // This ensures /en/... routes work correctly and don't cause 404 errors
+  localePrefix: 'always'
 });
 
 // Lightweight wrappers around Next.js' navigation APIs

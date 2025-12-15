@@ -49,14 +49,8 @@ export function LanguageSwitcher() {
       : '/';
 
     // Build new path with new locale
-    let newPath: string;
-    if (newLocale === routing.defaultLocale) {
-      // Default locale (en) has no prefix
-      newPath = cleanPath;
-    } else {
-      // Non-default locales have prefix: /uk, /pl, /ru
-      newPath = cleanPath === '/' ? `/${newLocale}` : `/${newLocale}${cleanPath}`;
-    }
+    // With 'always' strategy, all locales including 'en' have prefix
+    const newPath = cleanPath === '/' ? `/${newLocale}` : `/${newLocale}${cleanPath}`;
 
     // Set cookie for persistence
     document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;

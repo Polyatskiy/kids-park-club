@@ -15,13 +15,24 @@ function detectLocaleFromHeader(acceptLanguage: string | null): string {
     .split(",")
     .map((lang) => {
       const [locale, q = "1"] = lang.trim().split(";q=");
-      return { locale: locale.split("-")[0].toLowerCase(), quality: parseFloat(q) };
+      // Extract base locale (e.g., "en" from "en-US" or "en-GB")
+      const baseLocale = locale.split("-")[0].toLowerCase();
+      return { locale: baseLocale, quality: parseFloat(q) };
     })
     .sort((a, b) => b.quality - a.quality);
 
+  // First, try to find an exact match in supported locales
   for (const { locale } of languages) {
     if (SUPPORTED_LOCALES.includes(locale)) {
       return locale;
+    }
+  }
+
+  // If no exact match, check for English variants (en-US, en-GB, etc.)
+  // These should map to 'en'
+  for (const { locale } of languages) {
+    if (locale === 'en' || locale.startsWith('en-')) {
+      return DEFAULT_LOCALE; // Return 'en' as default locale
     }
   }
 
@@ -139,9 +150,9 @@ export async function proxy(req: NextRequest) {
     return redirectResponse;
   }
   
-  // If user is accessing root or a path without locale prefix
-  // and detected locale is not default, redirect to prefixed version
-  if (!urlLocale && locale !== DEFAULT_LOCALE) {
+  // With 'always' strategy, all locales including 'en' must have prefix
+  // If user is accessing root or a path without locale prefix, redirect to prefixed version
+  if (!urlLocale) {
     // Preserve the pathname and add locale prefix
     const newPath = `/${locale}${pathname === "/" ? "" : pathname}`;
     url.pathname = newPath;
@@ -156,16 +167,6 @@ export async function proxy(req: NextRequest) {
     }
     redirectResponse.headers.set("x-proxy-hit", "1");
     redirectResponse.headers.set("x-locale", locale);
-    return redirectResponse;
-  }
-
-  // If URL has a locale prefix but it's default locale, redirect to remove prefix
-  if (urlLocale === DEFAULT_LOCALE) {
-    const pathWithoutLocale = pathname.replace(`/${DEFAULT_LOCALE}`, "") || "/";
-    url.pathname = pathWithoutLocale;
-    const redirectResponse = NextResponse.redirect(url);
-    redirectResponse.headers.set("x-proxy-hit", "1");
-    redirectResponse.headers.set("x-locale", DEFAULT_LOCALE);
     return redirectResponse;
   }
 
@@ -227,6 +228,9 @@ export async function proxy(req: NextRequest) {
   }
 
   // Add debug header and locale header for root layout
+  // CRITICAL: Always set x-locale header, even when no prefix in URL
+  // This ensures Next.js can properly route to app/[locale]/... structure
+  // For default locale (en) without prefix, locale is still 'en'
   response.headers.set("x-proxy-hit", "1");
   response.headers.set("x-locale", locale);
   return response;
