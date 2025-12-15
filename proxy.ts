@@ -75,11 +75,13 @@ export async function proxy(req: NextRequest) {
   const url = req.nextUrl.clone();
   const pathname = url.pathname;
 
-  // Skip locale detection for static files, API routes, and Next.js internals
+  // Skip locale detection for static files, API routes, Next.js internals, and special routes
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
     pathname.startsWith("/static") ||
+    pathname === "/sitemap.xml" ||
+    pathname === "/robots.txt" ||
     pathname.match(/\.(ico|png|jpg|jpeg|svg|gif|webp|woff|woff2|ttf|eot)$/)
   ) {
     return response;
