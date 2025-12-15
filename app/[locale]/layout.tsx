@@ -7,6 +7,7 @@ import { routing } from "@/i18n/routing";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Analytics } from "@/components/analytics";
 
 // Helper function to deep merge objects
 function deepMerge(target: any, source: any): any {
@@ -82,6 +83,7 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={mergedMessages}>
+      <Analytics />
       <Navbar />
       <main className="flex-1 relative">{children}</main>
       <Footer />
