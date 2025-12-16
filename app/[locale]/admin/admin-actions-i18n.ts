@@ -86,8 +86,8 @@ export async function createCategory(formData: FormData) {
   // Revalidate pages that display categories
   revalidatePath("/coloring", "page");
   revalidatePath("/games/jigsaw/gallery", "page");
-  revalidateTag("categories");
-  revalidateTag("sitemap");
+  revalidateTag("categories", "max");
+  revalidateTag("sitemap", "max");
 
   return { id: category.id };
 }
@@ -147,8 +147,8 @@ export async function updateCategory(formData: FormData) {
   // Revalidate pages that display categories
   revalidatePath("/coloring", "page");
   revalidatePath("/games/jigsaw/gallery", "page");
-  revalidateTag("categories");
-  revalidateTag("sitemap");
+  revalidateTag("categories", "max");
+  revalidateTag("sitemap", "max");
 }
 
 /**
@@ -172,8 +172,8 @@ export async function deleteCategory(formData: FormData) {
   // Revalidate pages that display categories
   revalidatePath("/coloring", "page");
   revalidatePath("/games/jigsaw/gallery", "page");
-  revalidateTag("categories");
-  revalidateTag("sitemap");
+  revalidateTag("categories", "max");
+  revalidateTag("sitemap", "max");
 }
 
 // =============================================
@@ -249,8 +249,8 @@ export async function createSubcategory(formData: FormData) {
   // Revalidate pages that display subcategories
   revalidatePath("/coloring", "page");
   revalidatePath("/games/jigsaw/gallery", "page");
-  revalidateTag("subcategories");
-  revalidateTag("sitemap");
+  revalidateTag("subcategories", "max");
+  revalidateTag("sitemap", "max");
 
   return { id: subcategory.id };
 }
@@ -308,8 +308,8 @@ export async function updateSubcategory(formData: FormData) {
   // Revalidate pages that display subcategories
   revalidatePath("/coloring", "page");
   revalidatePath("/games/jigsaw/gallery", "page");
-  revalidateTag("subcategories");
-  revalidateTag("sitemap");
+  revalidateTag("subcategories", "max");
+  revalidateTag("sitemap", "max");
 }
 
 /**
@@ -332,8 +332,8 @@ export async function deleteSubcategory(formData: FormData) {
   // Revalidate pages that display subcategories
   revalidatePath("/coloring", "page");
   revalidatePath("/games/jigsaw/gallery", "page");
-  revalidateTag("subcategories");
-  revalidateTag("sitemap");
+  revalidateTag("subcategories", "max");
+  revalidateTag("sitemap", "max");
 }
 
 // =============================================
@@ -473,8 +473,8 @@ export async function uploadItem(formData: FormData) {
   revalidatePath(itemPath, "page");
   revalidatePath("/coloring", "page");
   revalidatePath("/games/jigsaw/gallery", "page");
-  revalidateTag("items");
-  revalidateTag("sitemap");
+  revalidateTag("items", "max");
+  revalidateTag("sitemap", "max");
 
   return { id: itemId };
 }
@@ -495,7 +495,7 @@ export async function updateItem(formData: FormData) {
   // Get current item to know type and paths
   const { data: currentItem, error: fetchError } = await supabase
     .from("items")
-    .select("type, source_path, thumb_path")
+    .select("type, source_path, thumb_path, slug")
     .eq("id", itemId)
     .single();
 
@@ -597,8 +597,8 @@ export async function updateItem(formData: FormData) {
   }
   revalidatePath("/coloring", "page");
   revalidatePath("/games/jigsaw/gallery", "page");
-  revalidateTag("items");
-  revalidateTag("sitemap");
+  revalidateTag("items", "max");
+  revalidateTag("sitemap", "max");
 }
 
 /**
@@ -644,8 +644,8 @@ export async function deleteItem(formData: FormData) {
   // Revalidate listing pages and sitemap
   revalidatePath("/coloring", "page");
   revalidatePath("/games/jigsaw/gallery", "page");
-  revalidateTag("items");
-  revalidateTag("sitemap");
+  revalidateTag("items", "max");
+  revalidateTag("sitemap", "max");
 }
 
 // =============================================
