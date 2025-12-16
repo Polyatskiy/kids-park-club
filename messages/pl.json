@@ -21,6 +21,8 @@
     },
     "adminPanel": {
       "adminPanel": "Panel Administracyjny",
+      "manageCategories": "Zarządzaj Kategoriami",
+      "manageItems": "Zarządzaj Elementami",
       "manageColoring": "Zarządzaj Kolorowankami",
       "managePuzzles": "Zarządzaj Puzzle",
       "backToSite": "← Wróć do Strony",
@@ -54,6 +56,16 @@
       "noColoringPages": "Brak kolorowanek. Dodaj pierwszą!",
       "noPuzzles": "Brak puzzli. Dodaj pierwsze w panelu administracyjnym!",
       "loading": "Ładowanie..."
+    },
+    "coloringPage": {
+      "title": "Kolorowanki dla Dzieci",
+      "description": "Darmowe kolorowanki do druku",
+      "subtitle": "Zabawne i edukacyjne aktywności kolorowania dla dzieci."
+    },
+    "puzzlesPage": {
+      "title": "Puzzle dla Dzieci",
+      "description": "Interaktywne puzzle",
+      "subtitle": "Ułóż puzzle i baw się dobrze!"
     },
     "toolbar": {
       "zoom": "Powiększenie",

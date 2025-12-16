@@ -1,6 +1,14 @@
 import { Link } from "@/i18n/routing";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function AdminPage({
   params
@@ -16,19 +24,31 @@ export default async function AdminPage({
   const t = await getTranslations({ locale: validLocale, namespace: "common.adminPanel" });
   return (
     <div className="p-10 flex flex-col gap-6 text-xl">
-      <h1 className="text-3xl font-bold">{t("adminPanel")}</h1>
+      <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-lg">
+        <h1 className="text-3xl font-bold text-gray-900">{t("adminPanel")}</h1>
+      </div>
 
-      <Link href="/admin/coloring" className="underline">
-        {t("manageColoring")}
-      </Link>
+      <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-lg flex flex-col gap-4">
+        <Link href="/admin/categories" className="text-blue-700 hover:text-blue-900 font-semibold underline decoration-2 underline-offset-2">
+          Manage Categories
+        </Link>
 
-      <Link href="/admin/puzzles" className="underline">
-        {t("managePuzzles")}
-      </Link>
+        <Link href="/admin/items" className="text-blue-700 hover:text-blue-900 font-semibold underline decoration-2 underline-offset-2">
+          Manage Items (Coloring & Puzzles)
+        </Link>
 
-      <Link href="/" className="underline">
-        {t("backToSite")}
-      </Link>
+        <Link href="/admin/coloring" className="text-blue-700 hover:text-blue-900 font-semibold underline decoration-2 underline-offset-2">
+          {t("manageColoring")} (Legacy)
+        </Link>
+
+        <Link href="/admin/puzzles" className="text-blue-700 hover:text-blue-900 font-semibold underline decoration-2 underline-offset-2">
+          {t("managePuzzles")} (Legacy)
+        </Link>
+
+        <Link href="/" className="text-blue-700 hover:text-blue-900 font-semibold underline decoration-2 underline-offset-2">
+          {t("backToSite")}
+        </Link>
+      </div>
     </div>
   );
 }

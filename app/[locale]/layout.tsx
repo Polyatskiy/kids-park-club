@@ -8,31 +8,7 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from "@/components/analytics";
-
-// Helper function to deep merge objects
-function deepMerge(target: any, source: any): any {
-  const output = { ...target };
-  
-  if (isObject(target) && isObject(source)) {
-    Object.keys(source).forEach((key) => {
-      if (isObject(source[key])) {
-        if (!(key in target)) {
-          Object.assign(output, { [key]: source[key] });
-        } else {
-          output[key] = deepMerge(target[key], source[key]);
-        }
-      } else {
-        Object.assign(output, { [key]: source[key] });
-      }
-    });
-  }
-  
-  return output;
-}
-
-function isObject(item: any): boolean {
-  return item && typeof item === 'object' && !Array.isArray(item);
-}
+import { getMessages } from "next-intl/server";
 
 export const metadata: Metadata = {
   title: "Kids Park Club – Coloring Pages and Games",
@@ -65,24 +41,11 @@ export default async function LocaleLayout({
   // Enable static rendering
   setRequestLocale(locale);
 
-  // Load messages directly using the locale from params to ensure correct locale is used
-  // This bypasses any potential issues with requestLocale extraction
-  let messages;
-  try {
-    messages = (await import(`@/messages/${locale}.json`)).default;
-  } catch (error) {
-    // Fallback to English if locale file doesn't exist
-    messages = (await import(`@/messages/${routing.defaultLocale}.json`)).default;
-  }
-
-  // Merge with English messages to ensure all keys exist (safe fallback)
-  const defaultMessages = (await import(`@/messages/${routing.defaultLocale}.json`)).default;
-  
-  // Deep merge: use locale messages, fallback to English for missing keys
-  const mergedMessages = deepMerge(defaultMessages, messages);
+  // Use next-intl's getMessages which handles fallbacks properly
+  const messages = await getMessages();
 
   return (
-    <NextIntlClientProvider locale={locale} messages={mergedMessages}>
+    <NextIntlClientProvider locale={locale} messages={messages}>
       <Analytics />
       <Navbar />
       <main className="flex-1 relative">{children}</main>

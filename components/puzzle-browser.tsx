@@ -2,145 +2,148 @@
 
 import { Link } from "@/i18n/routing";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { supabaseBrowser } from "@/lib/supabaseClient";
+import { useTranslations, useLocale } from "next-intl";
+import { getItems, getCategories } from "@/lib/content-repository";
 import { JIGSAW_OPTIONS } from "@/app/[locale]/games/jigsaw/jigsawConfig";
-import type { PuzzleImage } from "@/types/content";
 import { CarouselRow } from "@/components/carousel-row";
-import { useTranslations } from "next-intl";
-
-type PuzzleItem = {
-  id: string;
-  title: string;
-  category: string;
-  subcategory: string;
-  slug: string;
-  image_url: string;
-  thumbnail_url: string | null;
-};
-
-// Server-fetched puzzle type (from content-repository)
-type ServerPuzzle = PuzzleImage;
+import { useState, useEffect } from "react";
+import type { Item, Category, Subcategory } from "@/types/content";
 
 interface PuzzleBrowserProps {
-  /** Puzzles pre-fetched on the server (bypasses RLS) */
-  serverPuzzles?: ServerPuzzle[];
+  initialItems?: Item[];
+  initialCategories?: Category[];
+  initialSubcategories?: Subcategory[];
 }
 
-export default function PuzzleBrowser({ serverPuzzles }: PuzzleBrowserProps) {
-  const t = useTranslations("common.browser");
-  
-  // Convert server puzzles to the format we use internally
-  const convertedServerPuzzles: PuzzleItem[] = (serverPuzzles || []).map((p) => ({
-    id: p.id,
-    title: p.title,
-    category: p.category,
-    subcategory: p.subCategory || "",
-    slug: p.slug,
-    image_url: p.imageUrl,
-    thumbnail_url: p.thumbnailUrl || null,
-  }));
-
-  const [items, setItems] = useState<PuzzleItem[]>(convertedServerPuzzles);
-  const [loading, setLoading] = useState(!serverPuzzles || serverPuzzles.length === 0);
-
-  const supabase = supabaseBrowser();
+export default function PuzzleBrowser({ 
+  initialItems,
+  initialCategories,
+  initialSubcategories = []
+}: PuzzleBrowserProps = {}) {
+  const [items, setItems] = useState<Item[]>(initialItems || []);
+  const [categories, setCategories] = useState<Category[]>(initialCategories || []);
+  const [loading, setLoading] = useState(!initialItems);
+  const t = useTranslations("common");
+  const locale = useLocale();
 
   useEffect(() => {
-    // If we have server-provided puzzles, don't fetch again
-    if (serverPuzzles && serverPuzzles.length > 0) {
-      setLoading(false);
-      return;
+    if (initialItems && initialCategories) {
+      return; // Use server-provided data
     }
 
-    // Fallback: try to fetch on client (may fail due to RLS)
     async function load() {
-      const { data, error } = await supabase
-        .from("puzzle_items")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      // DEBUG: Log the result to understand what's happening
-      if (process.env.NODE_ENV !== "production") {
-        console.log("[DEBUG] puzzle_items client query result:", { 
-          data, 
-          error,
-          dataLength: data?.length,
-          errorMessage: error?.message,
-          errorCode: error?.code
-        });
+      try {
+        const [itemsData, categoriesData] = await Promise.all([
+          getItems('puzzles', { locale }),
+          getCategories('puzzles', locale),
+        ]);
+        setItems(itemsData);
+        setCategories(categoriesData);
+      } catch (error) {
+        console.error("Failed to load puzzle items:", error);
+      } finally {
+        setLoading(false);
       }
-
-      if (error) {
-        console.error("[DEBUG] Supabase error fetching puzzles (likely RLS issue):", error);
-      }
-
-      if (!error && data) {
-        // Convert Supabase response to our format (id is number from DB, convert to string)
-        const converted = data.map((row: any) => ({
-          id: String(row.id),
-          title: row.title,
-          category: row.category,
-          subcategory: row.subcategory,
-          slug: row.slug,
-          image_url: row.image_url,
-          thumbnail_url: row.thumbnail_url,
-        }));
-        setItems(converted);
-      }
-
-      setLoading(false);
     }
 
     load();
-  }, [serverPuzzles]);
+  }, [locale, initialItems, initialCategories]);
 
-  if (loading)
+  if (loading) {
     return <div className="p-4 text-center text-gray-500">{t("loading")}</div>;
+  }
 
-  if (items.length === 0)
+  if (items.length === 0) {
     return (
       <div className="p-6 text-center text-gray-500">
         {t("noPuzzles")}
       </div>
     );
+  }
+
+  // Group items by category
+  const itemsByCategory = new Map<string, Item[]>();
+  items.forEach((item) => {
+    const catId = item.categoryId;
+    if (!itemsByCategory.has(catId)) {
+      itemsByCategory.set(catId, []);
+    }
+    itemsByCategory.get(catId)!.push(item);
+  });
+
+  // Get category details
+  const categoryMap = new Map(categories.map(cat => [cat.id, cat]));
 
   return (
     <div className="p-4 max-w-4xl mx-auto">
-      {/* Группируем по категориям */}
-      {Array.from(new Set(items.map((i) => i.category))).map((category) => (
-        <CategoryBlock
-          key={category}
-          title={category}
-          items={items.filter((i) => i.category === category)}
-        />
-      ))}
+      <h1 className="sr-only">{t("puzzlesPage.title") || "Jigsaw Puzzles for Kids"}</h1>
+      {Array.from(itemsByCategory.entries()).map(([categoryId, categoryItems]) => {
+        const category = categoryMap.get(categoryId);
+        if (!category) return null;
+
+        // Group by subcategory
+        const itemsBySubcategory = new Map<string, Item[]>();
+        categoryItems.forEach((item) => {
+          const subId = item.subcategoryId || 'uncategorized';
+          if (!itemsBySubcategory.has(subId)) {
+            itemsBySubcategory.set(subId, []);
+          }
+          itemsBySubcategory.get(subId)!.push(item);
+        });
+
+        return (
+          <CategoryBlock
+            key={categoryId}
+            category={category}
+            itemsBySubcategory={itemsBySubcategory}
+            allSubcategories={initialSubcategories}
+          />
+        );
+      })}
     </div>
   );
 }
 
 function CategoryBlock({
-  title,
-  items,
+  category,
+  itemsBySubcategory,
+  allSubcategories,
 }: {
-  title: string;
-  items: PuzzleItem[];
+  category: Category;
+  itemsBySubcategory: Map<string, Item[]>;
+  allSubcategories?: Subcategory[];
 }) {
-  const subcats = Array.from(new Set(items.map((i) => i.subcategory)));
+  // Use provided subcategories or empty map
+  const subcategoryMap = new Map<string, Subcategory>();
+  if (allSubcategories) {
+    allSubcategories.forEach(sub => {
+      if (sub.categoryId === category.id) {
+        subcategoryMap.set(sub.id, sub);
+      }
+    });
+  }
 
   return (
     <div className="mb-10">
       <h2 className="inline-block text-2xl font-bold mb-4 px-3 py-1 rounded-xl bg-white/35 backdrop-blur-[12px] text-[#222] shadow-[0_2px_8px_rgba(0,0,0,0.18)]">
-        {title}
+        {category.title}
       </h2>
+      {category.description && (
+        <p className="text-gray-700 mb-4 px-3 text-sm md:text-base">{category.description}</p>
+      )}
 
-      {subcats.map((sub) => (
-        <SubcategoryBlock
-          key={sub}
-          title={sub}
-          items={items.filter((i) => i.subcategory === sub)}
-        />
-      ))}
+      {Array.from(itemsBySubcategory.entries()).map(([subcategoryId, items]) => {
+        const subcategory = subcategoryMap.get(subcategoryId);
+        const subcategoryTitle = subcategory?.title || "Uncategorized";
+
+        return (
+          <SubcategoryBlock
+            key={subcategoryId}
+            title={subcategoryTitle}
+            items={items}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -150,22 +153,22 @@ function SubcategoryBlock({
   items,
 }: {
   title: string;
-  items: PuzzleItem[];
+  items: Item[];
 }) {
   const carouselItems = items.map((item) => (
-          <PuzzleCard key={item.id} item={item} />
+    <PuzzleCard key={item.id} item={item} />
   ));
 
   return <CarouselRow title={title} items={carouselItems} />;
 }
 
-function PuzzleCard({ item }: { item: PuzzleItem }) {
+function PuzzleCard({ item }: { item: Item }) {
   return (
     <article className="rounded-2xl bg-white/20 backdrop-blur-md shadow-[0_10px_28px_rgba(0,0,0,0.14)] overflow-hidden flex flex-col border border-white/30">
       <div className="aspect-[4/3] relative bg-white/30">
-        {item.thumbnail_url ? (
+        {item.thumbUrl ? (
           <Image
-            src={item.thumbnail_url}
+            src={item.thumbUrl}
             alt={item.title}
             fill
             className="object-cover"
@@ -223,4 +226,3 @@ function PuzzleCard({ item }: { item: PuzzleItem }) {
     </article>
   );
 }
-

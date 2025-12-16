@@ -1,6 +1,14 @@
 import { supabaseServer } from "@/lib/supabaseClient";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function DebugPage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

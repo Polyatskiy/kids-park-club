@@ -2,9 +2,19 @@
   "common": {
     "home": "Home",
     "coloring": "Coloring",
+    "coloringPage": {
+      "title": "Coloring Pages for Kids",
+      "description": "Free printable coloring pages",
+      "subtitle": "Fun and educational coloring activities for children."
+    },
     "games": "Games",
     "popular": "Popular",
     "puzzles": "Puzzles",
+    "puzzlesPage": {
+      "title": "Jigsaw Puzzles for Kids",
+      "description": "Interactive jigsaw puzzles",
+      "subtitle": "Assemble puzzles and have fun!"
+    },
     "admin": "Admin",
     "login": "Login",
     "logout": "Logout",
@@ -21,6 +31,8 @@
     },
     "adminPanel": {
       "adminPanel": "Admin Panel",
+      "manageCategories": "Manage Categories",
+      "manageItems": "Manage Items",
       "manageColoring": "Manage Coloring Pages",
       "managePuzzles": "Manage Puzzles",
       "backToSite": "← Back to Site",
