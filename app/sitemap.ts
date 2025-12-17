@@ -28,19 +28,38 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/popular",
   ];
 
-  // Fetch dynamic content (using new schema)
-  // Get items for all locales - we'll generate URLs for each locale
-  const [coloringItems, puzzleItems, coloringCategories, puzzleCategories, audioStories, books] = await Promise.all([
-    getItems('coloring', { locale: null }), // Get all items (will use default locale for titles, but we have IDs)
-    getItems('puzzles', { locale: null }),
-    getCategories('coloring', null),
-    getCategories('puzzles', null),
-    getAudioStories(),
-    getBooks(),
-  ]);
-
   // Generate sitemap entries for all locales
   const entries: MetadataRoute.Sitemap = [];
+
+  // Fetch dynamic content with error handling
+  // If any fetch fails, we'll still return static routes
+  let coloringItems: any[] = [];
+  let puzzleItems: any[] = [];
+  let coloringCategories: any[] = [];
+  let puzzleCategories: any[] = [];
+  let audioStories: any[] = [];
+  let books: any[] = [];
+
+  try {
+    const results = await Promise.allSettled([
+      getItems('coloring', { locale: null }),
+      getItems('puzzles', { locale: null }),
+      getCategories('coloring', null),
+      getCategories('puzzles', null),
+      getAudioStories(),
+      getBooks(),
+    ]);
+
+    if (results[0].status === 'fulfilled') coloringItems = results[0].value;
+    if (results[1].status === 'fulfilled') puzzleItems = results[1].value;
+    if (results[2].status === 'fulfilled') coloringCategories = results[2].value;
+    if (results[3].status === 'fulfilled') puzzleCategories = results[3].value;
+    if (results[4].status === 'fulfilled') audioStories = results[4].value;
+    if (results[5].status === 'fulfilled') books = results[5].value;
+  } catch (error) {
+    console.error('Error fetching sitemap data:', error);
+    // Continue with static routes only
+  }
 
   routing.locales.forEach((locale) => {
     // Add static routes (using localized URLs - EN unprefixed, others prefixed)
@@ -59,8 +78,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     coloringCategories.forEach((category) => {
       entries.push({
         url: `${getLocalizedUrl("/coloring", locale)}?category=${category.id}`,
-        lastModified: category.createdAt,
-        changeFrequency: "weekly",
+        lastModified: category.createdAt || now,
+        changeFrequency: "weekly" as const,
         priority: 0.8,
       });
     });
@@ -69,8 +88,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     puzzleCategories.forEach((category) => {
       entries.push({
         url: `${getLocalizedUrl("/games/jigsaw/gallery", locale)}?category=${category.id}`,
-        lastModified: category.createdAt,
-        changeFrequency: "weekly",
+        lastModified: category.createdAt || now,
+        changeFrequency: "weekly" as const,
         priority: 0.7,
       });
     });
@@ -80,8 +99,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const slug = item.slug || item.id;
       entries.push({
         url: getLocalizedUrl(`/coloring/${slug}`, locale),
-        lastModified: item.updatedAt || item.createdAt,
-        changeFrequency: "monthly",
+        lastModified: item.updatedAt || item.createdAt || now,
+        changeFrequency: "monthly" as const,
         priority: 0.7,
       });
     });
@@ -92,8 +111,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       // Puzzles are accessed via jigsaw game, but we can still list them
       entries.push({
         url: getLocalizedUrl("/games/jigsaw/gallery", locale),
-        lastModified: item.updatedAt || item.createdAt,
-        changeFrequency: "monthly",
+        lastModified: item.updatedAt || item.createdAt || now,
+        changeFrequency: "monthly" as const,
         priority: 0.6,
       });
     });
@@ -103,7 +122,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       entries.push({
         url: getLocalizedUrl(`/audio-stories/${story.slug}`, locale),
         lastModified: now,
-        changeFrequency: "monthly",
+        changeFrequency: "monthly" as const,
         priority: 0.7,
       });
     });
@@ -113,7 +132,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       entries.push({
         url: getLocalizedUrl(`/books/${book.slug}`, locale),
         lastModified: now,
-        changeFrequency: "monthly",
+        changeFrequency: "monthly" as const,
         priority: 0.7,
       });
     });

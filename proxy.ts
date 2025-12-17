@@ -10,6 +10,20 @@ const ADMIN_EMAIL = "polyatskiy@gmail.com";
 const intlMiddleware = createMiddleware(routing);
 
 export async function proxy(req: NextRequest) {
+  // Exclude metadata routes (sitemap.xml, robots.txt, etc.) from locale routing
+  const pathname = req.nextUrl.pathname;
+  
+  // Allow metadata routes to pass through without locale processing
+  if (
+    pathname === '/sitemap.xml' ||
+    pathname === '/robots.txt' ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/api') ||
+    pathname.match(/\.(ico|png|jpg|jpeg|svg|gif|webp|woff|woff2|ttf|eot)$/)
+  ) {
+    return NextResponse.next();
+  }
+
   // Let next-intl handle locale routing FIRST
   // This is critical: next-intl needs to rewrite URLs internally for Next.js routing
   // With 'as-needed', / becomes /en internally (URL stays /, but Next.js sees /en)
@@ -21,7 +35,6 @@ export async function proxy(req: NextRequest) {
   }
   
   // Get the pathname (after next-intl's internal rewrite)
-  const pathname = req.nextUrl.pathname;
   const segments = pathname.split('/').filter(Boolean);
   
   // Determine locale from the path (after rewrite)
@@ -81,7 +94,7 @@ export async function proxy(req: NextRequest) {
   return response;
 }
 
-// Robust matcher: all routes except Next.js internals, API, and static files
+// Robust matcher: all routes except Next.js internals, API, static files, and metadata routes
 export const config = {
   matcher: [
     /*
@@ -90,8 +103,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - sitemap.xml, robots.txt (metadata routes)
      * - static files (images, fonts, etc.)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot)).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot)).*)",
   ],
 };
