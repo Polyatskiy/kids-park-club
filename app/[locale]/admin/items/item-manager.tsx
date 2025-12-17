@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { uploadItem, updateItem, deleteItem, getItemTranslations } from "../admin-actions-i18n";
+import { uploadItem, updateItem, deleteItem, getItemTranslations, bulkUploadItems } from "../admin-actions-i18n";
 import { routing } from "@/i18n/routing";
 import type { Category, Subcategory, Item } from "@/types/content";
 
@@ -39,8 +39,10 @@ export function ItemManager({
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [itemTranslations, setItemTranslations] = useState<Record<string, Record<string, { title: string; shortTitle: string | null; description: string | null }>>>({});
+  const [bulkUploadProgress, setBulkUploadProgress] = useState<{ uploading: boolean; results: any } | null>(null);
 
   const currentCategories = selectedType === 'coloring' ? coloringCategories : puzzleCategories;
   const currentItems = selectedType === 'coloring' ? coloringItems : puzzleItems;
@@ -132,6 +134,22 @@ export function ItemManager({
       await deleteItem(formData);
       window.location.reload();
     } catch (error) {
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleBulkUpload = async (formData: FormData) => {
+    try {
+      setBulkUploadProgress({ uploading: true, results: null });
+      const result = await bulkUploadItems(formData);
+      setBulkUploadProgress({ uploading: false, results: result });
+      
+      // Reload after 2 seconds to show new items
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } catch (error) {
+      setBulkUploadProgress({ uploading: false, results: null });
       alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
@@ -338,6 +356,7 @@ export function ItemManager({
         <button
           onClick={() => {
             setShowCreateForm(!showCreateForm);
+            setShowBulkUpload(false);
             setEditingId(null);
             setSelectedCategoryId("");
             setSelectedSubcategoryId("");
@@ -345,6 +364,16 @@ export function ItemManager({
           className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
         >
           {showCreateForm ? "Cancel" : "Upload New Item"}
+        </button>
+        <button
+          onClick={() => {
+            setShowBulkUpload(!showBulkUpload);
+            setShowCreateForm(false);
+            setEditingId(null);
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+        >
+          {showBulkUpload ? "Cancel" : "📦 Bulk Upload (20-30 files)"}
         </button>
         <div className="flex gap-2">
           <button
@@ -361,6 +390,228 @@ export function ItemManager({
           </button>
         </div>
       </div>
+
+      {showBulkUpload && (
+        <div className="mb-8 bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-lg">
+          <h2 className="text-2xl font-bold mb-4 text-gray-900">Bulk Upload Files</h2>
+          <form action={handleBulkUpload} className="space-y-4">
+            <div>
+              <label className="block mb-2 font-semibold">Type</label>
+              <select
+                name="type"
+                value={selectedType}
+                onChange={(e) => {
+                  setSelectedType(e.target.value as 'coloring' | 'puzzles');
+                  setSelectedCategoryId("");
+                  setSelectedSubcategoryId("");
+                }}
+                required
+                className="w-full border p-2 rounded"
+              >
+                <option value="coloring">Coloring</option>
+                <option value="puzzles">Puzzles</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block mb-2 font-semibold">Category</label>
+              <select
+                name="category_id"
+                value={selectedCategoryId}
+                onChange={(e) => {
+                  setSelectedCategoryId(e.target.value);
+                  setSelectedSubcategoryId("");
+                }}
+                required
+                className="w-full border p-2 rounded"
+              >
+                <option value="">Select category</option>
+                {currentCategories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedCategoryId && (
+              <div>
+                <label className="block mb-2 font-semibold">Subcategory (optional)</label>
+                <select
+                  name="subcategory_id"
+                  value={selectedSubcategoryId}
+                  onChange={(e) => setSelectedSubcategoryId(e.target.value)}
+                  className="w-full border p-2 rounded"
+                >
+                  <option value="">None</option>
+                  {currentSubcategories.map((sub) => (
+                    <option key={sub.id} value={sub.id}>
+                      {sub.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div>
+              <label className="block mb-2 font-semibold">
+                Select Multiple Files (up to 50 files)
+              </label>
+              <input
+                type="file"
+                name="files"
+                accept="image/*"
+                multiple
+                required
+                className="w-full border p-2 rounded"
+              />
+              <p className="text-sm text-gray-600 mt-2">
+                💡 Tip: File names will be used as titles (English) if no translations file provided.
+              </p>
+            </div>
+
+            <div className="border-t pt-4">
+              <h3 className="font-semibold mb-3">🌍 Translations (Optional)</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Upload a CSV or JSON file with translations, or paste JSON directly. This will automatically fill titles, short titles, and descriptions for all 4 languages.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block mb-2 font-semibold text-sm">
+                    Option 1: Upload CSV/JSON File
+                  </label>
+                  <input
+                    type="file"
+                    name="translations_file"
+                    accept=".csv,.json"
+                    className="w-full border p-2 rounded text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    CSV format: filename,title_en,title_pl,title_ru,title_uk,short_title_en,short_title_pl,short_title_ru,short_title_uk,description_en,description_pl,description_ru,description_uk
+                  </p>
+                  <a 
+                    href="/translations-example.csv" 
+                    download
+                    className="text-xs text-blue-600 hover:text-blue-800 underline mt-1 inline-block"
+                  >
+                    📥 Download CSV Example Template
+                  </a>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute top-0 right-0 text-xs text-gray-500">OR</div>
+                  <label className="block mb-2 font-semibold text-sm">
+                    Option 2: Paste JSON
+                  </label>
+                  <textarea
+                    name="translations_json"
+                    placeholder='{"cat-1.png": {"en": {"title": "Cute Cat", "shortTitle": "Cat", "description": "A cute cat coloring page"}, "pl": {"title": "Słodki Kot", ...}}, ...}'
+                    rows={6}
+                    className="w-full border p-2 rounded text-sm font-mono"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    JSON format: {"{"}"filename.png": {"{"}"en": {"{"}"title": "...", "shortTitle": "...", "description": "..."}, "pl": {...}, "ru": {...}, "uk": {...}}{"}"}, ...{"}"}
+                  </p>
+                </div>
+              </div>
+
+              <details className="mt-4">
+                <summary className="cursor-pointer text-sm font-medium text-blue-600 hover:text-blue-800">
+                  📋 Show Format Examples
+                </summary>
+                <div className="mt-2 p-4 bg-gray-50 rounded text-xs space-y-4">
+                  <div>
+                    <p className="font-semibold mb-1">CSV Example:</p>
+                    <pre className="bg-white p-2 rounded border overflow-x-auto">
+{`filename,title_en,title_pl,title_ru,title_uk,short_title_en,short_title_pl,short_title_ru,short_title_uk,description_en,description_pl,description_ru,description_uk
+cat-1.png,Cute Cat,Słodki Kot,Милый Кот,Милий Кіт,Cat,Kot,Кот,Кіт,Free printable cat coloring page,Darmowa kolorowanka kota,Бесплатная раскраска кота,Безкоштовна розмальовка кота
+dog-1.jpg,Happy Dog,Wesoły Pies,Счастливая Собака,Щасливий Пес,Dog,Pies,Собака,Пес,Free printable dog coloring page,Darmowa kolorowanka psa,Бесплатная раскраска собаки,Безкоштовна розмальовка пса`}
+                    </pre>
+                  </div>
+                  <div>
+                    <p className="font-semibold mb-1">JSON Example:</p>
+                    <pre className="bg-white p-2 rounded border overflow-x-auto">
+{`{
+  "cat-1.png": {
+    "en": {
+      "title": "Cute Cat",
+      "shortTitle": "Cat",
+      "description": "Free printable cat coloring page"
+    },
+    "pl": {
+      "title": "Słodki Kot",
+      "shortTitle": "Kot",
+      "description": "Darmowa kolorowanka kota"
+    },
+    "ru": {
+      "title": "Милый Кот",
+      "shortTitle": "Кот",
+      "description": "Бесплатная раскраска кота"
+    },
+    "uk": {
+      "title": "Милий Кіт",
+      "shortTitle": "Кіт",
+      "description": "Безкоштовна розмальовка кота"
+    }
+  }
+}`}
+                    </pre>
+                  </div>
+                </div>
+              </details>
+            </div>
+
+            <button
+              type="submit"
+              disabled={bulkUploadProgress?.uploading}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+            >
+              {bulkUploadProgress?.uploading ? "Uploading..." : "📦 Upload All Files"}
+            </button>
+          </form>
+
+          {bulkUploadProgress?.uploading && (
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <span className="text-blue-800 font-medium">Uploading files, please wait...</span>
+              </div>
+            </div>
+          )}
+
+          {bulkUploadProgress?.results && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <h3 className="font-semibold mb-2">Upload Results:</h3>
+              <div className="space-y-1 text-sm">
+                <p className="text-green-600">
+                  ✅ Successful: {bulkUploadProgress.results.successful} / {bulkUploadProgress.results.total}
+                </p>
+                {bulkUploadProgress.results.failed > 0 && (
+                  <p className="text-red-600">
+                    ❌ Failed: {bulkUploadProgress.results.failed} / {bulkUploadProgress.results.total}
+                  </p>
+                )}
+                {bulkUploadProgress.results.failed > 0 && (
+                  <details className="mt-2">
+                    <summary className="cursor-pointer text-red-600 font-medium">Show failed files</summary>
+                    <ul className="mt-2 space-y-1 pl-4">
+                      {bulkUploadProgress.results.results
+                        .filter((r: any) => !r.success)
+                        .map((r: any, idx: number) => (
+                          <li key={idx} className="text-red-600">
+                            {r.fileName}: {r.error}
+                          </li>
+                        ))}
+                    </ul>
+                  </details>
+                )}
+              </div>
+              <p className="mt-2 text-sm text-gray-600">Page will reload in a moment...</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {showCreateForm && !editingId && (
         <div onReset={() => {

@@ -781,3 +781,305 @@ export async function getItemTranslations(itemId: string) {
 
   return translations;
 }
+
+// =============================================
+// Helper: Parse translations from CSV/JSON
+// =============================================
+
+type TranslationData = {
+  [locale: string]: {
+    title: string;
+    shortTitle?: string | null;
+    description?: string | null;
+  };
+};
+
+type TranslationsMap = {
+  [fileName: string]: TranslationData;
+};
+
+/**
+ * Parse CSV file with translations
+ * Format: filename,title_en,title_pl,title_ru,title_uk,short_title_en,short_title_pl,short_title_ru,short_title_uk,description_en,description_pl,description_ru,description_uk
+ */
+async function parseCSVTranslations(csvFile: File): Promise<TranslationsMap> {
+  const text = await csvFile.text();
+  const lines = text.split('\n').filter(line => line.trim());
+  const translations: TranslationsMap = {};
+
+  // Skip header row
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    // Parse CSV line (handle quoted values and escaped quotes)
+    const values: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let j = 0; j < line.length; j++) {
+      const char = line[j];
+      const nextChar = line[j + 1];
+      
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          // Escaped quote
+          current += '"';
+          j++; // Skip next quote
+        } else {
+          // Toggle quote state
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        values.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    values.push(current.trim());
+
+    if (values.length < 2) continue;
+
+    const fileName = values[0];
+    const locales = ['en', 'pl', 'ru', 'uk'];
+    const translationData: TranslationData = {};
+
+    locales.forEach((locale, index) => {
+      const titleIndex = 1 + index;
+      const shortTitleIndex = 5 + index;
+      const descriptionIndex = 9 + index;
+
+      if (values[titleIndex]) {
+        translationData[locale] = {
+          title: values[titleIndex] || '',
+          shortTitle: values[shortTitleIndex] || null,
+          description: values[descriptionIndex] || null,
+        };
+      }
+    });
+
+    if (Object.keys(translationData).length > 0) {
+      translations[fileName] = translationData;
+    }
+  }
+
+  return translations;
+}
+
+/**
+ * Parse JSON file with translations
+ * Format: { "filename.png": { "en": { "title": "...", "shortTitle": "...", "description": "..." }, ... } }
+ */
+async function parseJSONTranslations(jsonFile: File): Promise<TranslationsMap> {
+  const text = await jsonFile.text();
+  return JSON.parse(text) as TranslationsMap;
+}
+
+/**
+ * Parse JSON text with translations
+ */
+function parseJSONText(jsonText: string): TranslationsMap {
+  return JSON.parse(jsonText) as TranslationsMap;
+}
+
+/**
+ * Get translations for a file from the translations map
+ */
+function getFileTranslations(fileName: string, translationsMap: TranslationsMap): TranslationData | null {
+  // Try exact match first
+  if (translationsMap[fileName]) {
+    return translationsMap[fileName];
+  }
+
+  // Try without extension
+  const fileNameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
+  if (translationsMap[fileNameWithoutExt]) {
+    return translationsMap[fileNameWithoutExt];
+  }
+
+  // Try case-insensitive match
+  const lowerFileName = fileName.toLowerCase();
+  for (const key in translationsMap) {
+    if (key.toLowerCase() === lowerFileName || key.toLowerCase() === fileNameWithoutExt.toLowerCase()) {
+      return translationsMap[key];
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Bulk upload multiple items (20-30 files at once)
+ * Supports CSV/JSON files with translations for all 4 languages
+ */
+export async function bulkUploadItems(formData: FormData) {
+  const type = formData.get("type")?.toString() as ContentType;
+  const categoryId = formData.get("category_id")?.toString();
+  const subcategoryId = formData.get("subcategory_id")?.toString() || null;
+  const files = formData.getAll("files") as File[];
+  const translationsFile = formData.get("translations_file") as File | null;
+  const translationsJson = formData.get("translations_json")?.toString() || null;
+
+  if (!type || !categoryId || !files || files.length === 0) {
+    throw new Error("Type, category ID, and at least one file are required.");
+  }
+
+  if (files.length > 50) {
+    throw new Error("Maximum 50 files allowed per upload.");
+  }
+
+  // Parse translations
+  let translationsMap: TranslationsMap = {};
+  if (translationsFile) {
+    const fileName = translationsFile.name.toLowerCase();
+    if (fileName.endsWith('.csv')) {
+      translationsMap = await parseCSVTranslations(translationsFile);
+    } else if (fileName.endsWith('.json')) {
+      translationsMap = await parseJSONTranslations(translationsFile);
+    } else {
+      throw new Error("Translations file must be CSV or JSON format.");
+    }
+  } else if (translationsJson) {
+    try {
+      translationsMap = parseJSONText(translationsJson);
+    } catch (error) {
+      throw new Error("Invalid JSON format in translations field.");
+    }
+  }
+
+  const supabase = supabaseServer();
+  const bucket = type === 'coloring' ? 'coloring' : 'puzzles';
+  const results: Array<{ fileName: string; success: boolean; itemId?: string; error?: string }> = [];
+
+  // Process each file
+  for (const file of files) {
+    try {
+      // Get translations for this file
+      const fileTranslations = getFileTranslations(file.name, translationsMap);
+      
+      // Generate title from filename if no translation found
+      const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+      const defaultTitle = fileNameWithoutExt.trim() || `Item ${randomUUID().slice(0, 8)}`;
+      
+      // Use translations or fallback to filename
+      const translations: TranslationData = fileTranslations || {
+        en: { title: defaultTitle, shortTitle: null, description: null }
+      };
+
+      // Ensure English title exists
+      if (!translations.en || !translations.en.title) {
+        translations.en = { title: defaultTitle, shortTitle: null, description: null };
+      }
+
+      // Generate item ID
+      const itemId = randomUUID();
+
+      // Process image
+      const fileBuffer = Buffer.from(await file.arrayBuffer());
+      const thumbBuffer = await generateThumbnail(fileBuffer);
+
+      // Get image dimensions
+      const metadata = await sharp(fileBuffer).metadata();
+      const width = metadata.width || null;
+      const height = metadata.height || null;
+
+      // Determine file extensions
+      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+      const sourceExt = ext === "jpg" || ext === "jpeg" ? "jpg" : "png";
+
+      // Storage paths
+      const sourcePath = `${type}/${categoryId}/${subcategoryId || 'uncategorized'}/${itemId}/source.${sourceExt}`;
+      const thumbPath = `${type}/${categoryId}/${subcategoryId || 'uncategorized'}/${itemId}/thumb.webp`;
+
+      // Upload source file
+      const { error: sourceError } = await supabase.storage
+        .from(bucket)
+        .upload(sourcePath, fileBuffer, {
+          contentType: file.type || `image/${sourceExt}`,
+          upsert: false,
+        });
+
+      if (sourceError) {
+        throw new Error(`Failed to upload source: ${sourceError.message}`);
+      }
+
+      // Upload thumbnail
+      const { error: thumbError } = await supabase.storage
+        .from(bucket)
+        .upload(thumbPath, thumbBuffer, {
+          contentType: "image/webp",
+          upsert: false,
+        });
+
+      if (thumbError) {
+        // Cleanup source if thumbnail fails
+        await supabase.storage.from(bucket).remove([sourcePath]);
+        throw new Error(`Failed to upload thumbnail: ${thumbError.message}`);
+      }
+
+      // Create item record
+      const { data: item, error: itemError } = await supabase
+        .from("items")
+        .insert({
+          id: itemId,
+          type,
+          category_id: categoryId,
+          subcategory_id: subcategoryId,
+          slug: null,
+          source_path: sourcePath,
+          thumb_path: thumbPath,
+          width,
+          height,
+          status: 'published',
+          is_visible: true,
+        })
+        .select()
+        .single();
+
+      if (itemError || !item) {
+        // Cleanup files if database insert fails
+        await supabase.storage.from(bucket).remove([sourcePath, thumbPath]);
+        throw new Error(`Failed to create item record: ${itemError?.message}`);
+      }
+
+      // Create translations for all locales
+      const translationInserts = Object.entries(translations).map(([locale, trans]) => ({
+        item_id: itemId,
+        locale,
+        title: trans.title,
+        short_title: trans.shortTitle || null,
+        description: trans.description || null,
+        search_text: `${trans.title} ${trans.description || ''}`.trim() || null,
+      }));
+
+      if (translationInserts.length > 0) {
+        const { error: translationError } = await supabase
+          .from("item_i18n")
+          .insert(translationInserts);
+
+        if (translationError) {
+          console.error(`Translation error for ${file.name}:`, translationError);
+          // Don't fail the whole upload, just log the error
+        }
+      }
+
+      results.push({ fileName: file.name, success: true, itemId: itemId });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      results.push({ fileName: file.name, success: false, error: errorMessage });
+    }
+  }
+
+  // Revalidate paths
+  revalidatePath('/admin/items');
+  revalidateTag('items');
+
+  return {
+    success: true,
+    total: files.length,
+    successful: results.filter(r => r.success).length,
+    failed: results.filter(r => !r.success).length,
+    results,
+  };
+}
