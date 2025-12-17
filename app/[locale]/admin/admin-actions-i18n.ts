@@ -803,9 +803,44 @@ type TranslationsMap = {
  * Format: filename,title_en,title_pl,title_ru,title_uk,short_title_en,short_title_pl,short_title_ru,short_title_uk,description_en,description_pl,description_ru,description_uk
  */
 async function parseCSVTranslations(csvFile: File): Promise<TranslationsMap> {
-  const text = await csvFile.text();
-  const lines = text.split('\n').filter(line => line.trim());
+  let text: string;
+  try {
+    // Try to read as UTF-8, handle BOM if present
+    text = await csvFile.text();
+    // Remove BOM if present
+    if (text.charCodeAt(0) === 0xFEFF) {
+      text = text.slice(1);
+    }
+  } catch (error) {
+    throw new Error(`Failed to read CSV file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+
+  if (!text.trim()) {
+    throw new Error("CSV file is empty.");
+  }
+
+  const lines = text.split(/\r?\n/).filter(line => line.trim());
+  
+  if (lines.length < 2) {
+    throw new Error("CSV file must contain at least a header row and one data row.");
+  }
+
   const translations: TranslationsMap = {};
+
+  // Detect delimiter (comma or semicolon)
+  const firstLine = lines[0];
+  const commaCount = (firstLine.match(/,/g) || []).length;
+  const semicolonCount = (firstLine.match(/;/g) || []).length;
+  const delimiter = semicolonCount > commaCount ? ';' : ',';
+
+  // Validate header row
+  const header = lines[0].toLowerCase();
+  const expectedColumns = ['filename', 'title_en', 'title_pl', 'title_ru', 'title_uk'];
+  const hasRequiredColumns = expectedColumns.every(col => header.includes(col));
+  
+  if (!hasRequiredColumns) {
+    throw new Error(`CSV file must contain required columns: filename, title_en, title_pl, title_ru, title_uk. Found: ${header.substring(0, 100)}`);
+  }
 
   // Skip header row
   for (let i = 1; i < lines.length; i++) {
@@ -830,7 +865,7 @@ async function parseCSVTranslations(csvFile: File): Promise<TranslationsMap> {
           // Toggle quote state
           inQuotes = !inQuotes;
         }
-      } else if (char === ',' && !inQuotes) {
+      } else if (char === delimiter && !inQuotes) {
         values.push(current.trim());
         current = '';
       } else {
@@ -872,15 +907,61 @@ async function parseCSVTranslations(csvFile: File): Promise<TranslationsMap> {
  * Format: { "filename.png": { "en": { "title": "...", "shortTitle": "...", "description": "..." }, ... } }
  */
 async function parseJSONTranslations(jsonFile: File): Promise<TranslationsMap> {
-  const text = await jsonFile.text();
-  return JSON.parse(text) as TranslationsMap;
+  let text: string;
+  try {
+    text = await jsonFile.text();
+    // Remove BOM if present
+    if (text.charCodeAt(0) === 0xFEFF) {
+      text = text.slice(1);
+    }
+  } catch (error) {
+    throw new Error(`Failed to read JSON file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+
+  if (!text.trim()) {
+    throw new Error("JSON file is empty.");
+  }
+
+  try {
+    const parsed = JSON.parse(text) as TranslationsMap;
+    
+    // Validate structure
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      throw new Error("JSON must be an object with filename keys.");
+    }
+
+    return parsed;
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error(`Invalid JSON syntax: ${error.message}`);
+    }
+    throw error;
+  }
 }
 
 /**
  * Parse JSON text with translations
  */
 function parseJSONText(jsonText: string): TranslationsMap {
-  return JSON.parse(jsonText) as TranslationsMap;
+  if (!jsonText.trim()) {
+    throw new Error("JSON text is empty.");
+  }
+
+  try {
+    const parsed = JSON.parse(jsonText) as TranslationsMap;
+    
+    // Validate structure
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      throw new Error("JSON must be an object with filename keys.");
+    }
+
+    return parsed;
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new Error(`Invalid JSON syntax: ${error.message}`);
+    }
+    throw error;
+  }
 }
 
 /**
@@ -932,19 +1013,37 @@ export async function bulkUploadItems(formData: FormData) {
   // Parse translations
   let translationsMap: TranslationsMap = {};
   if (translationsFile) {
-    const fileName = translationsFile.name.toLowerCase();
-    if (fileName.endsWith('.csv')) {
-      translationsMap = await parseCSVTranslations(translationsFile);
-    } else if (fileName.endsWith('.json')) {
-      translationsMap = await parseJSONTranslations(translationsFile);
-    } else {
-      throw new Error("Translations file must be CSV or JSON format.");
+    try {
+      const fileName = translationsFile.name.toLowerCase();
+      const fileSize = translationsFile.size;
+      
+      // Check file size (max 5MB)
+      if (fileSize > 5 * 1024 * 1024) {
+        throw new Error(`File is too large (${Math.round(fileSize / 1024)}KB). Maximum size is 5MB.`);
+      }
+      
+      if (fileName.endsWith('.csv')) {
+        translationsMap = await parseCSVTranslations(translationsFile);
+        console.log(`Parsed CSV file: ${Object.keys(translationsMap).length} translations found`);
+      } else if (fileName.endsWith('.json')) {
+        translationsMap = await parseJSONTranslations(translationsFile);
+        console.log(`Parsed JSON file: ${Object.keys(translationsMap).length} translations found`);
+      } else {
+        throw new Error("Translations file must be CSV or JSON format.");
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Translation file parsing error:', error);
+      throw new Error(`Failed to parse translations file: ${errorMessage}`);
     }
   } else if (translationsJson) {
     try {
       translationsMap = parseJSONText(translationsJson);
+      console.log(`Parsed JSON text: ${Object.keys(translationsMap).length} translations found`);
     } catch (error) {
-      throw new Error("Invalid JSON format in translations field.");
+      const errorMessage = error instanceof Error ? error.message : 'Invalid JSON';
+      console.error('JSON parsing error:', error);
+      throw new Error(`Invalid JSON format in translations field: ${errorMessage}`);
     }
   }
 
@@ -963,13 +1062,18 @@ export async function bulkUploadItems(formData: FormData) {
       const defaultTitle = fileNameWithoutExt.trim() || `Item ${randomUUID().slice(0, 8)}`;
       
       // Use translations or fallback to filename
-      const translations: TranslationData = fileTranslations || {
-        en: { title: defaultTitle, shortTitle: null, description: null }
-      };
-
-      // Ensure English title exists
-      if (!translations.en || !translations.en.title) {
-        translations.en = { title: defaultTitle, shortTitle: null, description: null };
+      let translations: TranslationData;
+      if (fileTranslations) {
+        translations = fileTranslations;
+        // Ensure English title exists
+        if (!translations.en || !translations.en.title) {
+          translations.en = { title: defaultTitle, shortTitle: null, description: null };
+        }
+      } else {
+        // No translations found, use filename
+        translations = {
+          en: { title: defaultTitle, shortTitle: null, description: null }
+        };
       }
 
       // Generate item ID

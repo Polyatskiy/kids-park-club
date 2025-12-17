@@ -141,7 +141,32 @@ export function ItemManager({
   const handleBulkUpload = async (formData: FormData) => {
     try {
       setBulkUploadProgress({ uploading: true, results: null });
+      
+      // Validate required fields
+      const type = formData.get("type")?.toString();
+      const categoryId = formData.get("category_id")?.toString();
+      const files = formData.getAll("files") as File[];
+      const translationsFile = formData.get("translations_file") as File | null;
+      
+      if (!type || !categoryId) {
+        throw new Error("Please select type and category.");
+      }
+      
+      if (!files || files.length === 0) {
+        throw new Error("Please select at least one file to upload.");
+      }
+
+      console.log('Starting bulk upload:', {
+        type,
+        categoryId,
+        filesCount: files.length,
+        hasTranslationsFile: !!translationsFile,
+        translationsFileName: translationsFile?.name
+      });
+      
       const result = await bulkUploadItems(formData);
+      console.log('Bulk upload result:', result);
+      
       setBulkUploadProgress({ uploading: false, results: result });
       
       // Reload after 2 seconds to show new items
@@ -150,7 +175,13 @@ export function ItemManager({
       }, 2000);
     } catch (error) {
       setBulkUploadProgress({ uploading: false, results: null });
-      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Bulk upload error:', error);
+      console.error('Error details:', {
+        message: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      alert(`Error: ${errorMessage}\n\nCheck browser console for details.`);
     }
   };
 
