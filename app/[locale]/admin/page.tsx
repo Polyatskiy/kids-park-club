@@ -37,14 +37,6 @@ export default async function AdminPage({
           Manage Items (Coloring & Puzzles)
         </Link>
 
-        <Link href="/admin/coloring" className="text-blue-700 hover:text-blue-900 font-semibold underline decoration-2 underline-offset-2">
-          {t("manageColoring")} (Legacy)
-        </Link>
-
-        <Link href="/admin/puzzles" className="text-blue-700 hover:text-blue-900 font-semibold underline decoration-2 underline-offset-2">
-          {t("managePuzzles")} (Legacy)
-        </Link>
-
         <Link href="/" className="text-blue-700 hover:text-blue-900 font-semibold underline decoration-2 underline-offset-2">
           {t("backToSite")}
         </Link>
