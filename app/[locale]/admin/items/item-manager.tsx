@@ -511,7 +511,7 @@ export function ItemManager({
                     className="w-full border p-2 rounded text-sm font-mono"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    JSON format: {"{"}"filename.png": {"{"}"en": {"{"}"title": "...", "shortTitle": "...", "description": "..."}, "pl": {...}, "ru": {...}, "uk": {...}}{"}"}, ...{"}"}
+                    JSON format: Object with filename as key, containing locale objects (en, pl, ru, uk) with title, shortTitle, and description fields. See example below.
                   </p>
                 </div>
               </div>

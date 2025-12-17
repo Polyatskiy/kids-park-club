@@ -1072,8 +1072,9 @@ export async function bulkUploadItems(formData: FormData) {
   }
 
   // Revalidate paths
-  revalidatePath('/admin/items');
-  revalidateTag('items');
+  revalidatePath('/admin/items', 'page');
+  revalidateTag('items', 'max');
+  revalidateTag('sitemap', 'max');
 
   return {
     success: true,
