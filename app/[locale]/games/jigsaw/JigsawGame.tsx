@@ -30,7 +30,7 @@ const BOARD_HEIGHT_RATIO = 0.62;
 
 // Margins and padding
 const OUTER_PADDING = 8;
-const BOARD_MARGIN = 8;
+const BOARD_MARGIN = 4; // Reduced from 8 to maximize board size
 const TRAY_MARGIN = 8;
 const TRAY_INNER_PADDING = 6;
 
@@ -310,9 +310,14 @@ const calculateLayout = (
     scatterHeight = trayZoneHeight - TRAY_MARGIN * 2 - TRAY_INNER_PADDING * 2;
   }
   
-  // Available space for the board (with margins)
+  // Available space for the board - use maximum available space
+  // Minimize margins to maximize board size and image scale
   const boardAvailableWidth = boardZoneWidth - BOARD_MARGIN * 2;
   const boardAvailableHeight = boardZoneHeight - BOARD_MARGIN * 2;
+  
+  // Ensure we have positive dimensions
+  const effectiveBoardWidth = Math.max(1, boardAvailableWidth);
+  const effectiveBoardHeight = Math.max(1, boardAvailableHeight);
   
   // Calculate board dimensions preserving IMAGE aspect ratio (not puzzle grid)
   // The board must maintain the original image's aspect ratio to prevent stretching
@@ -320,35 +325,36 @@ const calculateLayout = (
   let boardHeight: number;
   let cellSize: number;
   
+  // Calculate puzzle grid aspect ratio
+  const puzzleAspectRatio = cols / rows;
+  
   if (imageAspectRatio && imageAspectRatio > 0) {
-    // Step 1: Calculate MAXIMUM board size that fits in available space
-    // while preserving IMAGE aspect ratio (contain logic)
-    // Priority: maximize HEIGHT first (user wants full-height board), then width
+    // Step 1: Calculate MAXIMUM board size that uses ALL available space
+    // Board must use IMAGE aspect ratio to adapt to the image, not force image to fit fixed board
+    // Priority: use full available HEIGHT if image is portrait, full WIDTH if image is landscape
     
-    // Calculate what size the board would be if we fill available HEIGHT (priority)
-    const boardHeightByHeight = boardAvailableHeight;
+    // Calculate what size board would be if we use full available height
+    const boardHeightByHeight = effectiveBoardHeight;
     const boardWidthByHeight = boardHeightByHeight * imageAspectRatio;
     
-    // Calculate what size the board would be if we fill available width
-    const boardWidthByWidth = boardAvailableWidth;
+    // Calculate what size board would be if we use full available width
+    const boardWidthByWidth = effectiveBoardWidth;
     const boardHeightByWidth = boardWidthByWidth / imageAspectRatio;
     
-    // Use the dimension that maximizes board size while ensuring it fits
-    // Priority: use full height if possible, otherwise use full width
-    if (boardWidthByHeight <= boardAvailableWidth) {
-      // Height is the limiting factor - use full available height (PRIORITY)
-      boardWidth = boardWidthByHeight;
+    // Choose the dimension that maximizes board size while ensuring it fits
+    // This adapts board to image aspect ratio, not vice versa
+    if (boardWidthByHeight <= effectiveBoardWidth) {
+      // Height is the limiting factor - use full available height (portrait image)
       boardHeight = boardHeightByHeight;
+      boardWidth = boardWidthByHeight;
     } else {
-      // Width is the limiting factor - use full available width
+      // Width is the limiting factor - use full available width (landscape image)
       boardWidth = boardWidthByWidth;
       boardHeight = boardHeightByWidth;
     }
     
-    // Step 2: Calculate cellSize to fit the puzzle grid within the board
-    // The grid must fit within the board (it may not fill it completely if aspect ratios differ)
-    const puzzleAspectRatio = cols / rows;
-    
+    // Step 2: Calculate cellSize to ensure grid COVERS entire board
+    // Grid must cover 100% of board to ensure all image parts are accessible
     // Calculate cellSize if grid fills board width
     const cellSizeByBoardWidth = boardWidth / cols;
     const gridHeightByWidth = rows * cellSizeByBoardWidth;
@@ -357,19 +363,25 @@ const calculateLayout = (
     const cellSizeByBoardHeight = boardHeight / rows;
     const gridWidthByHeight = cols * cellSizeByBoardHeight;
     
-    // Choose cellSize that ensures grid fits within board
-    if (gridHeightByWidth <= boardHeight) {
-      // Grid fits by width
+    // Choose cellSize that ensures grid COVERS (not just fits) the entire board
+    // Use the LARGER cellSize to ensure grid covers entire board area
+    if (gridHeightByWidth >= boardHeight) {
+      // Grid covers by width - use this cellSize
       cellSize = Math.max(MIN_CELL_SIZE, Math.floor(cellSizeByBoardWidth));
     } else {
-      // Grid fits by height
+      // Grid covers by height - use this cellSize
       cellSize = Math.max(MIN_CELL_SIZE, Math.floor(cellSizeByBoardHeight));
     }
     
-    // Step 3: Keep board dimensions as calculated (maximized based on image aspect ratio)
-    // Do NOT recalculate board from cellSize - this would shrink the board
-    // The grid may be smaller than the board if aspect ratios differ, which is fine
-    // The image will scale to fit the board using "contain" logic
+    // Step 3: Recalculate board from cellSize to ensure grid covers 100% of board
+    // This ensures grid covers entire board area, and image covers entire grid
+    const gridWidth = cols * cellSize;
+    const gridHeight = rows * cellSize;
+    
+    // Use grid dimensions as board dimensions to ensure 100% coverage
+    // This ensures puzzle covers 100% of image area - no missing pieces
+    boardWidth = gridWidth;
+    boardHeight = gridHeight;
   } else {
     // Fallback: use puzzle grid aspect ratio if image dimensions not available
     const puzzleAspectRatio = cols / rows;
@@ -400,9 +412,11 @@ const calculateLayout = (
   const tabRadius = cellSize * 0.22;
   const pieceVisualSize = Math.ceil(cellSize + tabRadius * 2);
   
-  // Center the board within the board zone
+  // Position the board within the board zone
+  // Center horizontally, align to top vertically to maximize height usage
   const boardOriginX = (isMobile ? OUTER_PADDING : OUTER_PADDING + trayZoneWidth + 16) + Math.floor((boardZoneWidth - boardWidth) / 2);
-  const boardOriginY = boardZoneY + Math.floor((boardZoneHeight - boardHeight) / 2);
+  // Align board to top of zone (with minimal margin) to eliminate empty space at top
+  const boardOriginY = boardZoneY + BOARD_MARGIN;
   
   const workspaceWidth = containerWidth;
   const workspaceHeight = containerHeight;
@@ -417,7 +431,7 @@ const calculateLayout = (
     tabRadius,
     pieceVisualSize,
     boardWidth,
-    boardHeight,
+    boardHeight, // Board height is already maximized to use full available height
     boardOriginX,
     boardOriginY,
     trayZoneWidth,
@@ -780,11 +794,16 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     let newLeft = localX - drag.offsetX;
     let newTop = localY - drag.offsetY;
 
-    const maxX = drag.workspaceWidth - pieceVisualSize;
-    const maxY = drag.workspaceHeight - pieceVisualSize;
+    // Allow piece to move freely to reach board edges
+    // Piece center is at (newLeft + tabRadius + cellSize/2, newTop + tabRadius + cellSize/2)
+    // To allow center to reach workspace edges, we need extended bounds
+    const minX = -tabRadius - cellSize / 2; // Allow piece center to reach left edge (x=0)
+    const minY = -tabRadius - cellSize / 2; // Allow piece center to reach top edge (y=0)
+    const maxX = drag.workspaceWidth - (tabRadius + cellSize / 2); // Allow piece center to reach right edge
+    const maxY = drag.workspaceHeight - (tabRadius + cellSize / 2); // Allow piece center to reach bottom edge
 
-    newLeft = clamp(newLeft, 0, maxX);
-    newTop = clamp(newTop, 0, maxY);
+    newLeft = clamp(newLeft, minX, maxX);
+    newTop = clamp(newTop, minY, maxY);
 
     pieceEl.style.left = `${newLeft}px`;
     pieceEl.style.top = `${newTop}px`;
@@ -843,11 +862,16 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
       finalY = correctPos.y;
       snapped = true;
     } else {
-      const rect = containerEl.getBoundingClientRect();
-      const maxX = rect.width - pieceVisualSize;
-      const maxY = rect.height - pieceVisualSize;
-      finalX = clamp(currentLeft, 0, maxX);
-      finalY = clamp(currentTop, 0, maxY);
+      // Use workspace dimensions from drag state for consistent boundaries
+      // Allow piece to move freely to reach board edges
+      // Piece center is at (currentLeft + tabRadius + cellSize/2, currentTop + tabRadius + cellSize/2)
+      // To allow center to reach workspace edges, we need extended bounds
+      const minX = -tabRadius - cellSize / 2; // Allow piece center to reach left edge (x=0)
+      const minY = -tabRadius - cellSize / 2; // Allow piece center to reach top edge (y=0)
+      const maxX = drag.workspaceWidth - (tabRadius + cellSize / 2); // Allow piece center to reach right edge
+      const maxY = drag.workspaceHeight - (tabRadius + cellSize / 2); // Allow piece center to reach bottom edge
+      finalX = clamp(currentLeft, minX, maxX);
+      finalY = clamp(currentTop, minY, maxY);
     }
 
     pieceEl.style.left = `${finalX}px`;
@@ -994,7 +1018,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
         maxWidth: '100%',
         maxHeight: '100%',
         borderRadius: 16,
-        overflow: 'hidden',
+        overflow: 'visible', // Changed from 'hidden' to allow pieces to move freely without clipping
         background: 'radial-gradient(circle at top left, #4b5563 0, #111827 55%, #020617 100%)',
         boxShadow: '0 16px 40px rgba(0,0,0,0.55)',
         touchAction: 'none',
@@ -1031,7 +1055,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
       />
 
       {/* Hint overlay */}
-      {showHint && (
+      {showHint && imageDimensions && (
         <div
           style={{
             position: 'absolute',
@@ -1040,9 +1064,10 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
             width: boardWidth,
             height: boardHeight,
             backgroundImage: `url(${selectedImage.src})`,
-            // Use 'contain' to preserve aspect ratio and fit image within board without cropping
-            // This ensures the image is never stretched, matching the user's requirement
-            backgroundSize: 'contain',
+            // Use 'cover' to ensure image fills entire board area
+            // This matches the SVG pieces which use preserveAspectRatio="slice"
+            // Both hint and pieces will show image covering 100% of board/grid area
+            backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
             opacity: 0.4,
@@ -1050,7 +1075,8 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
             borderRadius: 12,
             zIndex: 5,
             // Ensure the hint container matches the exact board dimensions
-            overflow: 'hidden',
+            // Don't use overflow: hidden here - it might clip the image
+            overflow: 'visible',
           }}
         />
       )}
@@ -1105,7 +1131,10 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
                 width={boardWidth}
                 height={boardHeight}
                 clipPath={`url(#${clipId})`}
-                preserveAspectRatio="xMidYMid meet"
+                preserveAspectRatio="xMidYMid slice"
+                // 'slice' (cover) ensures image fills entire boardWidth x boardHeight
+                // Image is scaled to cover the entire board/grid area while preserving aspect ratio
+                // This ensures 100% image coverage of the puzzle grid
               />
               <path
                 d={path}
