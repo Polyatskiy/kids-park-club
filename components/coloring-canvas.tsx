@@ -1447,7 +1447,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       const r = data[idx];
       const g = data[idx + 1];
       const b = data[idx + 2];
-    return (
+      return (
         Math.abs(r - tr) < TOLERANCE &&
         Math.abs(g - tg) < TOLERANCE &&
         Math.abs(b - tb) < TOLERANCE
@@ -1471,9 +1471,25 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     const finalB = fillB;
     const finalA = Math.round(opacity * 255);
 
+    // Early‑exit optimisation: if the starting pixel in the draw layer
+    // already has the target color/alpha, the fill would be a no‑op.
+    // This avoids doing a full flood fill on already‑filled regions.
+    const existingIdx = (iy * w + ix) * 4;
+    const dr = drawData.data[existingIdx];
+    const dg = drawData.data[existingIdx + 1];
+    const db = drawData.data[existingIdx + 2];
+    const da = drawData.data[existingIdx + 3];
+    if (dr === finalR && dg === finalG && db === finalB && da === finalA) {
+      return;
+    }
+
     // Perform flood fill
-    while (queue.length > 0) {
-      const { x, y } = queue.shift()!;
+    // Use an index‑based queue instead of Array.shift() to keep this
+    // loop O(n) instead of O(n²) for large fill regions.
+    let qIndex = 0;
+    let filledPixelCount = 0;
+    while (qIndex < queue.length) {
+      const { x, y } = queue[qIndex++];
       const idx = y * w + x;
 
       if (x < 0 || x >= w || y < 0 || y >= h) continue;
@@ -1483,6 +1499,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       if (!match(pixelIdx)) continue;
 
       visited[idx] = 1;
+      filledPixelCount++;
 
       // Write absolute RGBA values (no blending) - matches brush behavior
       // This ensures the fill color is exactly correct on first click
@@ -1496,6 +1513,16 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       if (x < w - 1) queue.push({ x: x + 1, y });
       if (y > 0) queue.push({ x, y: y - 1 });
       if (y < h - 1) queue.push({ x, y: y + 1 });
+    }
+
+    // If the filled area is extremely large, skip the expensive
+    // edge‑expansion and smoothing passes – they scan the whole
+    // canvas and are the main source of long INP on huge regions.
+    const LARGE_FILL_THRESHOLD = 300_000; // ~300k pixels
+    if (filledPixelCount > LARGE_FILL_THRESHOLD) {
+      drawCtx.putImageData(drawData, 0, 0);
+      saveUndo();
+      return;
     }
 
     // OVERPAINT EXPANSION: Paint 1-2 pixels beyond filled region to cover anti-aliased edges
