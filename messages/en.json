@@ -18,6 +18,8 @@
     "admin": "Admin",
     "login": "Login",
     "logout": "Logout",
+    "menu": "Menu",
+    "language": "Language",
     "footer": {
       "copyright": "© {year} Kids Park Club",
       "tagline": "Coloring pages and games for kids"

@@ -233,19 +233,19 @@ function PuzzleCard({ item }: { item: Item }) {
             e.preventDefault();
             toggleOpen();
           }}
-          className="absolute bottom-3 right-3 inline-flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-full bg-surface shadow-soft hover:bg-surface-muted hover:shadow-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="absolute bottom-3 right-3 inline-flex items-center justify-center w-[31px] h-[31px] md:w-[34px] md:h-[34px] rounded-full bg-surface shadow-soft hover:bg-surface-muted hover:shadow-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           aria-haspopup="true"
           aria-expanded={isOpen}
           aria-label="Choose puzzle size"
         >
-          <span className="relative inline-flex items-center justify-center w-8 h-8 md:w-9 md:h-9">
+          <span className="relative inline-flex items-center justify-center w-[22px] h-[22px] md:w-[25px] md:h-[25px]">
             <img
               src="/icons/puzzle.png"
               alt=""
               className="w-full h-full object-contain drop-shadow-md"
               aria-hidden="true"
             />
-            <span className="absolute inset-0 flex items-center justify-center text-sm md:text-base font-extrabold text-slate-900 drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]">
+            <span className="absolute inset-0 flex items-center justify-center text-xs md:text-sm font-extrabold text-slate-900 drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]">
               {defaultOption?.pieces}
             </span>
           </span>
@@ -262,17 +262,17 @@ function PuzzleCard({ item }: { item: Item }) {
               <Link
                 key={opt.pieces}
                 href={`/games/jigsaw?imageId=${item.id}&size=${opt.pieces}`}
-                className="inline-flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-full bg-surface-muted text-xs font-semibold hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="inline-flex items-center justify-center w-[31px] h-[31px] md:w-[34px] md:h-[34px] rounded-full bg-surface-muted text-xs font-semibold hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 onClick={closeMenu}
               >
-                <span className="relative inline-flex items-center justify-center w-8 h-8 md:w-9 md:h-9">
+                <span className="relative inline-flex items-center justify-center w-[22px] h-[22px] md:w-[25px] md:h-[25px]">
                   <img
                     src="/icons/puzzle.png"
                     alt=""
                     className="w-full h-full object-contain"
                     aria-hidden="true"
                   />
-                  <span className="absolute inset-0 flex items-center justify-center text-sm font-extrabold text-slate-900 drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]">
+                  <span className="absolute inset-0 flex items-center justify-center text-xs md:text-sm font-extrabold text-slate-900 drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]">
                     {opt.pieces}
                   </span>
                 </span>

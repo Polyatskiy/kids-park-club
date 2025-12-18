@@ -8,6 +8,8 @@
     "admin": "Адміністратор",
     "login": "Увійти",
     "logout": "Вийти",
+    "menu": "Меню",
+    "language": "Мова",
     "footer": {
       "copyright": "© {year} Kids Park Club",
       "tagline": "Розмальовки та ігри для дітей"

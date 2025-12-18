@@ -17,12 +17,13 @@ import {
 } from './jigsawConfig';
 import { useContainerSize } from '@/lib/useContainerSize';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 
 const IMAGES = JIGSAW_IMAGES;
 
 // Layout constants
 const MIN_CELL_SIZE = 16;
-const MOBILE_BREAKPOINT = 768;
+const MOBILE_BREAKPOINT = 640; // Changed to 640px to include small tablets in desktop layout
 
 // Vertical space allocation (mobile-first)
 const BOARD_HEIGHT_RATIO = 0.62;
@@ -258,51 +259,150 @@ const calculateLayout = (
   containerHeight: number,
   rows: number,
   cols: number,
+  isMobile: boolean,
+  imageAspectRatio: number | null, // width / height
 ): LayoutDimensions => {
   const availableWidth = containerWidth - OUTER_PADDING * 2;
   const availableHeight = containerHeight - OUTER_PADDING * 2;
   
-  const boardZoneHeight = Math.floor(availableHeight * BOARD_HEIGHT_RATIO);
-  const trayZoneHeight = availableHeight - boardZoneHeight;
+  let boardZoneWidth: number;
+  let boardZoneHeight: number;
+  let boardZoneY: number;
+  let trayZoneWidth: number;
+  let trayZoneHeight: number;
+  let trayZoneY: number;
+  let scatterX: number;
+  let scatterY: number;
+  let scatterWidth: number;
+  let scatterHeight: number;
   
-  const boardZoneY = OUTER_PADDING;
-  const boardZoneWidth = availableWidth;
-  
-  const trayZoneY = boardZoneY + boardZoneHeight;
-  const trayZoneWidth = availableWidth;
+  if (isMobile) {
+    // Mobile: vertical layout (board top, tray bottom)
+    boardZoneHeight = Math.floor(availableHeight * BOARD_HEIGHT_RATIO);
+    trayZoneHeight = availableHeight - boardZoneHeight;
+    
+    boardZoneY = OUTER_PADDING;
+    boardZoneWidth = availableWidth;
+    
+    trayZoneY = boardZoneY + boardZoneHeight;
+    trayZoneWidth = availableWidth;
+    
+    scatterX = OUTER_PADDING + TRAY_MARGIN + TRAY_INNER_PADDING;
+    scatterY = trayZoneY + TRAY_MARGIN + TRAY_INNER_PADDING;
+    scatterWidth = trayZoneWidth - TRAY_MARGIN * 2 - TRAY_INNER_PADDING * 2;
+    scatterHeight = trayZoneHeight - TRAY_MARGIN * 2 - TRAY_INNER_PADDING * 2;
+  } else {
+    // Desktop/Tablet: two-column layout (tray left, board right full-height)
+    const TRAY_WIDTH = 280; // Fixed width for tray on desktop
+    const GAP = 16; // Gap between tray and board
+    
+    trayZoneWidth = TRAY_WIDTH;
+    trayZoneHeight = availableHeight;
+    trayZoneY = OUTER_PADDING;
+    
+    boardZoneWidth = availableWidth - TRAY_WIDTH - GAP;
+    boardZoneHeight = availableHeight;
+    boardZoneY = OUTER_PADDING;
+    
+    scatterX = OUTER_PADDING + TRAY_MARGIN + TRAY_INNER_PADDING;
+    scatterY = trayZoneY + TRAY_MARGIN + TRAY_INNER_PADDING;
+    scatterWidth = trayZoneWidth - TRAY_MARGIN * 2 - TRAY_INNER_PADDING * 2;
+    scatterHeight = trayZoneHeight - TRAY_MARGIN * 2 - TRAY_INNER_PADDING * 2;
+  }
   
   // Available space for the board (with margins)
   const boardAvailableWidth = boardZoneWidth - BOARD_MARGIN * 2;
   const boardAvailableHeight = boardZoneHeight - BOARD_MARGIN * 2;
   
-  // Calculate cell size to fill the available space
-  // The board should use most of the available space, not be tiny
-  const cellSizeByWidth = boardAvailableWidth / cols;
-  const cellSizeByHeight = boardAvailableHeight / rows;
+  // Calculate board dimensions preserving IMAGE aspect ratio (not puzzle grid)
+  // The board must maintain the original image's aspect ratio to prevent stretching
+  let boardWidth: number;
+  let boardHeight: number;
+  let cellSize: number;
   
-  // Use the smaller dimension to ensure the board fits, but no hard upper cap
-  // This ensures small puzzles (like 3x3) still have big pieces and fill the space
-  const cellSize = Math.max(
-    MIN_CELL_SIZE,
-    Math.floor(Math.min(cellSizeByWidth, cellSizeByHeight))
-  );
+  if (imageAspectRatio && imageAspectRatio > 0) {
+    // Step 1: Calculate MAXIMUM board size that fits in available space
+    // while preserving IMAGE aspect ratio (contain logic)
+    // Priority: maximize HEIGHT first (user wants full-height board), then width
+    
+    // Calculate what size the board would be if we fill available HEIGHT (priority)
+    const boardHeightByHeight = boardAvailableHeight;
+    const boardWidthByHeight = boardHeightByHeight * imageAspectRatio;
+    
+    // Calculate what size the board would be if we fill available width
+    const boardWidthByWidth = boardAvailableWidth;
+    const boardHeightByWidth = boardWidthByWidth / imageAspectRatio;
+    
+    // Use the dimension that maximizes board size while ensuring it fits
+    // Priority: use full height if possible, otherwise use full width
+    if (boardWidthByHeight <= boardAvailableWidth) {
+      // Height is the limiting factor - use full available height (PRIORITY)
+      boardWidth = boardWidthByHeight;
+      boardHeight = boardHeightByHeight;
+    } else {
+      // Width is the limiting factor - use full available width
+      boardWidth = boardWidthByWidth;
+      boardHeight = boardHeightByWidth;
+    }
+    
+    // Step 2: Calculate cellSize to fit the puzzle grid within the board
+    // The grid must fit within the board (it may not fill it completely if aspect ratios differ)
+    const puzzleAspectRatio = cols / rows;
+    
+    // Calculate cellSize if grid fills board width
+    const cellSizeByBoardWidth = boardWidth / cols;
+    const gridHeightByWidth = rows * cellSizeByBoardWidth;
+    
+    // Calculate cellSize if grid fills board height
+    const cellSizeByBoardHeight = boardHeight / rows;
+    const gridWidthByHeight = cols * cellSizeByBoardHeight;
+    
+    // Choose cellSize that ensures grid fits within board
+    if (gridHeightByWidth <= boardHeight) {
+      // Grid fits by width
+      cellSize = Math.max(MIN_CELL_SIZE, Math.floor(cellSizeByBoardWidth));
+    } else {
+      // Grid fits by height
+      cellSize = Math.max(MIN_CELL_SIZE, Math.floor(cellSizeByBoardHeight));
+    }
+    
+    // Step 3: Keep board dimensions as calculated (maximized based on image aspect ratio)
+    // Do NOT recalculate board from cellSize - this would shrink the board
+    // The grid may be smaller than the board if aspect ratios differ, which is fine
+    // The image will scale to fit the board using "contain" logic
+  } else {
+    // Fallback: use puzzle grid aspect ratio if image dimensions not available
+    const puzzleAspectRatio = cols / rows;
+    
+    const boardWidthByWidth = boardAvailableWidth;
+    const boardHeightByWidth = boardWidthByWidth / puzzleAspectRatio;
+    
+    const boardHeightByHeight = boardAvailableHeight;
+    const boardWidthByHeight = boardHeightByHeight * puzzleAspectRatio;
+    
+    if (boardHeightByWidth <= boardAvailableHeight) {
+      boardWidth = boardWidthByWidth;
+      boardHeight = boardHeightByWidth;
+    } else {
+      boardWidth = boardWidthByHeight;
+      boardHeight = boardHeightByHeight;
+    }
+    
+    cellSize = Math.max(
+      MIN_CELL_SIZE,
+      Math.floor(Math.min(boardWidth / cols, boardHeight / rows))
+    );
+    
+    boardWidth = cols * cellSize;
+    boardHeight = rows * cellSize;
+  }
   
   const tabRadius = cellSize * 0.22;
   const pieceVisualSize = Math.ceil(cellSize + tabRadius * 2);
   
-  // Board dimensions
-  const boardWidth = cols * cellSize;
-  const boardHeight = rows * cellSize;
-  
   // Center the board within the board zone
-  const boardOriginX = OUTER_PADDING + Math.floor((boardZoneWidth - boardWidth) / 2);
+  const boardOriginX = (isMobile ? OUTER_PADDING : OUTER_PADDING + trayZoneWidth + 16) + Math.floor((boardZoneWidth - boardWidth) / 2);
   const boardOriginY = boardZoneY + Math.floor((boardZoneHeight - boardHeight) / 2);
-  
-  // Tray scatter area
-  const scatterX = OUTER_PADDING + TRAY_MARGIN + TRAY_INNER_PADDING;
-  const scatterY = trayZoneY + TRAY_MARGIN + TRAY_INNER_PADDING;
-  const scatterWidth = trayZoneWidth - TRAY_MARGIN * 2 - TRAY_INNER_PADDING * 2;
-  const scatterHeight = trayZoneHeight - TRAY_MARGIN * 2 - TRAY_INNER_PADDING * 2;
   
   const workspaceWidth = containerWidth;
   const workspaceHeight = containerHeight;
@@ -417,6 +517,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   puzzleTitle,
 }) => {
   const t = useTranslations("common.jigsaw");
+  const router = useRouter();
   const isSupabasePuzzle = Boolean(puzzleImageUrl);
   
   const normalizePieces = (value?: number): number => {
@@ -447,6 +548,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
 
   const outerContainerRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -468,8 +570,8 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
         ua.includes('ipod') ||
         ua.includes('mobile');
       const mobileByWidth =
-        width <= MOBILE_BREAKPOINT ||
-        window.matchMedia?.('(max-width: 768px)').matches;
+        width < MOBILE_BREAKPOINT ||
+        window.matchMedia?.(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches;
       setIsMobile(mobileByWidth || isRealMobileUA);
     };
     checkViewport();
@@ -484,15 +586,35 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   const isGameplayMode = Boolean(selectedImage);
   const MOBILE_GRID_COLUMNS = 3;
 
+  // Load image to get its dimensions for proper hint scaling
+  useEffect(() => {
+    if (!selectedImage?.src) return;
+    
+    const img = new Image();
+    img.onload = () => {
+      setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+    };
+    img.onerror = () => {
+      // Fallback: assume square aspect ratio if image fails to load
+      setImageDimensions({ width: 1, height: 1 });
+    };
+    img.src = selectedImage.src;
+  }, [selectedImage?.src]);
+
   const rows = selectedOption.rows;
   const cols = selectedOption.cols;
   const totalPieces = rows * cols;
 
+  // Calculate image aspect ratio for proper scaling
+  const imageAspectRatio = imageDimensions 
+    ? imageDimensions.width / imageDimensions.height 
+    : null;
+
   const layout = useMemo(() => {
     const width = containerSize.width || (isMobile ? 360 : 800);
     const height = containerSize.height || (isMobile ? 600 : 700);
-    return calculateLayout(width, height, rows, cols);
-  }, [containerSize.width, containerSize.height, rows, cols, isMobile]);
+    return calculateLayout(width, height, rows, cols, isMobile, imageAspectRatio);
+  }, [containerSize.width, containerSize.height, rows, cols, isMobile, imageAspectRatio]);
 
   const {
     workspaceWidth,
@@ -504,6 +626,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     boardHeight,
     boardOriginX,
     boardOriginY,
+    trayZoneWidth,
     trayZoneY,
     trayZoneHeight,
     scatterX,
@@ -540,7 +663,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     
     const width = containerSize.width || (isMobile ? 360 : 800);
     const height = containerSize.height || (isMobile ? 600 : 700);
-    const nextLayout = calculateLayout(width, height, nextOption.rows, nextOption.cols);
+    const nextLayout = calculateLayout(width, height, nextOption.rows, nextOption.cols, isMobile, imageAspectRatio);
     
     const nextPieces = scatterPiecesInTray(
       total,
@@ -864,8 +987,10 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
       ref={containerRef}
       style={{
         position: 'relative',
-        width: workspaceWidth,
-        height: workspaceHeight,
+        width: isMobile ? workspaceWidth : '100%',
+        height: isMobile ? workspaceHeight : undefined, // Don't set height on desktop, let flex handle it
+        flex: isMobile ? 'none' : '1 1 0', // Use flex on desktop to fill available space
+        minHeight: 0, // Important for flex children to shrink properly
         maxWidth: '100%',
         maxHeight: '100%',
         borderRadius: 16,
@@ -895,11 +1020,13 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
           position: 'absolute',
           left: OUTER_PADDING + TRAY_MARGIN,
           top: trayZoneY + TRAY_MARGIN,
-          width: workspaceWidth - OUTER_PADDING * 2 - TRAY_MARGIN * 2,
+          width: trayZoneWidth - TRAY_MARGIN * 2,
           height: trayZoneHeight - TRAY_MARGIN * 2,
           borderRadius: 12,
           border: '1px dashed rgba(148,163,184,0.3)',
           background: 'rgba(15,23,42,0.3)',
+          overflowY: isMobile ? 'visible' : 'auto',
+          overflowX: 'hidden',
         }}
       />
 
@@ -913,12 +1040,17 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
             width: boardWidth,
             height: boardHeight,
             backgroundImage: `url(${selectedImage.src})`,
-            backgroundSize: `${boardWidth}px ${boardHeight}px`,
+            // Use 'contain' to preserve aspect ratio and fit image within board without cropping
+            // This ensures the image is never stretched, matching the user's requirement
+            backgroundSize: 'contain',
             backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
             opacity: 0.4,
             pointerEvents: 'none',
             borderRadius: 12,
             zIndex: 5,
+            // Ensure the hint container matches the exact board dimensions
+            overflow: 'hidden',
           }}
         />
       )}
@@ -973,7 +1105,7 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
                 width={boardWidth}
                 height={boardHeight}
                 clipPath={`url(#${clipId})`}
-                preserveAspectRatio="xMidYMid slice"
+                preserveAspectRatio="xMidYMid meet"
               />
               <path
                 d={path}
@@ -988,40 +1120,78 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
     </div>
   );
 
-  // ---------- BURGER BUTTON (top-right, with animated icon) ----------
-  // Light style to match the back arrow button
+  // ---------- OVERLAY BUTTONS (back + menu) ----------
+  // Shared button style for overlay controls
+  const overlayButtonStyle: React.CSSProperties = {
+    position: 'fixed',
+    width: 44,
+    height: 44,
+    borderRadius: 9999,
+    border: 'none',
+    background: 'linear-gradient(145deg, rgba(255,255,255,0.95), rgba(241,245,249,0.9))',
+    backdropFilter: 'blur(8px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1)',
+    padding: 0,
+    zIndex: 100,
+    cursor: 'pointer',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+  };
+
+  const handleButtonHover = (e: React.MouseEvent<HTMLButtonElement>, isEnter: boolean) => {
+    if (isEnter) {
+      e.currentTarget.style.transform = 'scale(1.05)';
+      e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.2), 0 3px 10px rgba(0,0,0,0.15)';
+    } else {
+      e.currentTarget.style.transform = 'scale(1)';
+      e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1)';
+    }
+  };
+
+  // Back button (top-left)
+  const backButton = (
+    <button
+      type="button"
+      onClick={() => router.back()}
+      aria-label="Go back"
+      style={{
+        ...overlayButtonStyle,
+        top: isMobile ? 16 : 20,
+        left: isMobile ? 16 : 24,
+        color: '#1e293b', // Dark color for contrast on light background
+      }}
+      onMouseEnter={(e) => handleButtonHover(e, true)}
+      onMouseLeave={(e) => handleButtonHover(e, false)}
+    >
+      <svg
+        style={{ width: 20, height: 20 }}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M15 19l-7-7 7-7" />
+      </svg>
+    </button>
+  );
+
+  // Burger button (top-right)
   const burgerButton = (
     <button
       type="button"
       onClick={() => setIsMenuOpen((v) => !v)}
       aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
       style={{
-        position: 'fixed',
+        ...overlayButtonStyle,
         top: isMobile ? 16 : 20,
         right: isMobile ? 16 : 24,
-        width: 44,
-        height: 44,
-        borderRadius: 9999, // Fully rounded like back arrow
-        border: 'none',
-        background: 'linear-gradient(145deg, rgba(255,255,255,0.95), rgba(241,245,249,0.9))',
-        backdropFilter: 'blur(8px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1)',
-        padding: 0,
-        zIndex: 100,
-        cursor: 'pointer',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'scale(1.05)';
-        e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.2), 0 3px 10px rgba(0,0,0,0.15)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'scale(1)';
-        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1)';
-      }}
+      onMouseEnter={(e) => handleButtonHover(e, true)}
+      onMouseLeave={(e) => handleButtonHover(e, false)}
     >
       <BurgerIcon isOpen={isMenuOpen} />
     </button>
@@ -1080,16 +1250,19 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: 'calc(env(safe-area-inset-top, 0px) + 8px) 8px 8px 8px',
+          padding: 'calc(env(safe-area-inset-top, 0px) + 8px) 8px calc(env(safe-area-inset-bottom, 0px) + 8px) 8px',
           boxSizing: 'border-box',
           fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
           overflow: 'hidden',
+          width: '100%',
+          height: '100dvh', // Use dynamic viewport height for better mobile support
         }}
       >
         {/* Game workspace - always visible, never pushed */}
         {workspaceContent}
         
-        {/* Burger button in top-right */}
+        {/* Overlay buttons: Back (left) and Menu (right) */}
+        {backButton}
         {burgerButton}
         
         {/* Menu overlay - slides from right */}
@@ -1099,26 +1272,34 @@ export const JigsawGame: React.FC<JigsawGameProps> = ({
   }
 
   // ---------- DESKTOP LAYOUT ----------
+  // Fullscreen game mode - no navbar, use entire viewport
   return (
     <div
       ref={outerContainerRef}
       style={{
-        position: 'relative',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        flexDirection: 'column',
         fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-        paddingTop: 8,
         width: '100%',
-        height: 'calc(100vh - 100px)',
-        maxHeight: 'calc(100vh - 100px)',
+        height: '100dvh', // Use dynamic viewport height for better mobile support
         overflow: 'hidden',
+        padding: '8px',
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 8px)',
+        boxSizing: 'border-box',
+        zIndex: 30,
       }}
     >
-      {/* Game workspace - always centered */}
+      {/* Game workspace - full height with two-column layout */}
       {workspaceContent}
       
-      {/* Burger button in top-right */}
+      {/* Overlay buttons: Back (left) and Menu (right) */}
+      {backButton}
       {burgerButton}
       
       {/* Menu overlay - slides from right */}

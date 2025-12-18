@@ -8,6 +8,8 @@
     "admin": "Administrator",
     "login": "Zaloguj się",
     "logout": "Wyloguj się",
+    "menu": "Menu",
+    "language": "Język",
     "footer": {
       "copyright": "© {year} Kids Park Club",
       "tagline": "Kolorowanki i gry dla dzieci"
