@@ -160,7 +160,7 @@ function SubcategoryBlock({
       href={`/coloring/${item.slug || item.id}`}
       className="block p-2 rounded-2xl border border-white/30 bg-white/20 backdrop-blur-md hover:shadow-[0_12px_30px_rgba(0,0,0,0.16)] transition-shadow shadow-[0_10px_24px_rgba(0,0,0,0.12)]"
     >
-      <div className="w-full relative aspect-[4/3] rounded-xl overflow-hidden bg-white/30">
+      <div className="w-full relative aspect-[5/4] rounded-xl overflow-hidden bg-white/30">
         <Image
           src={item.thumbUrl || item.sourceUrl || "/placeholder.png"}
           alt={item.title}

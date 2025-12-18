@@ -1,6 +1,5 @@
 import { Container } from "@/ui/container";
 import ColoringBrowser from "@/components/coloring-browser";
-import { BackArrow } from "@/components/back-arrow";
 import { getItems, getCategories, getSubcategories } from "@/lib/content-repository";
 import { routing } from "@/i18n/routing";
 import type { Metadata } from "next";
@@ -128,7 +127,6 @@ export default async function ColoringPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
-      <BackArrow />
       <Container className="pt-20 md:pt-24 pb-8">
         <ColoringBrowser 
           initialItems={items} 

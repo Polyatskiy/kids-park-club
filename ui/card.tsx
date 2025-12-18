@@ -1,16 +1,28 @@
 import React from "react";
+import { cn } from "@/lib/cn";
+
+type CardVariant = "solid" | "glass";
 
 export function Card({
   children,
-  className = ""
+  className = "",
+  variant = "solid",
 }: {
   children: React.ReactNode;
   className?: string;
+  variant?: CardVariant;
 }) {
+  const base =
+    "rounded-2xl p-4 transition-shadow shadow-soft border border-border bg-card text-card-foreground";
+
+  const variants: Record<CardVariant, string> = {
+    solid: "",
+    glass:
+      "backdrop-blur-xl bg-white/65 border-white/60 shadow-strong",
+  };
+
   return (
-    <div
-      className={`rounded-2xl p-4 backdrop-blur-md bg-white/25 border border-white/30 shadow-[0_8px_24px_rgba(0,0,0,0.12)] ${className}`}
-    >
+    <div className={cn(base, variants[variant], className)}>
       {children}
     </div>
   );

@@ -73,16 +73,15 @@ export function LanguageSwitcher() {
       <select
         value={locale}
         onChange={(e) => handleLocaleChange(e.target.value)}
-        className="px-3 py-1.5 md:px-4 md:py-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white font-medium rounded-full transition-all text-sm md:text-base cursor-pointer appearance-none pr-8 md:pr-10 border border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50"
-        style={{ textShadow: "0 1px 3px rgba(0,0,0,0.3)" }}
+        className="peer block w-full appearance-none rounded-full border border-border bg-surface px-3 py-2 pr-9 text-xs md:text-sm font-medium text-slate-900 shadow-soft hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer min-h-[40px]"
       >
         {routing.locales.map((loc) => (
-          <option key={loc} value={loc} className="bg-gray-800 text-white">
+          <option key={loc} value={loc} className="bg-surface text-slate-900">
             {LOCALE_NAMES[loc] || loc.toUpperCase()}
           </option>
         ))}
       </select>
-      <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-white/80">
+      <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 peer-focus-visible:text-slate-700">
         <svg
           className="w-4 h-4"
           fill="none"

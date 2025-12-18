@@ -163,65 +163,123 @@ function SubcategoryBlock({
 }
 
 function PuzzleCard({ item }: { item: Item }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const minPieces = JIGSAW_OPTIONS[0]?.pieces ?? 9;
+  const maxPieces = JIGSAW_OPTIONS[JIGSAW_OPTIONS.length - 1]?.pieces ?? minPieces;
+  const defaultOption =
+    JIGSAW_OPTIONS.find((o) => o.pieces === 25) ?? JIGSAW_OPTIONS[Math.floor(JIGSAW_OPTIONS.length / 2)];
+  const defaultHref = `/games/jigsaw?imageId=${item.id}&size=${defaultOption?.pieces ?? minPieces}`;
+
+  const toggleOpen = () => setIsOpen((prev) => !prev);
+  const closeMenu = () => setIsOpen(false);
+
   return (
-    <article className="rounded-2xl bg-white/20 backdrop-blur-md shadow-[0_10px_28px_rgba(0,0,0,0.14)] overflow-hidden flex flex-col border border-white/30">
-      <div className="aspect-[4/3] relative bg-white/30">
-        {item.thumbUrl ? (
-          <Image
-            src={item.thumbUrl}
-            alt={item.title}
-            fill
-            className="object-cover"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-100">
-            No image
-          </div>
-        )}
-      </div>
-
-      <div className="p-3 md:p-4 flex flex-col gap-2 md:gap-3">
-        <h2
-          className="text-base font-semibold text-white"
-          style={{ textShadow: "0 2px 6px rgba(0,0,0,0.25)" }}
+    <article
+      className="relative rounded-2xl bg-card border border-border shadow-soft overflow-hidden group focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-transparent"
+      onMouseLeave={closeMenu}
+    >
+      <div className="relative aspect-[5/4] bg-surface-muted">
+        {/* Quick start: click on image/overlay goes straight to default puzzle size */}
+        <Link
+          href={defaultHref}
+          className="block w-full h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          {item.title}
-        </h2>
+          <div className="relative w-full h-full">
+            {item.thumbUrl ? (
+              <Image
+                src={item.thumbUrl}
+                alt={item.title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                priority={false}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                No image
+              </div>
+            )}
 
-        <div className="grid grid-cols-3 gap-1.5 md:flex md:flex-wrap md:gap-2">
-          {JIGSAW_OPTIONS.map((opt) => {
-            // Dynamic font size based on digit count
-            const fontSize = opt.pieces >= 100 ? 12 : opt.pieces >= 10 ? 14 : 16;
-            return (
+            {/* Bottom gradient overlay with title + range info */}
+            <div className="absolute inset-x-0 bottom-0 p-3 flex items-center justify-between gap-2 bg-gradient-to-t from-black/75 via-black/45 to-transparent pointer-events-none">
+              <div className="min-w-0">
+                <h2 className="text-sm md:text-base font-semibold text-white truncate">
+                  {item.title}
+                </h2>
+                <div className="mt-0.5 inline-flex items-center gap-1 text-[11px] md:text-xs text-white/90">
+                  <span>
+                    {minPieces}–{maxPieces}
+                  </span>
+                  <span className="inline-flex items-center justify-center w-3.5 h-3.5 md:w-4 md:h-4 rounded-sm bg-black/35">
+                    <img
+                      src="/icons/puzzle.png"
+                      alt=""
+                      className="w-3 h-3 md:w-3.5 md:h-3.5 object-contain"
+                      aria-hidden="true"
+                    />
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        {/* Difficulty chooser badge (separate control from quick start) */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            toggleOpen();
+          }}
+          className="absolute bottom-3 right-3 inline-flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-full bg-surface shadow-soft hover:bg-surface-muted hover:shadow-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          aria-haspopup="true"
+          aria-expanded={isOpen}
+          aria-label="Choose puzzle size"
+        >
+          <span className="relative inline-flex items-center justify-center w-8 h-8 md:w-9 md:h-9">
+            <img
+              src="/icons/puzzle.png"
+              alt=""
+              className="w-full h-full object-contain drop-shadow-md"
+              aria-hidden="true"
+            />
+            <span className="absolute inset-0 flex items-center justify-center text-sm md:text-base font-extrabold text-slate-900 drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]">
+              {defaultOption?.pieces}
+            </span>
+          </span>
+        </button>
+
+        {/* Size menu overlay */}
+        {isOpen && (
+          <div
+            className="absolute bottom-[3.25rem] right-3 z-30 rounded-xl bg-surface shadow-strong border border-border px-2 py-2 flex flex-wrap gap-1.5"
+            role="group"
+            aria-label="Available puzzle sizes"
+          >
+            {JIGSAW_OPTIONS.map((opt) => (
               <Link
                 key={opt.pieces}
                 href={`/games/jigsaw?imageId=${item.id}&size=${opt.pieces}`}
-                className="relative transition-transform hover:scale-110 w-full aspect-square md:w-11 md:h-11"
+                className="inline-flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-full bg-surface-muted text-xs font-semibold hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                onClick={closeMenu}
               >
-                {/* Puzzle icon as background */}
-                <Image
-                  src="/icons/puzzle.png"
-                  alt={`${opt.pieces} pieces`}
-                  fill
-                  className="object-contain drop-shadow-md"
-                />
-                {/* Number overlay centered on icon */}
-                <span
-                  className="absolute inset-0 flex items-center justify-center font-extrabold"
-                  style={{
-                    fontSize: fontSize,
-                    color: '#1E3A8A',
-                    textShadow: '0 1px 2px rgba(255,255,255,0.4)',
-                    letterSpacing: '-0.5px',
-                  }}
-                >
-                  {opt.pieces}
+                <span className="relative inline-flex items-center justify-center w-8 h-8 md:w-9 md:h-9">
+                  <img
+                    src="/icons/puzzle.png"
+                    alt=""
+                    className="w-full h-full object-contain"
+                    aria-hidden="true"
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center text-sm font-extrabold text-slate-900 drop-shadow-[0_1px_3px_rgba(255,255,255,0.9)]">
+                    {opt.pieces}
+                  </span>
                 </span>
               </Link>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </article>
   );

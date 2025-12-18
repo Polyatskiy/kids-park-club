@@ -22,9 +22,20 @@ export default async function RootLayout({
   
   return (
     <html lang={locale}>
-      <body className="min-h-screen flex flex-col app-background">
+      <body className="min-h-screen flex flex-col">
         <GtagScript />
-        {children}
+        <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-sky-200 via-sky-100 to-emerald-100">
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute -top-44 -left-44 h-[640px] w-[640px] rounded-full bg-white/40 blur-3xl" />
+            <div className="absolute top-6 right-[-260px] h-[720px] w-[720px] rounded-full bg-white/28 blur-3xl" />
+            <div className="absolute bottom-[-320px] left-[8%] h-[820px] w-[980px] rounded-full bg-white/22 blur-3xl" />
+            <div className="absolute bottom-[-240px] right-[4%] h-[520px] w-[620px] rounded-full bg-white/16 blur-3xl" />
+          </div>
+          <div className="pointer-events-none absolute inset-0 bg-white/10" />
+          <div className="relative">
+            {children}
+          </div>
+        </div>
       </body>
     </html>
   );

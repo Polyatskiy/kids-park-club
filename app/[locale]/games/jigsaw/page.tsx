@@ -1,6 +1,5 @@
 import { getPuzzleById } from "@/lib/content-repository";
 import JigsawGame from "./JigsawGame";
-import { BackArrow } from "@/components/back-arrow";
 
 interface JigsawPageProps {
   searchParams?: Promise<{
@@ -32,14 +31,11 @@ export default async function JigsawPage({ searchParams }: JigsawPageProps) {
   }
 
   return (
-    <>
-      <BackArrow />
-      <JigsawGame
-        initialImageId={imageId}
-        initialGridSize={gridSize}
-        puzzleImageUrl={puzzleImageUrl}
-        puzzleTitle={puzzleTitle}
-      />
-    </>
+    <JigsawGame
+      initialImageId={imageId}
+      initialGridSize={gridSize}
+      puzzleImageUrl={puzzleImageUrl}
+      puzzleTitle={puzzleTitle}
+    />
   );
 }

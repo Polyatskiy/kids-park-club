@@ -20,7 +20,7 @@ export default function ColoringCard({ item }: Props) {
       href={`/coloring/${item.slug}`}
       className="block rounded-2xl overflow-hidden border border-white/30 bg-white/20 backdrop-blur-md shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:shadow-[0_12px_36px_rgba(0,0,0,0.2)] transition-shadow"
     >
-      <div className="w-full relative aspect-[4/3] bg-white/30 flex items-center justify-center overflow-hidden">
+      <div className="w-full relative aspect-[5/4] bg-white/30 flex items-center justify-center overflow-hidden">
         <Image
           src={item.thumbnail_url || "/placeholder.png"}
           alt={item.title}

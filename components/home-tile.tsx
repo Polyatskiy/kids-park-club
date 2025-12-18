@@ -11,13 +11,13 @@ interface HomeTileProps {
 
 export function HomeTile({ icon, label, href, glowColor, bgColor }: HomeTileProps) {
   return (
-    <Link href={href} className="block group">
+    <Link href={href} className="block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
       <div
-        className="home-tile flex flex-col items-center justify-center gap-3 p-5 md:p-6 rounded-[32px] cursor-pointer backdrop-blur-[16px] border border-white/20"
+        className="home-tile flex flex-col items-center justify-center gap-3 p-5 md:p-6 rounded-[32px] cursor-pointer bg-card text-card-foreground border border-border shadow-soft hover:shadow-strong transition"
         style={{ 
           minHeight: "130px",
-          backgroundColor: bgColor,
-          boxShadow: `0 8px 32px ${glowColor}, 0 4px 16px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.3)`,
+          backgroundImage: `linear-gradient(135deg, ${bgColor}, rgba(255,255,255,0.9))`,
+          boxShadow: `0 10px 30px ${glowColor}`,
         }}
       >
         {/* Icon - 20% larger */}
@@ -34,12 +34,8 @@ export function HomeTile({ icon, label, href, glowColor, bgColor }: HomeTileProp
           />
         </div>
         
-        {/* Label - larger, semi-bold, with shadow */}
         <span 
-          className="text-base md:text-lg font-semibold text-white text-center"
-          style={{
-            textShadow: "0 2px 8px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2)"
-          }}
+          className="text-base md:text-lg font-semibold text-slate-900 text-center"
         >
           {label}
         </span>

@@ -6,38 +6,61 @@
    THEME VARIABLES
 ============================================================ */
 :root {
-  --color-primary: #FFB3C6;
-  --color-secondary: #BDE0FE;
-  --color-accent: #FFCF56;
-  --color-bg-soft: #FFF7F0;
+  /* Layout */
+  --navbar-height: 70px;
+
+  /* Color system (HSL for Tailwind/shadcn-style tokens) */
+  --kp-background: 210 40% 98%;
+  --kp-foreground: 222 47% 11%;
+
+  --kp-surface: 0 0% 100%;
+  --kp-surface-muted: 210 40% 96%;
+
+  --kp-border: 214 32% 87%;
+  --kp-input: 214 32% 87%;
+
+  /* Primary: kid-friendly bright sky blue */
+  --kp-primary: 199 89% 58%; /* #0ea5e9-ish */
+  --kp-primary-foreground: 210 40% 98%;
+
+  /* Accent: soft mint/green */
+  --kp-accent: 152 60% 58%; /* mint */
+  --kp-accent-foreground: 210 40% 98%;
+
+  /* Neutral text */
+  --kp-muted: 215 16% 47%;
+  --kp-muted-foreground: 215 16% 35%;
+
+  /* Destructive: calm pink/red */
+  --kp-destructive: 347 77% 60%; /* soft red/pink */
+  --kp-destructive-foreground: 210 40% 98%;
+
+  /* Focus ring */
+  --kp-ring: 199 89% 58%;
+
+  /* Card surfaces */
+  --kp-card: 0 0% 100%;
+  --kp-card-foreground: 222 47% 11%;
+
+  /* Radii */
+  --kp-radius-lg: 1rem;
+  --kp-radius-xl: 1.5rem;
+  --kp-radius-2xl: 2rem;
+
+  /* Shadows */
+  --kp-shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --kp-shadow-strong: 0 14px 45px rgba(15, 23, 42, 0.16);
+
+  /* Legacy tile colors (kept for content data) */
   --color-tile-pink: #FFE4EC;
   --color-tile-blue: #E8F4FD;
   --color-tile-yellow: #FFF8E1;
   --color-tile-green: #E8F5E9;
-  --navbar-height: 70px;
-}
-
-/* ============================================================
-   BACKGROUND STYLES
-============================================================ */
-.app-background {
-  background-image: url('/assets/bg-mobile.png');
-  background-size: cover;
-  background-position: center top;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  min-height: 100vh;
-}
-
-@media (min-width: 768px) {
-  .app-background {
-    background-image: url('/assets/bg-desktop.png');
-    background-position: left center;
-  }
 }
 
 body {
-  @apply text-gray-800;
+  @apply text-slate-900 antialiased;
+  background-color: hsl(var(--kp-background));
 }
 
 ::-webkit-scrollbar {

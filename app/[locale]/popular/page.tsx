@@ -1,6 +1,5 @@
 import { Container } from "@/ui/container";
 import { Link } from "@/i18n/routing";
-import { BackArrow } from "@/components/back-arrow";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 
@@ -17,9 +16,7 @@ export default async function PopularPage({
   
   const t = await getTranslations({ locale: validLocale, namespace: "common.pages" });
   return (
-    <>
-      <BackArrow />
-      <Container className="pt-16 md:pt-20 pb-8">
+    <Container className="pt-16 md:pt-20 pb-8">
         <div className="bg-white/25 backdrop-blur-xl border border-white/30 rounded-3xl p-8 md:p-12 shadow-[0_14px_36px_rgba(0,0,0,0.18)] text-center max-w-2xl mx-auto">
           <h1
             className="text-3xl md:text-4xl font-bold text-white mb-4"
@@ -39,6 +36,5 @@ export default async function PopularPage({
           </Link>
         </div>
       </Container>
-    </>
   );
 }

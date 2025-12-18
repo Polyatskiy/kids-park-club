@@ -25,14 +25,11 @@ export function GameCard({ game }: { game: GameMeta }) {
   
   return (
     <Link href={`/games/${game.slug}`}>
-      <Card className="hover:shadow-[0_12px_32px_rgba(0,0,0,0.18)] cursor-pointer space-y-2 border border-white/30 bg-white/20 backdrop-blur-md">
-        <h3
-          className="font-semibold text-white text-lg"
-          style={{ textShadow: "0 2px 6px rgba(0,0,0,0.25)" }}
-        >
+      <Card className="cursor-pointer space-y-2 hover:shadow-strong transition-shadow">
+        <h3 className="font-semibold text-slate-900 text-lg">
           {getTitle()}
         </h3>
-        <p className="text-sm text-white/90">{getDescription()}</p>
+        <p className="text-sm text-muted-foreground">{getDescription()}</p>
       </Card>
     </Link>
   );

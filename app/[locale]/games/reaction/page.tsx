@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Container } from "@/ui/container";
-import { BackArrow } from "@/components/back-arrow";
 import { useTranslations } from "next-intl";
 
 export default function ReactionGamePage() {
@@ -46,9 +45,7 @@ export default function ReactionGamePage() {
   }, [timeoutId]);
 
   return (
-    <>
-      <BackArrow />
-      <Container className="pt-16 md:pt-20 pb-8 space-y-6">
+    <Container className="pt-16 md:pt-20 pb-8 space-y-6">
         <h1 className="text-2xl font-bold text-gray-900">{t("pageTitle")}</h1>
         <p className="text-sm text-gray-600">
           {t("pageDescription")}
@@ -81,6 +78,5 @@ export default function ReactionGamePage() {
           )}
         </div>
       </Container>
-    </>
   );
 }

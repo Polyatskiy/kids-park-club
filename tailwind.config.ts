@@ -9,22 +9,53 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: "#FFB3C6",
-        secondary: "#BDE0FE",
-        accent: "#FFCF56",
-        bgSoft: "#FFF7F0",
-        // New theme colors for tiles
+        background: "hsl(var(--kp-background))",
+        foreground: "hsl(var(--kp-foreground))",
+        surface: "hsl(var(--kp-surface))",
+        "surface-muted": "hsl(var(--kp-surface-muted))",
+        border: "hsl(var(--kp-border))",
+        input: "hsl(var(--kp-input))",
+        primary: {
+          DEFAULT: "hsl(var(--kp-primary))",
+          foreground: "hsl(var(--kp-primary-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--kp-accent))",
+          foreground: "hsl(var(--kp-accent-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--kp-muted))",
+          foreground: "hsl(var(--kp-muted-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--kp-destructive))",
+          foreground: "hsl(var(--kp-destructive-foreground))",
+        },
+        ring: "hsl(var(--kp-ring))",
+        card: {
+          DEFAULT: "hsl(var(--kp-card))",
+          foreground: "hsl(var(--kp-card-foreground))",
+        },
+        // Tile helper colors (used in some content)
         tile: {
-          pink: "#FFE4EC",
-          blue: "#E8F4FD",
-          yellow: "#FFF8E1",
-          green: "#E8F5E9",
-        }
+          pink: "var(--color-tile-pink)",
+          blue: "var(--color-tile-blue)",
+          yellow: "var(--color-tile-yellow)",
+          green: "var(--color-tile-green)",
+        },
       },
       borderRadius: {
-        "2xl": "1.5rem",
-        "3xl": "1.75rem"
-      }
+        lg: "var(--kp-radius-lg)",
+        xl: "var(--kp-radius-xl)",
+        "2xl": "var(--kp-radius-2xl)",
+      },
+      boxShadow: {
+        "soft": "var(--kp-shadow-soft)",
+        "strong": "var(--kp-shadow-strong)",
+      },
+      fontFamily: {
+        sans: ["system-ui", "ui-sans-serif", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+      },
     }
   },
   plugins: []
