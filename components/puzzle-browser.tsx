@@ -176,10 +176,10 @@ function PuzzleCard({ item }: { item: Item }) {
 
   return (
     <article
-      className="relative rounded-2xl bg-card border border-border shadow-soft overflow-hidden group focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-transparent"
+      className="relative rounded-2xl bg-card border border-border shadow-soft overflow-hidden group focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-transparent w-[110%] md:w-full transition-all duration-300"
       onMouseLeave={closeMenu}
     >
-      <div className="relative aspect-[5/4] bg-surface-muted">
+      <div className="relative aspect-[25/24] md:aspect-[25/24] md:group-hover:aspect-[125/144] bg-surface-muted transition-all duration-300">
         {/* Quick start: click on image/overlay goes straight to default puzzle size */}
         <Link
           href={defaultHref}
