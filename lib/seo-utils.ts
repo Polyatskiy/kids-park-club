@@ -1,6 +1,6 @@
 import { routing } from "@/i18n/routing";
 
-const base = "https://kids-park.club";
+const base = "https://www.kids-park.club";
 
 /**
  * Generate URL for a locale, with EN being unprefixed

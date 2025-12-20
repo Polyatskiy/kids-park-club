@@ -12,7 +12,7 @@ import { getLocalizedUrl } from "@/lib/seo-utils";
 export const revalidate = 3600; // Revalidate every hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = "https://kids-park.club";
+  const base = "https://www.kids-park.club";
   const now = new Date();
 
   // Static routes that exist for all locales
