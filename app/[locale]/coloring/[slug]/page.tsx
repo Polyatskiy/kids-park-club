@@ -9,7 +9,6 @@ import { Suspense } from "react";
 
 // Dynamically import ColoringCanvas to reduce initial bundle size
 const ColoringCanvas = dynamic(() => import("@/components/coloring-canvas"), {
-  ssr: false,
   loading: () => (
     <div className="flex items-center justify-center w-full h-screen bg-sky-100">
       <div className="text-center">

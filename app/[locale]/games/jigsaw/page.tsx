@@ -3,7 +3,6 @@ import { getPuzzleById } from "@/lib/content-repository";
 
 // Dynamically import JigsawGame to reduce initial bundle size and improve INP
 const JigsawGame = dynamic(() => import("./JigsawGame"), {
-  ssr: false,
   loading: () => (
     <div className="flex items-center justify-center w-full h-screen bg-gradient-to-b from-sky-200 via-sky-100 to-emerald-100">
       <div className="text-center">
