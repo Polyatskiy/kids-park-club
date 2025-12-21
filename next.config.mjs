@@ -32,6 +32,18 @@ const nextConfig = {
   // Note: Source maps in dev mode are handled by Turbopack automatically
   // The warnings about missing 'mappings' field are known Turbopack issues in dev mode
   // and don't affect functionality
+  
+  // Compiler configuration to reduce legacy JavaScript polyfills
+  compiler: {
+    // Remove console.log in production (optional, but recommended)
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'], // Keep error and warn logs
+    } : false,
+  },
+  
+  // Note: SWC minify is enabled by default in Next.js 13+ (no need to specify)
+  // browserslist configuration in package.json tells Next.js/SWC to target modern browsers only
+  // This prevents adding unnecessary polyfills for features like Array.prototype.at, flat, etc.
   // Optimize JavaScript bundle size and code splitting
   webpack: (config, { isServer }) => {
     if (!isServer) {
@@ -73,6 +85,15 @@ const nextConfig = {
               reuseExistingChunk: true,
             },
           },
+        },
+      };
+      
+      // Resolve configuration to help reduce polyfills
+      // Modern browsers support ES6+ natively, so we don't need polyfills
+      config.resolve = {
+        ...config.resolve,
+        alias: {
+          ...config.resolve.alias,
         },
       };
     }

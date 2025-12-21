@@ -77,7 +77,7 @@ export default function PuzzleBrowser({
   return (
     <div className="p-4 max-w-4xl mx-auto">
       <h1 className="sr-only">{t("puzzlesPage.title") || "Jigsaw Puzzles for Kids"}</h1>
-      {Array.from(itemsByCategory.entries()).map(([categoryId, categoryItems]) => {
+      {Array.from(itemsByCategory.entries()).map(([categoryId, categoryItems], categoryIndex) => {
         const category = categoryMap.get(categoryId);
         if (!category) return null;
 
@@ -97,6 +97,7 @@ export default function PuzzleBrowser({
             category={category}
             itemsBySubcategory={itemsBySubcategory}
             allSubcategories={initialSubcategories}
+            isFirstCategory={categoryIndex === 0}
           />
         );
       })}
@@ -108,10 +109,12 @@ function CategoryBlock({
   category,
   itemsBySubcategory,
   allSubcategories,
+  isFirstCategory = false,
 }: {
   category: Category;
   itemsBySubcategory: Map<string, Item[]>;
   allSubcategories?: Subcategory[];
+  isFirstCategory?: boolean;
 }) {
   // Use provided subcategories or empty map
   const subcategoryMap = new Map<string, Subcategory>();
@@ -132,15 +135,18 @@ function CategoryBlock({
         <p className="text-gray-700 mb-4 px-3 text-sm md:text-base">{category.description}</p>
       )}
 
-      {Array.from(itemsBySubcategory.entries()).map(([subcategoryId, items]) => {
+      {Array.from(itemsBySubcategory.entries()).map(([subcategoryId, items], subcategoryIndex) => {
         const subcategory = subcategoryMap.get(subcategoryId);
         const subcategoryTitle = subcategory?.title || "Uncategorized";
+        // Mark first subcategory of first category as priority for LCP optimization
+        const isFirstSubcategory = subcategoryIndex === 0;
 
         return (
           <SubcategoryBlock
             key={subcategoryId}
             title={subcategoryTitle}
             items={items}
+            isFirst={isFirstCategory && isFirstSubcategory}
           />
         );
       })}
@@ -151,18 +157,20 @@ function CategoryBlock({
 function SubcategoryBlock({
   title,
   items,
+  isFirst = false,
 }: {
   title: string;
   items: Item[];
+  isFirst?: boolean;
 }) {
-  const carouselItems = items.map((item) => (
-    <PuzzleCard key={item.id} item={item} />
+  const carouselItems = items.map((item, index) => (
+    <PuzzleCard key={item.id} item={item} priority={isFirst && index === 0} />
   ));
 
   return <CarouselRow title={title} items={carouselItems} />;
 }
 
-function PuzzleCard({ item }: { item: Item }) {
+function PuzzleCard({ item, priority = false }: { item: Item; priority?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const minPieces = JIGSAW_OPTIONS[0]?.pieces ?? 9;
@@ -193,7 +201,9 @@ function PuzzleCard({ item }: { item: Item }) {
                 fill
                 className="object-cover"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                priority={false}
+                priority={priority}
+                fetchPriority={priority ? "high" : "auto"}
+                loading={priority ? "eager" : "lazy"}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
