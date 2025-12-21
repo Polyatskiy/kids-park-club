@@ -389,6 +389,7 @@ export async function getItems(
     search?: string;
     sortBy?: 'created_at' | 'popular'; // TODO: implement popular sorting
     limit?: number;
+    sinceDate?: Date; // Filter items created after this date
   } = {}
 ): Promise<Item[]> {
   const targetLocale = getLocaleWithFallback(options.locale);
@@ -428,6 +429,11 @@ export async function getItems(
 
   if (options.subcategoryId) {
     query = query.eq("subcategory_id", options.subcategoryId);
+  }
+
+  // Filter by date if provided
+  if (options.sinceDate) {
+    query = query.gte("created_at", options.sinceDate.toISOString());
   }
 
   // Search: filter by title or search_text in current locale (with fallback to en)

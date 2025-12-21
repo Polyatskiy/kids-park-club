@@ -29,7 +29,10 @@
       "miniGamesDescription": "Simple games to warm up attention and memory.",
       "popularTitle": "⭐ Popular",
       "popularDescription": "The most popular coloring pages and games will appear here soon!",
-      "backToHome": "Home"
+      "recentItemsDescription": "New coloring pages and puzzles from the last week",
+      "backToHome": "Home",
+      "puzzle": "Puzzle",
+      "coloring": "Coloring"
     },
     "adminPanel": {
       "adminPanel": "Admin Panel",

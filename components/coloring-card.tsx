@@ -31,13 +31,10 @@ export default function ColoringCard({ item }: Props) {
       </div>
 
       <div className="p-3">
-        <div
-          className="font-semibold text-white text-sm md:text-base"
-          style={{ textShadow: "0 2px 6px rgba(0,0,0,0.25)" }}
-        >
+        <div className="font-semibold text-slate-800 text-sm md:text-base">
           {item.title}
         </div>
-        <div className="text-xs mt-1 text-white/90">
+        <div className="text-xs mt-1 text-slate-700">
           {item.category} • {item.subcategory}
         </div>
       </div>

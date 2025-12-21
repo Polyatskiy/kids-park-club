@@ -19,7 +19,10 @@
       "miniGamesDescription": "Proste gry do rozgrzania uwagi i pamięci.",
       "popularTitle": "⭐ Popularne",
       "popularDescription": "Najpopularniejsze kolorowanki i gry pojawią się tutaj wkrótce!",
-      "backToHome": "Strona główna"
+      "recentItemsDescription": "Nowe kolorowanki i puzzle z ostatniego tygodnia",
+      "backToHome": "Strona główna",
+      "puzzle": "Puzzle",
+      "coloring": "Kolorowanka"
     },
     "adminPanel": {
       "adminPanel": "Panel Administracyjny",

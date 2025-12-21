@@ -19,7 +19,10 @@
       "miniGamesDescription": "Прості ігри для розминки уваги та пам'яті.",
       "popularTitle": "⭐ Популярне",
       "popularDescription": "Найпопулярніші розмальовки та ігри з'являться тут незабаром!",
-      "backToHome": "Головна"
+      "recentItemsDescription": "Нові розмальовки та пазли за останній тиждень",
+      "backToHome": "Головна",
+      "puzzle": "Пазл",
+      "coloring": "Розмальовка"
     },
     "adminPanel": {
       "adminPanel": "Панель Адміністратора",

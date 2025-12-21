@@ -19,7 +19,10 @@
       "miniGamesDescription": "Простые игры для разминки внимания и памяти.",
       "popularTitle": "⭐ Популярное",
       "popularDescription": "Самые популярные раскраски и игры появятся здесь скоро!",
-      "backToHome": "Главная"
+      "recentItemsDescription": "Новые раскраски и пазлы за последнюю неделю",
+      "backToHome": "Главная",
+      "puzzle": "Пазл",
+      "coloring": "Раскраска"
     },
     "adminPanel": {
       "adminPanel": "Панель Администратора",

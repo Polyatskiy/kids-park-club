@@ -170,10 +170,7 @@ function SubcategoryBlock({
         />
       </div>
 
-      <div
-        className="mt-2 text-center text-sm font-semibold text-white"
-        style={{ textShadow: "0 2px 6px rgba(0,0,0,0.25)" }}
-      >
+      <div className="mt-2 text-center text-sm font-semibold text-slate-800">
         {item.title}
       </div>
     </Link>
