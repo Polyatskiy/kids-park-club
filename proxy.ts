@@ -91,6 +91,45 @@ export async function proxy(req: NextRequest) {
     }
   }
 
+  // Add Content Security Policy headers to resolve CSP eval warnings
+  // In development, Next.js uses eval for HMR, so we allow it only in dev mode
+  // In production, Next.js doesn't use eval, so we can have stricter CSP
+  const isDev = process.env.NODE_ENV === 'development';
+  
+  // Build CSP directive
+  // Allow unsafe-eval only in development for Next.js HMR
+  // In production, this should not be needed
+  const scriptSrc = [
+    "'self'",
+    "'unsafe-inline'", // Required for inline scripts (Next.js, React)
+    "https://www.googletagmanager.com", // Google Analytics
+    "https://www.google-analytics.com", // Google Analytics
+    "https://*.supabase.co", // Supabase
+    ...(isDev ? ["'unsafe-eval'"] : []), // Only allow eval in development for HMR
+  ].join(' ');
+
+  const cspHeader = [
+    "default-src 'self'",
+    `script-src ${scriptSrc}`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", // Tailwind uses inline styles
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "img-src 'self' data: blob: https:",
+    "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.vercel-analytics.com",
+    "frame-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests",
+  ].join('; ');
+
+  // Clone response headers and add CSP
+  response.headers.set('Content-Security-Policy', cspHeader);
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+
   return response;
 }
 
@@ -109,3 +148,4 @@ export const config = {
     "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|woff|woff2|ttf|eot)).*)",
   ],
 };
+
