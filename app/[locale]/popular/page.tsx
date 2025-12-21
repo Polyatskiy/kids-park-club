@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { getItems } from "@/lib/content-repository";
 import { PopularItemCard } from "@/components/popular-item-card";
+import { Suspense } from "react";
 
 export default async function PopularPage({
   params
@@ -64,7 +65,12 @@ export default async function PopularPage({
         {allRecentItems.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
             {allRecentItems.map((item) => (
-              <PopularItemCard key={item.id} item={item} />
+              <PopularItemCard 
+                key={item.id} 
+                item={item}
+                puzzleLabel={t("puzzle")}
+                coloringLabel={t("coloring")}
+              />
             ))}
           </div>
         ) : (

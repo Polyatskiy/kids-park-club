@@ -91,43 +91,105 @@ export async function proxy(req: NextRequest) {
     }
   }
 
-  // Add Content Security Policy headers to resolve CSP eval warnings
-  // In development, Next.js uses eval for HMR, so we allow it only in dev mode
-  // In production, Next.js doesn't use eval, so we can have stricter CSP
+  // Add Content Security Policy headers to protect against XSS attacks
+  // Reference: https://web.dev/articles/csp
+  // 
+  // Security considerations:
+  // - 'unsafe-inline' and 'unsafe-eval' weaken CSP but are necessary for:
+  //   * Google Analytics (requires eval for dynamic code execution)
+  //   * Vercel Speed Insights (may use eval)
+  //   * Next.js inline scripts and React hydration
+  //   * Next.js HMR in development mode
+  // 
+  // Future improvements (if needed):
+  // - Use nonce-based CSP for inline scripts (requires passing nonce through component tree)
+  // - Consider using hash-based CSP for specific inline scripts
+  // - Move Google Analytics to server-side tracking if possible
   const isDev = process.env.NODE_ENV === 'development';
   
-  // Build CSP directive
-  // Allow unsafe-eval only in development for Next.js HMR
-  // In production, this should not be needed
+  // Build CSP directives
+  // Script sources: allow necessary third-party scripts
   const scriptSrc = [
-    "'self'",
-    "'unsafe-inline'", // Required for inline scripts (Next.js, React)
+    "'self'", // Allow scripts from same origin
+    "'unsafe-inline'", // Required for: Next.js inline scripts, React hydration, gtag init
     "https://www.googletagmanager.com", // Google Analytics
     "https://www.google-analytics.com", // Google Analytics
-    "https://*.supabase.co", // Supabase
-    ...(isDev ? ["'unsafe-eval'"] : []), // Only allow eval in development for HMR
+    "https://*.supabase.co", // Supabase client library
+    "https://va.vercel-scripts.com", // Vercel Speed Insights
+    "'unsafe-eval'", // Required for: Google Analytics, Vercel Speed Insights, Next.js HMR (dev)
   ].join(' ');
 
-  const cspHeader = [
-    "default-src 'self'",
-    `script-src ${scriptSrc}`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", // Tailwind uses inline styles
-    "font-src 'self' https://fonts.gstatic.com data:",
-    "img-src 'self' data: blob: https:",
-    "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.vercel-analytics.com",
-    "frame-src 'self'",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-    "upgrade-insecure-requests",
-  ].join('; ');
+  // Connect sources: allow fetch/XHR to external APIs
+  const connectSrc = [
+    "'self'",
+    "https://*.supabase.co", // Supabase API
+    "https://www.google-analytics.com", // Google Analytics
+    "https://www.googletagmanager.com", // Google Tag Manager
+    "https://*.vercel-analytics.com", // Vercel Analytics
+    "https://vitals.vercel-insights.com", // Vercel Speed Insights
+  ].join(' ');
 
-  // Clone response headers and add CSP
+  // Image sources: allow images from various sources
+  const imgSrc = [
+    "'self'",
+    "data:",
+    "blob:",
+    "https:", // Allow all HTTPS images (for Supabase storage, external images)
+  ].join(' ');
+
+  // Font sources
+  const fontSrc = [
+    "'self'",
+    "https://fonts.gstatic.com",
+    "data:",
+  ].join(' ');
+
+  // Style sources
+  // Note: 'unsafe-inline' is required because Tailwind CSS generates utility classes
+  // as inline styles. This is standard for Tailwind and doesn't significantly reduce security.
+  const styleSrc = [
+    "'self'",
+    "'unsafe-inline'", // Required for Tailwind CSS utility classes
+    "https://fonts.googleapis.com", // Google Fonts CSS
+  ].join(' ');
+
+  // Build CSP header with report-uri for monitoring violations
+  // In development, you can use report-only mode to test policies
+  const reportUri = isDev ? undefined : '/api/csp-report'; // Optional: endpoint for CSP violation reports
+  
+  const cspDirectives = [
+    `default-src 'self'`,
+    `script-src ${scriptSrc}`,
+    `style-src ${styleSrc}`,
+    `font-src ${fontSrc}`,
+    `img-src ${imgSrc}`,
+    `connect-src ${connectSrc}`,
+    `frame-src 'self'`,
+    `object-src 'none'`,
+    `base-uri 'self'`,
+    `form-action 'self'`,
+    `frame-ancestors 'none'`,
+    `upgrade-insecure-requests`,
+  ];
+  
+  // Add report-uri if in production (optional, for monitoring CSP violations)
+  // Uncomment the following line and create /api/csp-report endpoint if you want to monitor violations
+  // if (reportUri) {
+  //   cspDirectives.push(`report-uri ${reportUri}`);
+  // }
+  
+  const cspHeader = cspDirectives.join('; ');
+
+  // Set security headers
+  // Content-Security-Policy: Primary defense against XSS attacks
   response.headers.set('Content-Security-Policy', cspHeader);
+  // X-Content-Type-Options: Prevents MIME type sniffing
   response.headers.set('X-Content-Type-Options', 'nosniff');
+  // X-Frame-Options: Prevents clickjacking by blocking iframe embedding
   response.headers.set('X-Frame-Options', 'DENY');
+  // X-XSS-Protection: Legacy XSS protection (modern browsers use CSP, but doesn't hurt)
   response.headers.set('X-XSS-Protection', '1; mode=block');
+  // Referrer-Policy: Controls referrer information sent with requests
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
   return response;

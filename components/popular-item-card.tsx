@@ -2,16 +2,16 @@
 
 import { Link } from "@/i18n/routing";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
 import type { Item } from "@/types/content";
 import { JIGSAW_OPTIONS } from "@/app/[locale]/games/jigsaw/jigsawConfig";
 
 interface PopularItemCardProps {
   item: Item;
+  puzzleLabel?: string;
+  coloringLabel?: string;
 }
 
-export function PopularItemCard({ item }: PopularItemCardProps) {
-  const t = useTranslations("common.pages");
+export function PopularItemCard({ item, puzzleLabel = "Puzzle", coloringLabel = "Coloring" }: PopularItemCardProps) {
   
   // For puzzles, create link to jigsaw game
   if (item.type === "puzzles") {
@@ -46,7 +46,7 @@ export function PopularItemCard({ item }: PopularItemCardProps) {
             {item.title}
           </div>
           <div className="text-xs mt-1 text-slate-700">
-            {t("puzzle")}
+            {puzzleLabel}
           </div>
         </div>
       </Link>
@@ -81,7 +81,7 @@ export function PopularItemCard({ item }: PopularItemCardProps) {
           {item.title}
         </div>
         <div className="text-xs mt-1 text-slate-700">
-          {t("coloring")}
+          {coloringLabel}
         </div>
       </div>
     </Link>
