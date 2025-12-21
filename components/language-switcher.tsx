@@ -70,9 +70,14 @@ export function LanguageSwitcher() {
 
   return (
     <div className="relative">
+      <label htmlFor="language-select" className="sr-only">
+        Select language
+      </label>
       <select
+        id="language-select"
         value={locale}
         onChange={(e) => handleLocaleChange(e.target.value)}
+        aria-label="Select language"
         className="peer block w-full appearance-none rounded-full border border-border bg-surface px-3 py-2 pr-9 text-xs md:text-sm font-medium text-slate-900 shadow-soft hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer min-h-[40px]"
       >
         {routing.locales.map((loc) => (

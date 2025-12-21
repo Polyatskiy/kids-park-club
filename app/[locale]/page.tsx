@@ -1,6 +1,26 @@
 import { HomeTile } from "@/components/home-tile";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
+import type { Metadata } from "next";
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const validLocale = routing.locales.includes(locale as any) 
+    ? locale 
+    : routing.defaultLocale;
+  setRequestLocale(validLocale);
+  
+  const t = await getTranslations({ locale: validLocale, namespace: "common" });
+  
+  return {
+    title: "Kids Park Club – Coloring Pages and Games",
+    description: "Free printable coloring pages, jigsaw puzzles, and fun games for kids. Educational activities and entertainment in one place.",
+  };
+}
 
 export default async function HomePage({
   params

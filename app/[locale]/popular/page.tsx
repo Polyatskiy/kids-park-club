@@ -51,11 +51,11 @@ export default async function PopularPage({
             {t("popularTitle")}
           </h1>
           {allRecentItems.length === 0 ? (
-            <p className="text-slate-700 text-lg mb-8">
+            <p className="text-slate-800 text-lg mb-8">
               {t("popularDescription")}
             </p>
           ) : (
-            <p className="text-slate-700 text-lg mb-8">
+            <p className="text-slate-800 text-lg mb-8">
               {t("recentItemsDescription")}
             </p>
           )}
@@ -69,7 +69,7 @@ export default async function PopularPage({
           </div>
         ) : (
           <div className="bg-white/25 backdrop-blur-xl border border-white/30 rounded-3xl p-8 md:p-12 shadow-[0_14px_36px_rgba(0,0,0,0.18)] text-center max-w-2xl mx-auto">
-            <p className="text-slate-700 text-lg mb-8">
+            <p className="text-slate-800 text-lg mb-8">
               {t("popularDescription")}
             </p>
             <Link

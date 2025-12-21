@@ -107,7 +107,7 @@ function ColoringToolbar({
           {/* Brush Settings */}
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-2">
-              <label className="text-xs text-gray-600 whitespace-nowrap">Brush Size</label>
+              <label className="text-xs text-slate-700 whitespace-nowrap">Brush Size</label>
               <input
                 type="range"
                 min={5}
@@ -119,7 +119,7 @@ function ColoringToolbar({
             </div>
 
             <div className="flex flex-col gap-2">
-              <label className="text-xs text-gray-600 whitespace-nowrap">Opacity</label>
+              <label className="text-xs text-slate-700 whitespace-nowrap">Opacity</label>
               <input
                 type="range"
                 min={0.1}
@@ -134,7 +134,7 @@ function ColoringToolbar({
 
           {/* Full Color Palette (Desktop) */}
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Palette</label>
+            <label className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Palette</label>
             <FullColorPalette
               color={color}
               setColor={handleColorSelect}
@@ -287,7 +287,7 @@ function ConfirmModal({
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-xl font-semibold mb-2">{title}</h3>
-        <p className="text-gray-600 mb-6">{message}</p>
+        <p className="text-slate-700 mb-6">{message}</p>
 
         <div className="flex gap-3 justify-end">
           <button
@@ -817,7 +817,7 @@ function SettingsButton({
       className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-150 hover:scale-105 active:scale-95 ${
         isActive 
           ? "bg-blue-500 text-white shadow-md" 
-          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          : "bg-gray-100 text-slate-700 hover:bg-gray-200"
       }`}
       aria-label={label}
     >

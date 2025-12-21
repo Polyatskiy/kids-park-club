@@ -45,7 +45,7 @@ export function PopularItemCard({ item }: PopularItemCardProps) {
           <div className="font-semibold text-slate-800 text-sm md:text-base">
             {item.title}
           </div>
-          <div className="text-xs mt-1 text-slate-600">
+          <div className="text-xs mt-1 text-slate-700">
             {t("puzzle")}
           </div>
         </div>
@@ -80,7 +80,7 @@ export function PopularItemCard({ item }: PopularItemCardProps) {
         <div className="font-semibold text-slate-800 text-sm md:text-base">
           {item.title}
         </div>
-        <div className="text-xs mt-1 text-slate-600">
+        <div className="text-xs mt-1 text-slate-700">
           {t("coloring")}
         </div>
       </div>

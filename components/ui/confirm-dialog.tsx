@@ -26,7 +26,7 @@ export function useConfirmDialog() {
             <div className="text-lg font-semibold mb-2">
               Clear drawing?
             </div>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-slate-700 mb-4">
               This action cannot be undone.
             </p>
 
