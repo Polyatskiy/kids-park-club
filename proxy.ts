@@ -132,6 +132,7 @@ export async function proxy(req: NextRequest) {
     "https://*.vercel-analytics.com", // Vercel Analytics
     "https://vitals.vercel-insights.com", // Vercel Speed Insights
     "https://vercel.live", // Vercel Live Feedback (development/preview)
+    "wss://*.pusher.com", // Pusher WebSocket connections (for Vercel Live Feedback/realtime features)
   ].join(' ');
 
   // Image sources: allow images from various sources
