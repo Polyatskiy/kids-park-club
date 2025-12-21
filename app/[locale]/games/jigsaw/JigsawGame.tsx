@@ -378,10 +378,27 @@ const calculateLayout = (
     const gridWidth = cols * cellSize;
     const gridHeight = rows * cellSize;
     
-    // Use grid dimensions as board dimensions to ensure 100% coverage
-    // This ensures puzzle covers 100% of image area - no missing pieces
-    boardWidth = gridWidth;
-    boardHeight = gridHeight;
+    // CRITICAL: Ensure board dimensions NEVER exceed available space
+    // If grid exceeds available space, scale down cellSize to fit
+    const scaleX = effectiveBoardWidth / gridWidth;
+    const scaleY = effectiveBoardHeight / gridHeight;
+    const scale = Math.min(1, scaleX, scaleY); // Never scale up, only down if needed
+    
+    if (scale < 1) {
+      // Grid is too large - scale down cellSize to fit within available space
+      cellSize = Math.max(MIN_CELL_SIZE, Math.floor(cellSize * scale));
+      // Recalculate board dimensions with scaled cellSize
+      boardWidth = cols * cellSize;
+      boardHeight = rows * cellSize;
+    } else {
+      // Grid fits within available space - use calculated dimensions
+      boardWidth = gridWidth;
+      boardHeight = gridHeight;
+    }
+    
+    // Final safety check: ensure board never exceeds available space (defensive programming)
+    boardWidth = Math.min(boardWidth, effectiveBoardWidth);
+    boardHeight = Math.min(boardHeight, effectiveBoardHeight);
   } else {
     // Fallback: use puzzle grid aspect ratio if image dimensions not available
     const puzzleAspectRatio = cols / rows;
@@ -407,6 +424,22 @@ const calculateLayout = (
     
     boardWidth = cols * cellSize;
     boardHeight = rows * cellSize;
+    
+    // CRITICAL: Ensure board dimensions NEVER exceed available space
+    // If grid exceeds available space, scale down cellSize to fit
+    if (boardWidth > effectiveBoardWidth || boardHeight > effectiveBoardHeight) {
+      const scaleX = effectiveBoardWidth / boardWidth;
+      const scaleY = effectiveBoardHeight / boardHeight;
+      const scale = Math.min(scaleX, scaleY);
+      
+      cellSize = Math.max(MIN_CELL_SIZE, Math.floor(cellSize * scale));
+      boardWidth = cols * cellSize;
+      boardHeight = rows * cellSize;
+    }
+    
+    // Final safety check: ensure board never exceeds available space (defensive programming)
+    boardWidth = Math.min(boardWidth, effectiveBoardWidth);
+    boardHeight = Math.min(boardHeight, effectiveBoardHeight);
   }
   
   const tabRadius = cellSize * 0.22;
