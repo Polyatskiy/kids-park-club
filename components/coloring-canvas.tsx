@@ -1189,8 +1189,9 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   /* Touch gesture state - for detecting taps vs drags/pinches */
   const touchStartTime = useRef<number>(0);
   const touchStartPos = useRef<{ x: number; y: number } | null>(null);
-  const isTouchGesture = useRef(false); /* True if user is doing multitouch or dragging */
-  const hasMovedSignificantly = useRef(false); /* True if finger moved more than threshold */
+  const isTouchGesture = useRef(false);
+  const isPanningGesture = useRef(false); // Separate flag for panning vs drawing
+  const hasMovedSignificantly = useRef(false); // Track if touch moved significantly (for tap/pan detection)
 
   /* ============================================================
       UTILITY FUNCTIONS
@@ -1719,7 +1720,35 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       EVENT HANDLERS - MOUSE
   ============================================================= */
 
+  // Check if click is on scrollbar area
+  const isClickOnScrollbar = (e: React.MouseEvent): boolean => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return false;
+
+    const rect = wrapper.getBoundingClientRect();
+    const scrollbarWidth = 17; // Typical scrollbar width in most browsers
+    
+    // Check if click is on vertical scrollbar (right edge)
+    const isOnVerticalScrollbar = 
+      wrapper.scrollHeight > wrapper.clientHeight &&
+      e.clientX >= rect.right - scrollbarWidth &&
+      e.clientX <= rect.right;
+
+    // Check if click is on horizontal scrollbar (bottom edge)
+    const isOnHorizontalScrollbar = 
+      wrapper.scrollWidth > wrapper.clientWidth &&
+      e.clientY >= rect.bottom - scrollbarWidth &&
+      e.clientY <= rect.bottom;
+
+    return isOnVerticalScrollbar || isOnHorizontalScrollbar;
+  };
+
   const handleMouseDown = (e: React.MouseEvent) => {
+    // Ignore clicks on scrollbar - don't draw
+    if (isClickOnScrollbar(e)) {
+      return;
+    }
+
     if (e.button === 1) {
       // Middle mouse button - pan
       isPanning.current = true;
@@ -1750,6 +1779,16 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    // Stop drawing if mouse moves over scrollbar
+    if (isClickOnScrollbar(e)) {
+      if (isDrawingRef.current) {
+        commitStroke();
+        isDrawingRef.current = false;
+        pointsRef.current = [];
+      }
+      return;
+    }
+
     if (isPanning.current) {
       const dx = e.clientX - panStart.current.x;
       const dy = e.clientY - panStart.current.y;
@@ -1838,6 +1877,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
 
   const TOUCH_TAP_THRESHOLD = 10; /* pixels - max movement to count as tap */
   const TOUCH_TAP_TIMEOUT = 300; /* ms - max duration to count as tap */
+  const TOUCH_PAN_THRESHOLD = 15; /* pixels - movement threshold to trigger panning instead of drawing */
 
   const handleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault();
@@ -1845,6 +1885,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     /* Two or more fingers = pinch-zoom gesture */
     if (e.touches.length >= 2) {
       isTouchGesture.current = true;
+      isPanningGesture.current = true;
       isDrawingRef.current = false;
       pointsRef.current = [];
       
@@ -1864,25 +1905,15 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     if (e.touches.length === 1) {
       const t = e.touches[0];
       
-      // Record touch start for tap detection
+      // Record touch start for tap and pan detection
       touchStartTime.current = Date.now();
       touchStartPos.current = { x: t.clientX, y: t.clientY };
       hasMovedSignificantly.current = false;
       isTouchGesture.current = false;
+      isPanningGesture.current = false; // Will be set to true if movement exceeds threshold
       
-      const coords = getCanvasCoords(t.clientX, t.clientY);
-      if (!coords) return;
-
-      // For brush/eraser: start drawing immediately
-      if (tool === "brush" || tool === "eraser") {
-        isDrawingRef.current = true;
-        pointsRef.current = [];
-        pointsRef.current.push(coords);
-        drawSpline();
-      }
-      
-      // For fill: we'll handle it on touchEnd (tap detection)
-      // For all tools: prepare for potential panning
+      // For fill tool: prepare for tap detection, allow panning if moved
+      // For brush/eraser: wait to see if it's a pan or draw gesture
       touchPanRef.current = { x: t.clientX, y: t.clientY };
     }
   };
@@ -1925,7 +1956,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     if (e.touches.length === 1) {
       const t = e.touches[0];
       
-      // Check if we've moved significantly (for tap detection)
+      // Check if we've moved significantly (for tap/pan detection)
       if (touchStartPos.current) {
         const moveDist = Math.sqrt(
           Math.pow(t.clientX - touchStartPos.current.x, 2) +
@@ -1934,26 +1965,42 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
         if (moveDist > TOUCH_TAP_THRESHOLD) {
           hasMovedSignificantly.current = true;
         }
+        
+        // If movement exceeds pan threshold, switch to panning mode (unless already drawing)
+        if (moveDist > TOUCH_PAN_THRESHOLD && !isDrawingRef.current) {
+          isPanningGesture.current = true;
+          isDrawingRef.current = false;
+          pointsRef.current = []; // Cancel any pending drawing
+        }
       }
 
-      // Drawing with brush/eraser
-      if (isDrawingRef.current && (tool === "brush" || tool === "eraser")) {
-        const coords = getCanvasCoords(t.clientX, t.clientY);
-        if (coords) {
-          pointsRef.current.push(coords);
-          drawSpline();
-        }
+      // If panning gesture is active, pan the canvas
+      if (isPanningGesture.current && touchPanRef.current) {
+        const dx = t.clientX - touchPanRef.current.x;
+        const dy = t.clientY - touchPanRef.current.y;
+        setTranslate((tr) => ({ x: tr.x + dx, y: tr.y + dy }));
+        touchPanRef.current = { x: t.clientX, y: t.clientY };
         return;
       }
 
-      // Panning (when using fill tool, or when zoomed in)
-      if (tool === "fill" || zoom > 1) {
-        if (touchPanRef.current && hasMovedSignificantly.current) {
-          const dx = t.clientX - touchPanRef.current.x;
-          const dy = t.clientY - touchPanRef.current.y;
-          setTranslate((tr) => ({ x: tr.x + dx, y: tr.y + dy }));
+      // Drawing with brush/eraser (only if not panning)
+      if (!isPanningGesture.current && (tool === "brush" || tool === "eraser")) {
+        // Start drawing on first significant movement
+        if (!isDrawingRef.current && hasMovedSignificantly.current) {
+          const coords = getCanvasCoords(t.clientX, t.clientY);
+          if (coords) {
+            isDrawingRef.current = true;
+            pointsRef.current = [];
+            pointsRef.current.push(coords);
+            drawSpline();
+          }
+        } else if (isDrawingRef.current) {
+          const coords = getCanvasCoords(t.clientX, t.clientY);
+          if (coords) {
+            pointsRef.current.push(coords);
+            drawSpline();
+          }
         }
-        touchPanRef.current = { x: t.clientX, y: t.clientY };
       }
     }
   };
@@ -1961,18 +2008,19 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   const handleTouchEnd = (e: React.TouchEvent) => {
     e.preventDefault();
     
-    // Commit any in-progress drawing
-    if (isDrawingRef.current) {
+    // Commit any in-progress drawing (only if not panning)
+    if (isDrawingRef.current && !isPanningGesture.current) {
       commitStroke();
       isDrawingRef.current = false;
       pointsRef.current = [];
     }
 
     /* Handle fill tool TAP detection */
-    /* Fill only triggers if: single tap, no multitouch, minimal movement, quick tap */
+    /* Fill only triggers if: single tap, no multitouch, no panning, minimal movement, quick tap */
     if (e.touches.length === 0 && 
         tool === "fill" && 
         !isTouchGesture.current && 
+        !isPanningGesture.current &&
         !hasMovedSignificantly.current &&
         touchStartPos.current) {
       
@@ -1991,13 +2039,19 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       touchPanRef.current = null;
       lastTouchDist.current = null;
       isTouchGesture.current = false;
+      isPanningGesture.current = false;
       hasMovedSignificantly.current = false;
       touchStartPos.current = null;
+      isDrawingRef.current = false;
+      pointsRef.current = [];
     }
   };
 
   /* ============================================================
-      CLAMP PAN (PREVENT CANVAS FROM GOING OUT OF BOUNDS)
+      CLAMP PAN AND CENTER CANVAS
+      
+      Centers the canvas when it's smaller than the viewport,
+      and prevents it from going out of bounds when it's larger.
   ============================================================= */
 
   const clampPan = useCallback(() => {
@@ -2011,21 +2065,29 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     const canvasW = base.width * zoom;
     const canvasH = base.height * zoom;
 
-    let minX = viewW - canvasW;
-    let minY = viewH - canvasH;
-
-    // If canvas is smaller than view, anchor to top-left
-    if (canvasW <= viewW) minX = 0;
-    if (canvasH <= viewH) minY = 0;
-
     setTranslate((t) => {
       let x = t.x;
       let y = t.y;
 
-      if (x > 0) x = 0;
-      if (y > 0) y = 0;
-      if (x < minX) x = minX;
-      if (y < minY) y = minY;
+      // If canvas is smaller than viewport, center it
+      if (canvasW <= viewW) {
+        x = (viewW - canvasW) / 2;
+      } else {
+        // Canvas is larger - clamp to prevent going out of bounds
+        const minX = viewW - canvasW;
+        const maxX = 0;
+        x = Math.max(minX, Math.min(maxX, x));
+      }
+
+      // If canvas is smaller than viewport, center it
+      if (canvasH <= viewH) {
+        y = (viewH - canvasH) / 2;
+      } else {
+        // Canvas is larger - clamp to prevent going out of bounds
+        const minY = viewH - canvasH;
+        const maxY = 0;
+        y = Math.max(minY, Math.min(maxY, y));
+      }
 
       return { x, y };
     });
@@ -2064,23 +2126,28 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       const scaleX = viewportWidth / imgWidth;
       const scaleY = viewportHeight / imgHeight;
       
-      // Use the smaller scale to ensure image fits, with some padding
-      return Math.min(scaleX, scaleY) * 0.9;
+      // Use the smaller scale to ensure image fits completely
+      return Math.min(scaleX, scaleY);
     }
     
     const viewWidth = wrapper?.clientWidth || container?.clientWidth || window.innerWidth;
     const viewHeight = wrapper?.clientHeight || container?.clientHeight || window.innerHeight;
+    
+    // Ensure we have valid dimensions
+    if (viewWidth <= 0 || viewHeight <= 0) {
+      return 1.0;
+    }
     
     // Calculate scale factors for both dimensions
     const scaleX = viewWidth / imgWidth;
     const scaleY = viewHeight / imgHeight;
     
     // Use the smaller scale to ensure image fits completely
-    // Apply 0.9 factor to leave some padding around the image
-    const fitScale = Math.min(scaleX, scaleY) * 0.9;
+    // This maximizes the image size while maintaining aspect ratio
+    const fitScale = Math.min(scaleX, scaleY);
     
-    // Clamp to reasonable bounds (0.1 to 1.0 for initial load)
-    return Math.max(0.1, Math.min(1.0, fitScale));
+    // Clamp to reasonable bounds
+    return Math.max(0.1, Math.min(4.0, fitScale));
   }, [isMobile]);
 
   /* ============================================================
@@ -2124,7 +2191,10 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       setTimeout(() => {
         const autoZoom = calculateAutoFitZoom(img.width, img.height);
         setZoom(autoZoom);
+        // Translate will be centered by clampPan after zoom is set
         setTranslate({ x: 0, y: 0 });
+        // Ensure canvas is centered after initial load
+        setTimeout(() => clampPan(), 100);
       }, 50);
 
       setTool("fill");
@@ -2142,12 +2212,49 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       RESPONSIVE DETECTION + AUTO-FIT ON RESIZE
   ============================================================= */
 
+  // Detect if device is actually mobile (not just narrow window)
+  const detectMobileDevice = useCallback((): boolean => {
+    if (typeof window === 'undefined') return false;
+    
+    // Check User-Agent for mobile devices
+    const ua = navigator.userAgent.toLowerCase();
+    const isMobileUA = 
+      ua.includes('iphone') ||
+      ua.includes('ipod') ||
+      ua.includes('android') ||
+      ua.includes('mobile') ||
+      ua.includes('blackberry') ||
+      ua.includes('windows phone') ||
+      (ua.includes('ipad') && 'ontouchend' in document); // iPad with touch support
+    
+    // Also check for touch support (primary input method)
+    const hasTouchScreen = 
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0 ||
+      (window.matchMedia && window.matchMedia('(pointer: coarse)').matches);
+    
+    // Device is mobile if it has mobile UA OR has touch as primary input
+    // But NOT if it's a desktop browser with touch support (like Surface)
+    // For desktop browsers, check window width as secondary factor
+    if (isMobileUA) {
+      return true;
+    }
+    
+    // If it's a touch device but window is very wide, it's probably a tablet/desktop with touch
+    // Use 900px as breakpoint - narrower windows on touch devices should use mobile layout
+    if (hasTouchScreen && window.innerWidth < 900) {
+      return true;
+    }
+    
+    return false;
+  }, []);
+
   useEffect(() => {
     let resizeTimeout: NodeJS.Timeout;
     
     const handleResize = () => {
-      // Update mobile state
-      setIsMobile(window.innerWidth < 900);
+      // Update mobile state based on actual device, not just window width
+      setIsMobile(detectMobileDevice());
       
       // Debounce auto-fit recalculation
       clearTimeout(resizeTimeout);
@@ -2155,13 +2262,16 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
         if (canvasSize.width > 0 && canvasSize.height > 0) {
           const autoZoom = calculateAutoFitZoom(canvasSize.width, canvasSize.height);
           setZoom(autoZoom);
+          // Translate will be centered by clampPan after zoom is set
           setTranslate({ x: 0, y: 0 });
+          // Ensure canvas is centered after resize
+          setTimeout(() => clampPan(), 100);
         }
       }, 200);
     };
     
     // Initial check
-    setIsMobile(window.innerWidth < 900);
+    setIsMobile(detectMobileDevice());
     
     window.addEventListener("resize", handleResize);
     window.addEventListener("orientationchange", handleResize);
@@ -2171,7 +2281,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       window.removeEventListener("orientationchange", handleResize);
       clearTimeout(resizeTimeout);
     };
-  }, [canvasSize, calculateAutoFitZoom]);
+  }, [canvasSize, calculateAutoFitZoom, detectMobileDevice]);
 
   /* ============================================================
       DOWNLOAD RESULT
@@ -2281,12 +2391,12 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
               <div
                 className="relative"
                 style={{
-                  display: "inline-block",
+                  display: "block",
                   transformOrigin: "top left",
-                  minWidth: `${canvasSize.width * zoom}px`,
-                  minHeight: `${canvasSize.height * zoom}px`,
                   width: `${canvasSize.width * zoom}px`,
                   height: `${canvasSize.height * zoom}px`,
+                  minWidth: `${canvasSize.width * zoom}px`,
+                  minHeight: `${canvasSize.height * zoom}px`,
                   position: "relative",
                 }}
               >
@@ -2396,21 +2506,26 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
               style={{
                 flex: '1 1 0%',
                 width: "100%",
+                minWidth: 0,
                 minHeight: 0,
                 overflow: "auto",
-                touchAction: "none"
+                overflowX: "auto",
+                overflowY: "auto",
+                // Allow pan-y and pan-x for touch scrolling, but prevent pinch-zoom default behavior
+                // We handle pinch-zoom manually in touch handlers
+                touchAction: "pan-x pan-y"
               }}
             >
               {/* SCALE WRAPPER - Mobile */}
               <div
                 className="relative"
                 style={{
-                  display: "inline-block",
+                  display: "block",
                   transformOrigin: "top left",
-                  minWidth: `${canvasSize.width * zoom}px`,
-                  minHeight: `${canvasSize.height * zoom}px`,
                   width: `${canvasSize.width * zoom}px`,
                   height: `${canvasSize.height * zoom}px`,
+                  minWidth: `${canvasSize.width * zoom}px`,
+                  minHeight: `${canvasSize.height * zoom}px`,
                   position: "relative",
                 }}
               >
