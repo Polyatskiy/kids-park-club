@@ -1,5 +1,18 @@
+import dynamic from "next/dynamic";
 import { getPuzzleById } from "@/lib/content-repository";
-import JigsawGame from "./JigsawGame";
+
+// Dynamically import JigsawGame to reduce initial bundle size and improve INP
+const JigsawGame = dynamic(() => import("./JigsawGame"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center w-full h-screen bg-gradient-to-b from-sky-200 via-sky-100 to-emerald-100">
+      <div className="text-center">
+        <div className="inline-block w-12 h-12 border-4 border-slate-300 border-t-slate-800 rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-700">Loading puzzle...</p>
+      </div>
+    </div>
+  ),
+});
 
 interface JigsawPageProps {
   searchParams?: Promise<{

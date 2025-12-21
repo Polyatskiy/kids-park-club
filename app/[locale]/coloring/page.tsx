@@ -1,6 +1,13 @@
 import { Container } from "@/ui/container";
-import ColoringBrowser from "@/components/coloring-browser";
+import dynamic from "next/dynamic";
 import { getItems, getCategories, getSubcategories } from "@/lib/content-repository";
+
+// Dynamically import ColoringBrowser to reduce initial bundle size
+const ColoringBrowser = dynamic(() => import("@/components/coloring-browser"), {
+  loading: () => (
+    <div className="p-8 text-center text-slate-600">Loading coloring pages...</div>
+  ),
+});
 import { routing } from "@/i18n/routing";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";

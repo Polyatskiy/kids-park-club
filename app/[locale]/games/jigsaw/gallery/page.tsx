@@ -1,6 +1,13 @@
 import { Container } from '@/ui/container';
-import PuzzleBrowser from '@/components/puzzle-browser';
+import dynamic from 'next/dynamic';
 import { getItems, getCategories, getSubcategories } from '@/lib/content-repository';
+
+// Dynamically import PuzzleBrowser to reduce initial bundle size
+const PuzzleBrowser = dynamic(() => import('@/components/puzzle-browser'), {
+  loading: () => (
+    <div className="p-8 text-center text-slate-600">Loading puzzles...</div>
+  ),
+});
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import type { Metadata } from "next";
@@ -73,9 +80,9 @@ export default async function JigsawGalleryPage({
   // Set request locale for server components
   setRequestLocale(validLocale);
 
-  // Fetch puzzles and categories with current locale
+  // Fetch puzzles and categories with current locale (limit items for better performance)
   const [items, categories] = await Promise.all([
-    getItems('puzzles', { locale: validLocale }),
+    getItems('puzzles', { locale: validLocale, limit: 500 }),
     getCategories('puzzles', validLocale),
   ]);
 

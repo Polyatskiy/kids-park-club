@@ -22,6 +22,11 @@ export default async function RootLayout({
   
   return (
     <html lang={locale}>
+      <head>
+        {/* Preload critical resources */}
+        <link rel="preload" href="/assets/logo.png" as="image" />
+        <link rel="dns-prefetch" href="https://www.supabase.co" />
+      </head>
       <body className="min-h-screen flex flex-col">
         <GtagScript />
         <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-sky-200 via-sky-100 to-emerald-100">
