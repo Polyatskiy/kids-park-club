@@ -6,9 +6,15 @@ import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { SpeedInsights } from '@vercel/speed-insights/next';
+import dynamic from 'next/dynamic';
 import { Analytics } from "@/components/analytics";
 import { getMessages } from "next-intl/server";
+
+// Dynamically import SpeedInsights to reduce initial bundle size
+// Load it after page interaction to improve TTI (Time to Interactive)
+const SpeedInsights = dynamic(
+  () => import('@vercel/speed-insights/next').then((mod) => ({ default: mod.SpeedInsights }))
+);
 
 const baseUrl = "https://www.kids-park.club";
 const logoUrl = `${baseUrl}/assets/logo.png`;
@@ -69,6 +75,7 @@ export default async function LocaleLayout({
       <Navbar />
       <main className="flex-1 relative">{children}</main>
       <Footer />
+      {/* Load SpeedInsights after initial render to improve performance */}
       <SpeedInsights />
     </NextIntlClientProvider>
   );

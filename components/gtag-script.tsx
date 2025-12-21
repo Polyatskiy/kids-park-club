@@ -9,6 +9,7 @@ export function GtagScript() {
 
   return (
     <>
+      {/* Load gtag.js with low priority to not block rendering */}
       <Script
         strategy="afterInteractive"
         src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
@@ -21,7 +22,10 @@ export function GtagScript() {
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '${gaId}');
+            gtag('config', '${gaId}', {
+              // Optimize performance: send page_view only after user interaction
+              send_page_view: true
+            });
           `,
         }}
       />
