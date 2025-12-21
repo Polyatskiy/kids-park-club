@@ -73,13 +73,13 @@ export default async function ColoringPage({
   // Set request locale for server components
   setRequestLocale(validLocale);
 
-  // Fetch items and categories with current locale
+  // Fetch items and categories with current locale (limit items for better performance)
   const [items, categories] = await Promise.all([
-    getItems('coloring', { locale: validLocale }),
+    getItems('coloring', { locale: validLocale, limit: 500 }),
     getCategories('coloring', validLocale),
   ]);
 
-  // Fetch all subcategories for the categories we have
+  // Fetch all subcategories for the categories we have (in parallel batches)
   const subcategoryPromises = categories.map(cat => getSubcategories(cat.id, validLocale));
   const subcategoryArrays = await Promise.all(subcategoryPromises);
   const allSubcategories = subcategoryArrays.flat();

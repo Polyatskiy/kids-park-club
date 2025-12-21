@@ -31,6 +31,8 @@ export function HomeTile({ icon, label, href, glowColor, bgColor }: HomeTileProp
               filter: "saturate(1.1) drop-shadow(0 4px 8px rgba(0,0,0,0.2))"
             }}
             sizes="(max-width: 768px) 56px, 64px"
+            priority
+            fetchPriority="high"
           />
         </div>
         

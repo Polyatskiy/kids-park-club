@@ -32,6 +32,8 @@ export function PopularItemCard({ item }: PopularItemCardProps) {
               fill
               className="object-cover"
               sizes="(max-width: 768px) 50vw, 33vw"
+              loading="lazy"
+              fetchPriority="auto"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-slate-500 text-sm">

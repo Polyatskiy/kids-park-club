@@ -1,10 +1,24 @@
-import ColoringCanvas from "@/components/coloring-canvas";
+import dynamic from "next/dynamic";
 import { notFound } from "next/navigation";
 import { getItemBySlug, getItemById, getCategoryById, getSubcategoryById } from "@/lib/content-repository";
 import { routing } from "@/i18n/routing";
 import type { Metadata } from "next";
 import { getCanonicalUrl, getHreflangUrls } from "@/lib/seo-utils";
 import { setRequestLocale } from "next-intl/server";
+import { Suspense } from "react";
+
+// Dynamically import ColoringCanvas to reduce initial bundle size
+const ColoringCanvas = dynamic(() => import("@/components/coloring-canvas"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center w-full h-screen bg-sky-100">
+      <div className="text-center">
+        <div className="inline-block w-12 h-12 border-4 border-slate-300 border-t-slate-800 rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-700">Loading coloring page...</p>
+      </div>
+    </div>
+  ),
+});
 
 type Props = {
   params: Promise<{ slug: string; locale: string }>;
@@ -158,7 +172,16 @@ export default async function ColoringPage({ params }: Props) {
         minHeight: '100vh',
         maxHeight: '100vh'
       }}>
-        <ColoringCanvas src={imageUrl} closeHref="/coloring" />
+        <Suspense fallback={
+          <div className="flex items-center justify-center w-full h-screen bg-sky-100">
+            <div className="text-center">
+              <div className="inline-block w-12 h-12 border-4 border-slate-300 border-t-slate-800 rounded-full animate-spin mb-4"></div>
+              <p className="text-slate-700">Loading coloring page...</p>
+            </div>
+          </div>
+        }>
+          <ColoringCanvas src={imageUrl} closeHref="/coloring" />
+        </Suspense>
       </div>
     </>
   );
