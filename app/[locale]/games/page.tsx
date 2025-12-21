@@ -3,6 +3,49 @@ import { getGames } from "@/lib/content-repository";
 import { GameCard } from "@/components/game-card";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
+import type { Metadata } from "next";
+import { getCanonicalUrl, getHreflangUrls } from "@/lib/seo-utils";
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const validLocale = routing.locales.includes(locale as any)
+    ? locale
+    : routing.defaultLocale;
+  
+  setRequestLocale(validLocale);
+  const t = await getTranslations({ locale: validLocale, namespace: "common.pages" });
+  
+  const path = "/games";
+  const url = getCanonicalUrl(path, validLocale);
+  const alternateUrls = getHreflangUrls(path);
+  
+  const title = t("miniGames") || "Mini Games for Kids";
+  const description = t("miniGamesDescription") || "Fun and educational mini games for children. Interactive games to develop creativity and skills.";
+  
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: url,
+      languages: {
+        ...alternateUrls,
+        'x-default': getCanonicalUrl(path, routing.defaultLocale),
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "website",
+      locale: validLocale,
+      alternateLocale: routing.locales.filter(l => l !== validLocale),
+    },
+  };
+}
 
 export default async function GamesPage({
   params

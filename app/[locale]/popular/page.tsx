@@ -5,6 +5,49 @@ import { routing } from "@/i18n/routing";
 import { getItems } from "@/lib/content-repository";
 import { PopularItemCard } from "@/components/popular-item-card";
 import { Suspense } from "react";
+import type { Metadata } from "next";
+import { getCanonicalUrl, getHreflangUrls } from "@/lib/seo-utils";
+
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const validLocale = routing.locales.includes(locale as any)
+    ? locale
+    : routing.defaultLocale;
+  
+  setRequestLocale(validLocale);
+  const t = await getTranslations({ locale: validLocale, namespace: "common.pages" });
+  
+  const path = "/popular";
+  const url = getCanonicalUrl(path, validLocale);
+  const alternateUrls = getHreflangUrls(path);
+  
+  const title = t("popularTitle") || "Popular Content";
+  const description = t("recentItemsDescription") || t("popularDescription") || "Discover the most popular coloring pages and puzzles. New content added weekly.";
+  
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: url,
+      languages: {
+        ...alternateUrls,
+        'x-default': getCanonicalUrl(path, routing.defaultLocale),
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "website",
+      locale: validLocale,
+      alternateLocale: routing.locales.filter(l => l !== validLocale),
+    },
+  };
+}
 
 export default async function PopularPage({
   params

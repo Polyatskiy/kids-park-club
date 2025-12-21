@@ -2,6 +2,7 @@ import { HomeTile } from "@/components/home-tile";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import type { Metadata } from "next";
+import { getCanonicalUrl, getHreflangUrls } from "@/lib/seo-utils";
 
 export async function generateMetadata({
   params
@@ -16,9 +17,31 @@ export async function generateMetadata({
   
   const t = await getTranslations({ locale: validLocale, namespace: "common" });
   
+  const path = "/";
+  const url = getCanonicalUrl(path, validLocale);
+  const alternateUrls = getHreflangUrls(path);
+  
+  const title = "Kids Park Club – Coloring Pages and Games";
+  const description = "Free printable coloring pages, jigsaw puzzles, and fun games for kids. Educational activities and entertainment in one place.";
+  
   return {
-    title: "Kids Park Club – Coloring Pages and Games",
-    description: "Free printable coloring pages, jigsaw puzzles, and fun games for kids. Educational activities and entertainment in one place.",
+    title,
+    description,
+    alternates: {
+      canonical: url,
+      languages: {
+        ...alternateUrls,
+        'x-default': getCanonicalUrl(path, routing.defaultLocale),
+      },
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "website",
+      locale: validLocale,
+      alternateLocale: routing.locales.filter(l => l !== validLocale),
+    },
   };
 }
 

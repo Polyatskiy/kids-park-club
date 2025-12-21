@@ -8,7 +8,18 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import dynamic from 'next/dynamic';
 import { Analytics } from "@/components/analytics";
+import { SuppressConsoleWarnings } from "@/components/suppress-console-warnings";
 import { getMessages } from "next-intl/server";
+import type { Viewport } from "next";
+
+// Viewport configuration for mobile responsiveness
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: "cover", // Support for iOS safe areas
+};
 
 // Dynamically import SpeedInsights to reduce initial bundle size
 // Load it after page interaction to improve TTI (Time to Interactive)
@@ -21,7 +32,8 @@ const logoUrl = `${baseUrl}/assets/logo.png`;
 
 export const metadata: Metadata = {
   title: "Kids Park Club – Coloring Pages and Games",
-  description: "Kids platform with coloring pages and mini-games.",
+  description: "Free printable coloring pages, jigsaw puzzles, and fun games for kids. Educational activities and entertainment in one place.",
+  metadataBase: new URL("https://www.kids-park.club"),
   openGraph: {
     title: "Kids Park Club",
     description: "Coloring pages and games in one place.",
@@ -71,6 +83,8 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
+      {/* Suppress non-critical warnings from third-party scripts (Vercel Live Feedback) */}
+      <SuppressConsoleWarnings />
       <Analytics />
       <Navbar />
       <main className="flex-1 relative">{children}</main>
