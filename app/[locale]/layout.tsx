@@ -10,14 +10,33 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from "@/components/analytics";
 import { getMessages } from "next-intl/server";
 
+const baseUrl = "https://www.kids-park.club";
+const logoUrl = `${baseUrl}/assets/logo.png`;
+
 export const metadata: Metadata = {
   title: "Kids Park Club – Coloring Pages and Games",
   description: "Kids platform with coloring pages and mini-games.",
   openGraph: {
     title: "Kids Park Club",
     description: "Coloring pages and games in one place.",
-    type: "website"
-  }
+    type: "website",
+    url: baseUrl,
+    siteName: "Kids Park Club",
+    images: [
+      {
+        url: logoUrl,
+        width: 1200,
+        height: 630,
+        alt: "Kids Park Club Logo",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Kids Park Club",
+    description: "Coloring pages and games in one place.",
+    images: [logoUrl],
+  },
 };
 
 export function generateStaticParams() {
