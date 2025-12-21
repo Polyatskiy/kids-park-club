@@ -116,6 +116,7 @@ export async function proxy(req: NextRequest) {
     "https://www.google-analytics.com", // Google Analytics
     "https://*.supabase.co", // Supabase client library
     "https://va.vercel-scripts.com", // Vercel Speed Insights
+    "https://vercel.live", // Vercel Live Feedback (development/preview)
     "'unsafe-eval'", // Required for: Google Analytics, Vercel Speed Insights, Next.js HMR (dev)
   ].join(' ');
 
@@ -125,8 +126,12 @@ export async function proxy(req: NextRequest) {
     "https://*.supabase.co", // Supabase API
     "https://www.google-analytics.com", // Google Analytics
     "https://www.googletagmanager.com", // Google Tag Manager
+    "https://*.google-analytics.com", // Google Analytics (all regions, including region1, region2, etc.)
+    "https://region1.google-analytics.com", // Google Analytics Region 1
+    "https://region2.google-analytics.com", // Google Analytics Region 2
     "https://*.vercel-analytics.com", // Vercel Analytics
     "https://vitals.vercel-insights.com", // Vercel Speed Insights
+    "https://vercel.live", // Vercel Live Feedback (development/preview)
   ].join(' ');
 
   // Image sources: allow images from various sources
@@ -160,6 +165,7 @@ export async function proxy(req: NextRequest) {
   const cspDirectives = [
     `default-src 'self'`,
     `script-src ${scriptSrc}`,
+    `script-src-elem ${scriptSrc}`, // CSP Level 3: controls <script> elements specifically (fixes Vercel Live Feedback)
     `style-src ${styleSrc}`,
     `font-src ${fontSrc}`,
     `img-src ${imgSrc}`,
