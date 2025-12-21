@@ -170,7 +170,7 @@ export async function proxy(req: NextRequest) {
     `font-src ${fontSrc}`,
     `img-src ${imgSrc}`,
     `connect-src ${connectSrc}`,
-    `frame-src 'self'`,
+    `frame-src 'self' https://vercel.live`, // Allow Vercel Live Feedback iframes
     `object-src 'none'`,
     `base-uri 'self'`,
     `form-action 'self'`,
