@@ -1224,7 +1224,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   const saveUndo = () => {
     const draw = drawCanvasRef.current;
     if (!draw) return;
-    const ctx = draw.getContext("2d");
+    const ctx = draw.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
     const img = ctx.getImageData(0, 0, draw.width, draw.height);
 
@@ -1239,7 +1239,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
 
     undoStack.current.pop();
     const prev = undoStack.current[undoStack.current.length - 1];
-    const ctx = draw.getContext("2d");
+    const ctx = draw.getContext("2d", { willReadFrequently: true });
     if (ctx) ctx.putImageData(prev, 0, 0);
   };
 
@@ -1247,13 +1247,13 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     const draw = drawCanvasRef.current;
     const temp = tempCanvasRef.current;
     if (!draw) return;
-    const ctx = draw.getContext("2d");
+    const ctx = draw.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
     
     ctx.clearRect(0, 0, draw.width, draw.height);
     
     if (temp) {
-      const tempCtx = temp.getContext("2d");
+      const tempCtx = temp.getContext("2d", { willReadFrequently: true });
       if (tempCtx) tempCtx.clearRect(0, 0, temp.width, temp.height);
     }
 
@@ -1297,7 +1297,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   const drawSpline = () => {
     const temp = tempCanvasRef.current;
     if (!temp) return;
-    const ctx = temp.getContext("2d");
+    const ctx = temp.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
 
     ctx.clearRect(0, 0, temp.width, temp.height);
@@ -1376,7 +1376,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     const draw = drawCanvasRef.current;
     if (!temp || !draw) return;
 
-    const ctx = draw.getContext("2d");
+    const ctx = draw.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
 
     // For eraser, we need to apply destination-out when merging
@@ -1414,7 +1414,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     const mergedCanvas = document.createElement("canvas");
     mergedCanvas.width = w;
     mergedCanvas.height = h;
-    const mergedCtx = mergedCanvas.getContext("2d");
+    const mergedCtx = mergedCanvas.getContext("2d", { willReadFrequently: true });
     if (!mergedCtx) return;
 
     mergedCtx.drawImage(base, 0, 0);
@@ -1455,13 +1455,13 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     };
 
     // Get base canvas data to detect outline boundaries
-    const baseCtx = base.getContext("2d");
+    const baseCtx = base.getContext("2d", { willReadFrequently: true });
     if (!baseCtx) return;
     const baseData = baseCtx.getImageData(0, 0, w, h);
     const basePixels = baseData.data;
 
     // Get draw canvas data for writing absolute RGBA values
-    const drawCtx = draw.getContext("2d");
+    const drawCtx = draw.getContext("2d", { willReadFrequently: true });
     if (!drawCtx) return;
     const drawData = drawCtx.getImageData(0, 0, w, h);
 
@@ -2107,13 +2107,13 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
 
       setCanvasSize({ width: img.width, height: img.height });
 
-      const ctx = base.getContext("2d");
+      const ctx = base.getContext("2d", { willReadFrequently: false });
       if (ctx) {
         ctx.clearRect(0, 0, base.width, base.height);
         ctx.drawImage(img, 0, 0);
       }
 
-      const drawCtx = draw.getContext("2d");
+      const drawCtx = draw.getContext("2d", { willReadFrequently: true });
       if (drawCtx) {
         drawCtx.clearRect(0, 0, draw.width, draw.height);
         undoStack.current = [drawCtx.getImageData(0, 0, draw.width, draw.height)];
@@ -2186,7 +2186,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     merged.width = base.width;
     merged.height = base.height;
 
-    const ctx = merged.getContext("2d");
+    const ctx = merged.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
     ctx.drawImage(base, 0, 0);
     ctx.drawImage(draw, 0, 0);

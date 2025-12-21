@@ -23,9 +23,9 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <head>
-        {/* Preload critical resources */}
-        <link rel="preload" href="/assets/logo.png" as="image" />
+        {/* DNS prefetch for external resources */}
         <link rel="dns-prefetch" href="https://www.supabase.co" />
+        {/* Note: logo.png preload removed - it's not used immediately on page load */}
       </head>
       <body className="min-h-screen flex flex-col">
         <GtagScript />
