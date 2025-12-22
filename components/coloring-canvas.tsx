@@ -32,8 +32,8 @@ function ColoringToolbar({
   onPrint,
   isMobile,
 }: {
-  tool: "brush" | "eraser" | "fill";
-  setTool: (t: "brush" | "eraser" | "fill") => void;
+  tool: "brush" | "eraser" | "fill" | "pan";
+  setTool: (t: "brush" | "eraser" | "fill" | "pan") => void;
   color: string;
   setColor: (c: string) => void;
   brushSize: number;
@@ -90,8 +90,9 @@ function ColoringToolbar({
         }}
       >
         <div className="flex flex-col gap-2">
-          {/* Main Tools: Brush, Eraser, Fill, Clear */}
+          {/* Main Tools: Pan, Brush, Eraser, Fill, Clear */}
           <div className="flex items-center gap-2">
+            <ToolButton icon="pan" active={tool === "pan"} onClick={() => setTool("pan")} />
             <ToolButton icon="brush" active={tool === "brush"} onClick={() => setTool("brush")} />
             <ToolButton icon="eraser" active={tool === "eraser"} onClick={() => setTool("eraser")} />
             <ToolButton icon="fill" active={tool === "fill"} onClick={() => setTool("fill")} />
@@ -172,8 +173,9 @@ function ColoringToolbar({
 
       {/* Row 1: Main Tools, History, Export, Settings */}
       <div className="flex items-center justify-between px-2 py-1.5 gap-1 border-b border-gray-100">
-        {/* Main Tools: Brush, Eraser, Fill, Clear */}
+        {/* Main Tools: Pan, Brush, Eraser, Fill, Clear */}
         <div className="flex items-center gap-1">
+          <ToolButton icon="pan" active={tool === "pan"} onClick={() => { setTool("pan"); closeAllPanels(); }} compact />
           <ToolButton icon="brush" active={tool === "brush"} onClick={() => { setTool("brush"); closeAllPanels(); }} compact />
           <ToolButton icon="eraser" active={tool === "eraser"} onClick={() => { setTool("eraser"); closeAllPanels(); }} compact />
           <ToolButton icon="fill" active={tool === "fill"} onClick={() => { setTool("fill"); closeAllPanels(); }} compact />
@@ -496,7 +498,7 @@ function MobileMenu({
     - No filled background when active
 ============================================================ */
 function ToolButton({ icon, active, onClick, compact = false }: {
-  icon: "brush" | "eraser" | "fill";
+  icon: "brush" | "eraser" | "fill" | "pan";
   active: boolean;
   onClick: () => void;
   compact?: boolean;
@@ -513,7 +515,23 @@ function ToolButton({ icon, active, onClick, compact = false }: {
         }
       `}
     >
-      <img src={`/icons/${icon}.svg`} className={compact ? "w-4 h-4" : "w-6 h-6 md:w-7 md:h-7"} alt={icon} />
+      {icon === "pan" ? (
+        <svg 
+          className={compact ? "w-4 h-4" : "w-6 h-6 md:w-7 md:h-7"} 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+        >
+          <path d="M18 11v-1a2 2 0 0 0-2-2h-5a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h5a2 2 0 0 0 2-2z" />
+          <path d="M6 11v-1a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z" />
+          <path d="M12 5v14" />
+        </svg>
+      ) : (
+        <img src={`/icons/${icon}.svg`} className={compact ? "w-4 h-4" : "w-6 h-6 md:w-7 md:h-7"} alt={icon} />
+      )}
     </button>
   );
 }
@@ -1978,7 +1996,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   const [brushSize, setBrushSize] = useState(40);
   const [zoom, setZoom] = useState(1);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
-  const [tool, setTool] = useState<"brush" | "eraser" | "fill">("fill");
+  const [tool, setTool] = useState<"brush" | "eraser" | "fill" | "pan">("pan");
   const [showClearModal, setShowClearModal] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [isMobile, setIsMobile] = useState(false);
@@ -2895,10 +2913,17 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       touchStartPos.current = { x: t.clientX, y: t.clientY };
       hasMovedSignificantly.current = false;
       isTouchGesture.current = false;
-      isPanningGesture.current = false; // Will be set to true if movement exceeds threshold
       
-      // For fill tool: prepare for tap detection, allow panning if moved
-      // For brush/eraser: wait to see if it's a pan or draw gesture
+      // If pan tool is active, always enable panning mode
+      if (tool === "pan") {
+        isPanningGesture.current = true;
+        isDrawingRef.current = false;
+        pointsRef.current = [];
+      } else {
+        // For other tools, wait to see if it's a pan or draw gesture
+        isPanningGesture.current = false;
+      }
+      
       touchPanRef.current = { x: t.clientX, y: t.clientY };
     }
   };
@@ -2941,35 +2966,28 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     if (e.touches.length === 1) {
       const t = e.touches[0];
       
-      // Check if we've moved significantly (for tap/pan detection)
-      if (touchStartPos.current) {
-        const moveDist = Math.sqrt(
-          Math.pow(t.clientX - touchStartPos.current.x, 2) +
-          Math.pow(t.clientY - touchStartPos.current.y, 2)
-        );
-        if (moveDist > TOUCH_TAP_THRESHOLD) {
-          hasMovedSignificantly.current = true;
-        }
-        
-        // If movement exceeds pan threshold, switch to panning mode (unless already drawing)
-        if (moveDist > TOUCH_PAN_THRESHOLD && !isDrawingRef.current) {
-          isPanningGesture.current = true;
-          isDrawingRef.current = false;
-          pointsRef.current = []; // Cancel any pending drawing
-        }
-      }
-
-      // If panning gesture is active, pan the canvas
-      if (isPanningGesture.current && touchPanRef.current) {
+      // If pan tool is active, always pan (no drawing)
+      if (tool === "pan" && touchPanRef.current) {
         const dx = t.clientX - touchPanRef.current.x;
         const dy = t.clientY - touchPanRef.current.y;
         setTranslate((tr) => ({ x: tr.x + dx, y: tr.y + dy }));
         touchPanRef.current = { x: t.clientX, y: t.clientY };
         return;
       }
-
-      // Drawing with brush/eraser (only if not panning)
-      if (!isPanningGesture.current && (tool === "brush" || tool === "eraser")) {
+      
+      // For brush/eraser tools, always draw (no panning with single finger)
+      if (tool === "brush" || tool === "eraser") {
+        // Check if we've moved significantly
+        if (touchStartPos.current) {
+          const moveDist = Math.sqrt(
+            Math.pow(t.clientX - touchStartPos.current.x, 2) +
+            Math.pow(t.clientY - touchStartPos.current.y, 2)
+          );
+          if (moveDist > TOUCH_TAP_THRESHOLD) {
+            hasMovedSignificantly.current = true;
+          }
+        }
+        
         // Start drawing on first significant movement
         if (!isDrawingRef.current && hasMovedSignificantly.current) {
           const coords = getCanvasCoords(t.clientX, t.clientY);
@@ -2985,6 +3003,36 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
             pointsRef.current.push(coords);
             drawSpline();
           }
+        }
+        return;
+      }
+      
+      // For fill tool, check if it's a tap or pan gesture
+      if (tool === "fill") {
+        // Check if we've moved significantly (for tap/pan detection)
+        if (touchStartPos.current) {
+          const moveDist = Math.sqrt(
+            Math.pow(t.clientX - touchStartPos.current.x, 2) +
+            Math.pow(t.clientY - touchStartPos.current.y, 2)
+          );
+          if (moveDist > TOUCH_TAP_THRESHOLD) {
+            hasMovedSignificantly.current = true;
+          }
+          
+          // If movement exceeds pan threshold, switch to panning mode
+          if (moveDist > TOUCH_PAN_THRESHOLD && !isDrawingRef.current) {
+            isPanningGesture.current = true;
+            isDrawingRef.current = false;
+            pointsRef.current = [];
+          }
+        }
+
+        // If panning gesture is active, pan the canvas
+        if (isPanningGesture.current && touchPanRef.current) {
+          const dx = t.clientX - touchPanRef.current.x;
+          const dy = t.clientY - touchPanRef.current.y;
+          setTranslate((tr) => ({ x: tr.x + dx, y: tr.y + dy }));
+          touchPanRef.current = { x: t.clientX, y: t.clientY };
         }
       }
     }
