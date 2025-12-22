@@ -2870,10 +2870,14 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       EVENT HANDLERS - TOUCH (FIXED FOR MOBILE)
       
       Key behavior:
-      1. Single finger = always drawing (brush/eraser) or tap to fill
-      2. Two fingers = pinch-zoom and pan (never triggers fill/draw)
-      3. Fill tool only triggers on TAP (quick touch without movement)
-      4. No panning with single finger - only drawing
+      1. Fill tool: 
+         - Single finger = pan (move image)
+         - Two fingers = zoom
+         - Quick tap = fill
+      2. Brush/Eraser tools:
+         - Single finger = drawing
+         - Two fingers = zoom and pan
+      3. Two fingers always = zoom and pan (never triggers fill/draw)
   ============================================================= */
 
   const TOUCH_TAP_THRESHOLD = 10; /* pixels - max movement to count as tap */
@@ -2901,18 +2905,29 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       return;
     }
 
-    /* Single finger touch - always for drawing/fill, never panning */
+    /* Single finger touch */
     if (e.touches.length === 1) {
       const t = e.touches[0];
       
-      // Record touch start for tap detection (fill tool)
+      // Record touch start
       touchStartTime.current = Date.now();
       touchStartPos.current = { x: t.clientX, y: t.clientY };
       hasMovedSignificantly.current = false;
       isTouchGesture.current = false;
-      isPanningGesture.current = false; // Single finger never pans
-      isDrawingRef.current = false;
-      pointsRef.current = [];
+      
+      // For fill tool: single finger = panning
+      // For brush/eraser: single finger = drawing
+      if (tool === "fill") {
+        isPanningGesture.current = true;
+        isDrawingRef.current = false;
+        pointsRef.current = [];
+        touchPanRef.current = { x: t.clientX, y: t.clientY };
+      } else {
+        // Brush/eraser: prepare for drawing
+        isPanningGesture.current = false;
+        isDrawingRef.current = false;
+        pointsRef.current = [];
+      }
     }
   };
 
@@ -2959,11 +2974,20 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       return;
     }
 
-    /* Single finger movement - always for drawing/fill, never panning */
+    /* Single finger movement */
     if (e.touches.length === 1) {
       const t = e.touches[0];
       
-      // For brush/eraser tools, always draw (no panning with single finger)
+      // For fill tool: single finger = panning
+      if (tool === "fill" && touchPanRef.current) {
+        const dx = t.clientX - touchPanRef.current.x;
+        const dy = t.clientY - touchPanRef.current.y;
+        setTranslate((tr) => ({ x: tr.x + dx, y: tr.y + dy }));
+        touchPanRef.current = { x: t.clientX, y: t.clientY };
+        return;
+      }
+      
+      // For brush/eraser tools: single finger = drawing
       if (tool === "brush" || tool === "eraser") {
         // Check if we've moved significantly
         if (touchStartPos.current) {
@@ -2994,21 +3018,6 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
         }
         return;
       }
-      
-      // For fill tool, only track movement for tap detection (no panning)
-      if (tool === "fill") {
-        // Check if we've moved significantly (for tap detection)
-        if (touchStartPos.current) {
-          const moveDist = Math.sqrt(
-            Math.pow(t.clientX - touchStartPos.current.x, 2) +
-            Math.pow(t.clientY - touchStartPos.current.y, 2)
-          );
-          if (moveDist > TOUCH_TAP_THRESHOLD) {
-            hasMovedSignificantly.current = true;
-          }
-        }
-        // No panning for fill tool - only tap to fill
-      }
     }
   };
 
@@ -3023,11 +3032,11 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     }
 
     /* Handle fill tool TAP detection */
-    /* Fill only triggers if: single tap, no multitouch, no panning, minimal movement, quick tap */
+    /* Fill only triggers if: single tap, no multitouch, minimal movement, quick tap */
+    /* Note: isPanningGesture can be true for fill tool (for panning), but fill still works on quick tap */
     if (e.touches.length === 0 && 
         tool === "fill" && 
         !isTouchGesture.current && 
-        !isPanningGesture.current &&
         !hasMovedSignificantly.current &&
         touchStartPos.current) {
       
