@@ -87,6 +87,10 @@ export default async function HomePage({
   // Explicitly pass locale to ensure correct translations are loaded
   const t = await getTranslations({ locale: validLocale, namespace: "common" });
   
+  // Calculate URL for structured data
+  const path = "/";
+  const url = getCanonicalUrl(path, validLocale);
+  
   const tiles = [
     {
       icon: "/assets/icon-crayons.png",
