@@ -30,16 +30,15 @@ const SpeedInsights = dynamic(
 const baseUrl = "https://www.kids-park.club";
 const logoUrl = `${baseUrl}/assets/logo.png`;
 
+// Base metadata - will be overridden by page-specific generateMetadata
+// This ensures Lighthouse can always find meta description in initial HTML
 export const metadata: Metadata = {
-  title: "Kids Park Club – Coloring Pages and Games",
-  description: "Free printable coloring pages, jigsaw puzzles, and fun games for kids. Educational activities and entertainment in one place.",
   metadataBase: new URL("https://www.kids-park.club"),
+  // Default fallback description - pages should override this
+  description: "Free printable coloring pages, jigsaw puzzles, and fun educational games for kids. Perfect for toddlers, preschoolers, and school-age children.",
   openGraph: {
-    title: "Kids Park Club",
-    description: "Coloring pages and games in one place.",
-    type: "website",
-    url: baseUrl,
     siteName: "Kids Park Club",
+    type: "website",
     images: [
       {
         url: logoUrl,
@@ -51,8 +50,6 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Kids Park Club",
-    description: "Coloring pages and games in one place.",
     images: [logoUrl],
   },
 };
