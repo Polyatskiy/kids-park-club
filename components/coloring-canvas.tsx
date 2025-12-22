@@ -2017,6 +2017,22 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   const isTouchGesture = useRef(false);
   const isPanningGesture = useRef(false); // Separate flag for panning vs drawing
   const hasMovedSignificantly = useRef(false); // Track if touch moved significantly (for tap/pan detection)
+  
+  /* Smooth panning state - use ref to track current translate for smooth updates */
+  const translateRef = useRef(translate);
+  
+  // Sync translate state with ref
+  useEffect(() => {
+    translateRef.current = translate;
+  }, [translate]);
+  
+  // Smooth pan function that updates translate directly without React batching delays
+  const smoothPan = useCallback((dx: number, dy: number) => {
+    const newX = translateRef.current.x + dx;
+    const newY = translateRef.current.y + dy;
+    translateRef.current = { x: newX, y: newY };
+    setTranslate({ x: newX, y: newY });
+  }, []);
 
   /* ============================================================
       UTILITY FUNCTIONS
@@ -2778,7 +2794,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       const dy = e.clientY - panStart.current.y;
 
       panStart.current = { x: e.clientX, y: e.clientY };
-      setTranslate((t) => ({ x: t.x + dx, y: t.y + dy }));
+      smoothPan(dx, dy);
       return;
     }
 
@@ -2826,8 +2842,8 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     const centerX = viewW / 2;
     const centerY = viewH / 2;
 
-    // Get current translate
-    const currentTranslate = translate;
+    // Get current translate from ref for smooth updates
+    const startTranslate = translateRef.current;
 
     function step(currentTime: number) {
       const elapsed = currentTime - startTime;
@@ -2843,8 +2859,11 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       // Zoom from center: adjust translate so the center point stays fixed
       // Formula: newTranslate = oldTranslate + (center - oldTranslate) * (1 - newZoom/oldZoom)
       const scaleRatio = currentScale / startScale;
-      const newTranslateX = currentTranslate.x + (centerX - currentTranslate.x) * (1 - scaleRatio);
-      const newTranslateY = currentTranslate.y + (centerY - currentTranslate.y) * (1 - scaleRatio);
+      const currentX = translateRef.current.x;
+      const currentY = translateRef.current.y;
+      const newTranslateX = currentX + (centerX - currentX) * (1 - scaleRatio);
+      const newTranslateY = currentY + (centerY - currentY) * (1 - scaleRatio);
+      translateRef.current = { x: newTranslateX, y: newTranslateY };
 
       setZoom(currentScale);
       setTranslate({ x: newTranslateX, y: newTranslateY });
@@ -2956,19 +2975,21 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
         // Calculate zoom from pinch center
         const scaleRatio = newScale / zoom;
         // Adjust translate so the pinch center stays fixed
-        const newTranslateX = translate.x + (centerX - translate.x) * (1 - scaleRatio);
-        const newTranslateY = translate.y + (centerY - translate.y) * (1 - scaleRatio);
+        const currentX = translateRef.current.x;
+        const currentY = translateRef.current.y;
+        const newTranslateX = currentX + (centerX - currentX) * (1 - scaleRatio);
+        const newTranslateY = currentY + (centerY - currentY) * (1 - scaleRatio);
+        translateRef.current = { x: newTranslateX, y: newTranslateY };
         setTranslate({ x: newTranslateX, y: newTranslateY });
         setZoom(newScale);
       }
       lastTouchDist.current = dist;
 
-      // Two-finger pan
-      
+      // Two-finger pan - smooth panning
       if (touchPanRef.current) {
         const panDx = centerX - touchPanRef.current.x;
         const panDy = centerY - touchPanRef.current.y;
-        setTranslate((tr) => ({ x: tr.x + panDx, y: tr.y + panDy }));
+        smoothPan(panDx, panDy);
       }
       touchPanRef.current = { x: centerX, y: centerY };
       return;
@@ -2978,11 +2999,11 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     if (e.touches.length === 1) {
       const t = e.touches[0];
       
-      // For fill tool: single finger = panning
+      // For fill tool: single finger = smooth panning
       if (tool === "fill" && touchPanRef.current) {
         const dx = t.clientX - touchPanRef.current.x;
         const dy = t.clientY - touchPanRef.current.y;
-        setTranslate((tr) => ({ x: tr.x + dx, y: tr.y + dy }));
+        smoothPan(dx, dy);
         touchPanRef.current = { x: t.clientX, y: t.clientY };
         return;
       }
