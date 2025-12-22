@@ -185,12 +185,11 @@ function ColoringToolbar({
         {/* Divider */}
         <div className="w-px h-6 bg-gray-200" />
 
-        {/* Actions: Undo, Redo, Download, Print */}
+        {/* Actions: Undo, Redo, Download */}
         <div className="flex items-center gap-1">
           <ActionButton type="undo" onClick={() => { undo(); closeAllPanels(); }} compact />
           <ActionButton type="redo" onClick={() => { redo(); closeAllPanels(); }} compact />
           <ActionButton type="download" onClick={() => { onDownload(); closeAllPanels(); }} compact />
-          <ActionButton type="print" onClick={() => { onPrint(); closeAllPanels(); }} compact />
         </div>
 
         {/* Divider */}
@@ -526,8 +525,11 @@ function ToolButton({ icon, active, onClick, compact = false }: {
           strokeLinejoin="round"
         >
           <path d="M18 11v-1a2 2 0 0 0-2-2h-5a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h5a2 2 0 0 0 2-2z" />
-          <path d="M6 11v-1a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z" />
-          <path d="M12 5v14" />
+          <path d="M14 10V4.5a1.5 1.5 0 0 0-3 0V10" />
+          <path d="M11 10.5V4.5a1.5 1.5 0 0 0-3 0V10" />
+          <path d="M8 10H4.5a1.5 1.5 0 0 1 0-3H8" />
+          <path d="M8 14H4.5a1.5 1.5 0 0 0 0 3H8" />
+          <path d="M14 14v5.5a1.5 1.5 0 0 1-3 0V14" />
         </svg>
       ) : (
         <img src={`/icons/${icon}.svg`} className={compact ? "w-4 h-4" : "w-6 h-6 md:w-7 md:h-7"} alt={icon} />
