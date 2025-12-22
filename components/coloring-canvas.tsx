@@ -171,9 +171,9 @@ function ColoringToolbar({
       />
 
       {/* Row 1: Main Tools, History, Export, Settings */}
-      <div className="flex items-center justify-between px-2 py-1.5 gap-1 border-b border-gray-100">
+      <div className="flex items-center justify-between px-1.5 py-1 gap-0.5 border-b border-gray-100">
         {/* Main Tools: Brush, Eraser, Fill, Clear */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <ToolButton icon="brush" active={tool === "brush"} onClick={() => { setTool("brush"); closeAllPanels(); }} compact />
           <ToolButton icon="eraser" active={tool === "eraser"} onClick={() => { setTool("eraser"); closeAllPanels(); }} compact />
           <ToolButton icon="fill" active={tool === "fill"} onClick={() => { setTool("fill"); closeAllPanels(); }} compact />
@@ -181,10 +181,10 @@ function ColoringToolbar({
         </div>
 
         {/* Divider */}
-        <div className="w-px h-6 bg-gray-200" />
+        <div className="w-px h-5 bg-gray-200" />
 
         {/* Actions: Undo, Redo, Download, Print */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <ActionButton type="undo" onClick={() => { undo(); closeAllPanels(); }} compact />
           <ActionButton type="redo" onClick={() => { redo(); closeAllPanels(); }} compact />
           <ActionButton type="download" onClick={() => { onDownload(); closeAllPanels(); }} compact />
@@ -192,10 +192,10 @@ function ColoringToolbar({
         </div>
 
         {/* Divider */}
-        <div className="w-px h-6 bg-gray-200" />
+        <div className="w-px h-5 bg-gray-200" />
 
         {/* Settings: Zoom, Brush Size, Color Wheel */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <SettingsButton
             icon="🔍"
             label={tToolbar("zoom")}
@@ -216,7 +216,7 @@ function ColoringToolbar({
       </div>
 
       {/* Row 2: Color Palette */}
-      <div className="px-2 py-1.5">
+      <div className="px-1.5 py-1">
         <div className="flex items-center justify-center">
           <CompactColorPalette
             color={color}
@@ -1908,7 +1908,7 @@ function CompactColorPalette({
 
   return (
     <>
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1">
         {/* All color families with popup - Black first */}
         {ALL_COLORS.map(({ name, base }) => (
           <button
@@ -1917,7 +1917,7 @@ function CompactColorPalette({
               colorRefs.current[base] = el;
             }}
             onClick={(e) => handleColorClick(base, e)}
-            className={`w-7 h-7 md:w-8 md:h-8 rounded-full transition-all duration-150 hover:scale-110 active:scale-95 ${
+            className={`w-6 h-6 md:w-8 md:h-8 rounded-full transition-all duration-150 hover:scale-110 active:scale-95 ${
               isInColorFamily(base)
                 ? "border-[3px] border-blue-500 shadow-md ring-2 ring-blue-200 scale-110"
                 : "border-2 border-gray-300"
@@ -1926,13 +1926,6 @@ function CompactColorPalette({
             aria-label={name}
           />
         ))}
-        {/* Color Wheel Button */}
-        <button
-          ref={wheelButtonRef}
-          onClick={handleColorWheelClick}
-          className="color-wheel-button w-7 h-7 md:w-8 md:h-8 rounded-full transition-all duration-150 hover:scale-110 active:scale-95 border-2 border-gray-300 relative overflow-hidden"
-          aria-label="Color wheel"
-        />
       </div>
 
       {expandedColor && !showColorWheel && (
