@@ -23,6 +23,13 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <head>
+        {/* Static fallback meta description for Lighthouse & basic SEO.
+            Page-level metadata from the App Router will add/override
+            more specific descriptions as needed. */}
+        <meta
+          name="description"
+          content="Discover free printable coloring pages, puzzles and fun games for kids on Kids Park Club."
+        />
         {/* DNS prefetch and preconnect for critical external resources */}
         <link rel="dns-prefetch" href="https://www.supabase.co" />
         <link rel="preconnect" href="https://vliqitzuwqwpieyjakoy.supabase.co" crossOrigin="anonymous" />
