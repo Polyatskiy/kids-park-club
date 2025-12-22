@@ -144,13 +144,9 @@ export async function proxy(req: NextRequest) {
     return response;
   }
   
-  // Get the pathname (after next-intl's internal rewrite)
-  const segments = pathname.split('/').filter(Boolean);
-  
-  // Determine locale from the path (after rewrite)
-  const urlLocale = segments[0] && routing.locales.includes(segments[0] as any)
-    ? segments[0]
-    : routing.defaultLocale;
+  // Determine locale from the path for admin redirects.
+  // We can safely reuse the earlier `segments` value here.
+  const urlLocale = hasLocalePrefix ? (firstSegment as string) : routing.defaultLocale;
 
   // Check if this is an admin path (after next-intl rewrite)
   const isAdminPath = pathname.includes('/admin');
