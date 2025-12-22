@@ -4,8 +4,6 @@ import {
   getItems,
   getCategories,
   getSubcategories,
-  getAudioStories,
-  getBooks,
 } from "@/lib/content-repository";
 import { getLocalizedUrl } from "@/lib/seo-utils";
 
@@ -23,8 +21,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/games/jigsaw/gallery",
     "/games/reaction",
     "/games/puzzle",
-    "/audio-stories",
-    "/books",
     "/popular",
   ];
 
@@ -37,8 +33,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let puzzleItems: any[] = [];
   let coloringCategories: any[] = [];
   let puzzleCategories: any[] = [];
-  let audioStories: any[] = [];
-  let books: any[] = [];
 
   try {
     // Set timeout for database queries to prevent hanging
@@ -51,8 +45,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       getItems('puzzles', { locale: null }),
       getCategories('coloring', null),
       getCategories('puzzles', null),
-      getAudioStories(),
-      getBooks(),
     ]);
 
     const results = await Promise.race([dataPromise, timeoutPromise]) as PromiseSettledResult<any>[];
@@ -61,8 +53,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (results[1]?.status === 'fulfilled') puzzleItems = results[1].value || [];
     if (results[2]?.status === 'fulfilled') coloringCategories = results[2].value || [];
     if (results[3]?.status === 'fulfilled') puzzleCategories = results[3].value || [];
-    if (results[4]?.status === 'fulfilled') audioStories = results[4].value || [];
-    if (results[5]?.status === 'fulfilled') books = results[5].value || [];
   } catch (error) {
     console.error('Error fetching sitemap data:', error);
     // Continue with static routes only - ensure we always return something
@@ -139,27 +129,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       });
     });
 
-    // Add audio story pages (using localized URLs)
-    audioStories.forEach((story) => {
-      if (!story?.slug) return; // Skip invalid stories
-      entries.push({
-        url: getLocalizedUrl(`/audio-stories/${encodeURIComponent(story.slug)}`, locale),
-        lastModified: now,
-        changeFrequency: "monthly" as const,
-        priority: 0.7,
-      });
-    });
-
-    // Add book pages (using localized URLs)
-    books.forEach((book) => {
-      if (!book?.slug) return; // Skip invalid books
-      entries.push({
-        url: getLocalizedUrl(`/books/${encodeURIComponent(book.slug)}`, locale),
-        lastModified: now,
-        changeFrequency: "monthly" as const,
-        priority: 0.7,
-      });
-    });
   });
 
   // Ensure we always return at least some entries (static routes)

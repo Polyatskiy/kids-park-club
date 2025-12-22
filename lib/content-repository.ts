@@ -740,7 +740,7 @@ export async function getItemBySlug(
 // LEGACY FUNCTIONS (for backward compatibility during migration)
 // ============================================
 
-import type { Coloring, PuzzleImage, AudioStory, Book } from "@/types/content";
+import type { Coloring, PuzzleImage } from "@/types/content";
 import { gamesSeed } from "@/data/games";
 
 /**
@@ -816,66 +816,6 @@ export async function getPuzzleBySlug(slug: string): Promise<PuzzleImage | null>
     imageUrl: item.sourceUrl || '',
     thumbnailUrl: item.thumbUrl || '',
   };
-}
-
-// --- АУДИОСКАЗКИ (unchanged) ---
-
-export async function getAudioStories(): Promise<AudioStory[]> {
-  const supabase = supabaseServer();
-  const { data, error } = await supabase
-    .from("audio_stories")
-    .select("id, title, slug, duration, description, audio_url")
-    .order("title", { ascending: true });
-
-  if (error) {
-    console.error("getAudioStories error", error);
-    return [];
-  }
-
-  return (data ?? []).map((row: any) => ({
-    id: String(row.id),
-    title: row.title,
-    slug: row.slug,
-    duration: row.duration ?? "",
-    description: row.description ?? "",
-    audioUrl: row.audio_url
-  }));
-}
-
-export async function getAudioStoryBySlug(
-  slug: string
-): Promise<AudioStory | null> {
-  const list = await getAudioStories();
-  return list.find((s) => s.slug === slug) ?? null;
-}
-
-// --- КНИГИ (unchanged) ---
-
-export async function getBooks(): Promise<Book[]> {
-  const supabase = supabaseServer();
-  const { data, error } = await supabase
-    .from("books")
-    .select("id, title, slug, description, cover_color, pages")
-    .order("title", { ascending: true });
-
-  if (error) {
-    console.error("getBooks error", error);
-    return [];
-  }
-
-  return (data ?? []).map((row: any) => ({
-    id: String(row.id),
-    title: row.title,
-    slug: row.slug,
-    description: row.description ?? "",
-    coverColor: row.cover_color ?? "#FFE066",
-    pages: row.pages ?? []
-  }));
-}
-
-export async function getBookBySlug(slug: string): Promise<Book | null> {
-  const list = await getBooks();
-  return list.find((b) => b.slug === slug) ?? null;
 }
 
 // --- ИГРЫ ---
