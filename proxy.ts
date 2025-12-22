@@ -91,7 +91,7 @@ export async function proxy(req: NextRequest) {
   const hasLocalePrefix = firstSegment && SUPPORTED_LOCALES.includes(firstSegment as any);
 
   const localeCookie = req.cookies.get('NEXT_LOCALE')?.value;
-  let effectiveLocale = DEFAULT_LOCALE;
+  let effectiveLocale: string = DEFAULT_LOCALE;
 
   if (localeCookie && SUPPORTED_LOCALES.includes(localeCookie as any)) {
     effectiveLocale = localeCookie;
