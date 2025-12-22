@@ -21,12 +21,30 @@ export async function generateMetadata({
   const url = getCanonicalUrl(path, validLocale);
   const alternateUrls = getHreflangUrls(path);
   
-  const title = "Kids Park Club – Coloring Pages and Games";
-  const description = "Free printable coloring pages, jigsaw puzzles, and fun games for kids. Educational activities and entertainment in one place.";
+  // Localized titles and descriptions for better SEO
+  const titles: Record<string, string> = {
+    en: "Kids Park Club – Free Coloring Pages, Puzzles & Games for Kids",
+    pl: "Kids Park Club – Darmowe Kolorowanki, Puzzle i Gry dla Dzieci",
+    ru: "Kids Park Club – Бесплатные Раскраски, Пазлы и Игры для Детей",
+    uk: "Kids Park Club – Безкоштовні Розмальовки, Пазли та Ігри для Дітей",
+  };
+  
+  const descriptions: Record<string, string> = {
+    en: "Discover thousands of free printable coloring pages, interactive jigsaw puzzles, and fun educational games for kids. Perfect for toddlers, preschoolers, and school-age children. Download, print, and play today!",
+    pl: "Odkryj tysiące darmowych kolorowanek do druku, interaktywnych puzzli i zabawnych gier edukacyjnych dla dzieci. Idealne dla maluchów, przedszkolaków i dzieci w wieku szkolnym. Pobierz, wydrukuj i graj już dziś!",
+    ru: "Откройте для себя тысячи бесплатных раскрасок для печати, интерактивных пазлов и веселых обучающих игр для детей. Идеально для малышей, дошкольников и школьников. Скачивайте, печатайте и играйте уже сегодня!",
+    uk: "Відкрийте для себе тисячі безкоштовних розмальовок для друку, інтерактивних пазлів та веселих навчальних ігор для дітей. Ідеально для малюків, дошкільнят та школярів. Завантажуйте, друкуйте та грайте вже сьогодні!",
+  };
+  
+  const title = titles[validLocale] || titles.en;
+  const description = descriptions[validLocale] || descriptions.en;
   
   return {
     title,
     description,
+    keywords: validLocale === 'en' 
+      ? "coloring pages, kids games, puzzles, printable activities, children entertainment, educational games"
+      : undefined,
     alternates: {
       canonical: url,
       languages: {
@@ -41,6 +59,12 @@ export async function generateMetadata({
       type: "website",
       locale: validLocale,
       alternateLocale: routing.locales.filter(l => l !== validLocale),
+      siteName: "Kids Park Club",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
     },
   };
 }
@@ -94,22 +118,65 @@ export default async function HomePage({
     },
   ];
   return (
-    <div className="min-h-screen flex items-center justify-center md:justify-end px-4 md:px-8 lg:px-12 pt-24 md:pt-0 home-tiles-container">
-      {/* Tiles Grid - positioned to avoid overlapping the girl */}
-      <div className="w-full max-w-[320px] md:max-w-[400px] lg:max-w-[440px] md:mr-4 lg:mr-8 xl:mr-16">
-        <div className="grid grid-cols-2 gap-3 md:gap-4">
-          {tiles.map((tile) => (
-            <HomeTile
-              key={tile.href}
-              icon={tile.icon}
-              label={tile.label}
-              href={tile.href}
-              bgColor={tile.bgColor}
-              glowColor={tile.glowColor}
-            />
-          ))}
+    <>
+      {/* SEO: Hidden H1 for search engines */}
+      <h1 className="sr-only">
+        {validLocale === 'en' 
+          ? "Kids Park Club – Free Coloring Pages, Puzzles & Games for Kids"
+          : validLocale === 'pl'
+          ? "Kids Park Club – Darmowe Kolorowanki, Puzzle i Gry dla Dzieci"
+          : validLocale === 'ru'
+          ? "Kids Park Club – Бесплатные Раскраски, Пазлы и Игры для Детей"
+          : "Kids Park Club – Безкоштовні Розмальовки, Пазли та Ігри для Дітей"
+        }
+      </h1>
+      
+      {/* Structured Data (JSON-LD) for better SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "Kids Park Club",
+            "url": url,
+            "description": validLocale === 'en'
+              ? "Free printable coloring pages, jigsaw puzzles, and fun educational games for kids"
+              : validLocale === 'pl'
+              ? "Darmowe kolorowanki do druku, puzzle i zabawne gry edukacyjne dla dzieci"
+              : validLocale === 'ru'
+              ? "Бесплатные раскраски для печати, пазлы и веселые обучающие игры для детей"
+              : "Безкоштовні розмальовки для друку, пазли та веселі навчальні ігри для дітей",
+            "inLanguage": validLocale,
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": {
+                "@type": "EntryPoint",
+                "urlTemplate": `${url}?search={search_term_string}`
+              },
+              "query-input": "required name=search_term_string"
+            }
+          })
+        }}
+      />
+      
+      <div className="min-h-screen flex items-center justify-center md:justify-end px-4 md:px-8 lg:px-12 pt-24 md:pt-0 home-tiles-container">
+        {/* Tiles Grid - positioned to avoid overlapping the girl */}
+        <div className="w-full max-w-[320px] md:max-w-[400px] lg:max-w-[440px] md:mr-4 lg:mr-8 xl:mr-16">
+          <div className="grid grid-cols-2 gap-3 md:gap-4">
+            {tiles.map((tile) => (
+              <HomeTile
+                key={tile.href}
+                icon={tile.icon}
+                label={tile.label}
+                href={tile.href}
+                bgColor={tile.bgColor}
+                glowColor={tile.glowColor}
+              />
+            ))}
+          </div>
         </div>
       </div>
-        </div>
+    </>
   );
 }
