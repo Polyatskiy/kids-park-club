@@ -1489,6 +1489,9 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     // loop O(n) instead of O(n²) for large fill regions.
     let qIndex = 0;
     let filledPixelCount = 0;
+
+    // Main flood‑fill loop. Uses an index pointer instead of Array.shift()
+    // to avoid O(n²) behavior on large regions.
     while (qIndex < queue.length) {
       const { x, y } = queue[qIndex++];
       const idx = y * w + x;
@@ -1516,18 +1519,19 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       if (y < h - 1) queue.push({ x, y: y + 1 });
     }
 
-    // If the filled area is extremely large, skip the expensive
-    // edge‑expansion and smoothing passes – they scan the whole
-    // canvas and are the main source of long INP on huge regions.
-    const LARGE_FILL_THRESHOLD = 300_000; // ~300k pixels
+    // If the filled area is large, skip all post‑processing. The extra
+    // edge‑smoothing passes are visually subtle but computationally heavy,
+    // and on big regions they can add hundreds of ms of blocking time.
+    const LARGE_FILL_THRESHOLD = 150_000; // ~150k pixels ≈ 400x375
     if (filledPixelCount > LARGE_FILL_THRESHOLD) {
       drawCtx.putImageData(drawData, 0, 0);
       saveUndo();
       return;
     }
 
-    // OVERPAINT EXPANSION: Paint 1-2 pixels beyond filled region to cover anti-aliased edges
-    const EXPANSION_RADIUS = 1; // 1 pixel expansion (can be increased to 2 if needed)
+    // OVERPAINT EXPANSION: Paint a 1‑pixel halo around the filled region
+    // to hide anti‑aliased gaps along the original line art.
+    const EXPANSION_RADIUS = 1;
     const BLACK_LINE_THRESHOLD = 30; // Brightness threshold for black lines
     const BLACK_LINE_ALPHA_THRESHOLD = 200; // Alpha threshold for black lines
 
@@ -1616,103 +1620,13 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       edgePixels.push(...expansionPixels);
     }
 
-    // EDGE SMOOTHING: Apply anti-aliasing to border pixels for smooth edges
-    // Create a copy of drawData for smoothing
-    const smoothedData = new ImageData(new Uint8ClampedArray(drawData.data), w, h);
-    
-    // Gaussian-like weights for smooth edge transition (3x3 kernel)
-    const kernel = [
-      [0.0625, 0.125, 0.0625],
-      [0.125,  0.25,  0.125],
-      [0.0625, 0.125, 0.0625]
-    ];
-    
-    // Apply smoothing only to border pixels
-    for (let y = 1; y < h - 1; y++) {
-      for (let x = 1; x < w - 1; x++) {
-        const idx = y * w + x;
-        
-        // Only smooth pixels that are part of the fill
-        if (!visited[idx]) continue;
-        
-        // Skip if it's a black outline pixel
-        if (isBlackLine(idx * 4)) continue;
-        
-        // Check if this is a border pixel (has at least one neighbor outside fill)
-        let isBorder = false;
-        let neighborOutsideCount = 0;
-        
-        const neighbors = [
-          { x: x - 1, y: y - 1 }, { x: x, y: y - 1 }, { x: x + 1, y: y - 1 },
-          { x: x - 1, y: y },                           { x: x + 1, y: y },
-          { x: x - 1, y: y + 1 }, { x: x, y: y + 1 }, { x: x + 1, y: y + 1 },
-        ];
-        
-        for (const n of neighbors) {
-          if (n.x < 0 || n.x >= w || n.y < 0 || n.y >= h) {
-            neighborOutsideCount++;
-            continue;
-          }
-          const nIdx = n.y * w + n.x;
-          if (!visited[nIdx] && !isBlackLine(nIdx * 4)) {
-            isBorder = true;
-            neighborOutsideCount++;
-          }
-        }
-        
-        // Only smooth border pixels (pixels with neighbors outside fill)
-        if (!isBorder || neighborOutsideCount === 0) continue;
-        
-        // Calculate distance from center (for feathering)
-        const pixelIdx = idx * 4;
-        
-        // Apply blur to border pixel - keep color solid, only smooth alpha
-        let sumA = 0;
-        let weightSum = 0;
-        
-        for (let ky = -1; ky <= 1; ky++) {
-          for (let kx = -1; kx <= 1; kx++) {
-            const px = x + kx;
-            const py = y + ky;
-            
-            if (px < 0 || px >= w || py < 0 || py >= h) {
-              // Edge of canvas: contribute transparency
-              weightSum += kernel[ky + 1][kx + 1];
-              continue;
-            }
-            
-            const pIdx = (py * w + px) * 4;
-            const weight = kernel[ky + 1][kx + 1];
-            const pVisited = visited[py * w + px];
-            
-            if (pVisited && !isBlackLine(pIdx)) {
-              // Inside fill: use full alpha
-              sumA += drawData.data[pIdx + 3] * weight;
-            } else {
-              // Outside fill or black line: contribute transparency
-              sumA += 0 * weight;
-            }
-            weightSum += weight;
-          }
-        }
-        
-        // Apply smoothed alpha while keeping color solid
-        if (weightSum > 0) {
-          const smoothedAlpha = Math.round(sumA / weightSum);
-          // Keep original RGB, only smooth alpha for soft edge
-          smoothedData.data[pixelIdx] = finalR;
-          smoothedData.data[pixelIdx + 1] = finalG;
-          smoothedData.data[pixelIdx + 2] = finalB;
-          smoothedData.data[pixelIdx + 3] = smoothedAlpha;
-        }
-      }
-    }
-    
-    // Apply smoothed data to draw canvas
-    drawCtx.putImageData(smoothedData, 0, 0);
-    
+    // Apply the final filled image to the draw canvas.
+    // We intentionally skip the previous Gaussian smoothing pass to keep
+    // fill latency low; the 1‑px expansion above already hides most jaggies.
+    drawCtx.putImageData(drawData, 0, 0);
+
     // Save undo AFTER the fill completes (same pattern as commitStroke for brush)
-    // This ensures the stack contains the result state, and undo restores correctly
+    // so each fill is a single, reversible action.
     saveUndo();
   };
 
