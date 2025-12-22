@@ -7,14 +7,13 @@ import { routing } from './i18n/routing';
 const ADMIN_EMAIL = "polyatskiy@gmail.com";
 
 // Create next-intl middleware.
-// We disable the built-in localeDetection and implement our own logic
-// so that we have full control over:
+// Built-in localeDetection is disabled via `config.localeDetection = false`
+// at the bottom of this file – we implement our own logic here instead so that
+// we have full control over:
 // - FIRST: previously chosen locale (cookie)
 // - THEN: Accept-Language header
 // - FINALLY: fallback to defaultLocale ("en")
-const intlMiddleware = createMiddleware(routing, {
-  localeDetection: false,
-});
+const intlMiddleware = createMiddleware(routing);
 
 const SUPPORTED_LOCALES = routing.locales;
 const DEFAULT_LOCALE = routing.defaultLocale;
@@ -310,6 +309,8 @@ export async function proxy(req: NextRequest) {
 
 // Robust matcher: all routes except Next.js internals, API, static files, and metadata routes
 export const config = {
+  // Disable next-intl's automatic locale detection – we handle it ourselves
+  localeDetection: false,
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
