@@ -6,8 +6,64 @@ import { routing } from './i18n/routing';
 
 const ADMIN_EMAIL = "polyatskiy@gmail.com";
 
-// Create next-intl middleware
-const intlMiddleware = createMiddleware(routing);
+// Create next-intl middleware.
+// We disable the built-in localeDetection and implement our own logic
+// so that we have full control over:
+// - FIRST: previously chosen locale (cookie)
+// - THEN: Accept-Language header
+// - FINALLY: fallback to defaultLocale ("en")
+const intlMiddleware = createMiddleware(routing, {
+  localeDetection: false,
+});
+
+const SUPPORTED_LOCALES = routing.locales;
+const DEFAULT_LOCALE = routing.defaultLocale;
+
+function detectLocaleFromAcceptLanguage(headerValue: string | null): string {
+  if (!headerValue) {
+    return DEFAULT_LOCALE;
+  }
+
+  type Candidate = { lang: string; quality: number; index: number };
+  const candidates: Candidate[] = [];
+
+  headerValue.split(",").forEach((part, index) => {
+    const [langRaw, qRaw] = part.trim().split(";q=");
+    const lang = langRaw.toLowerCase();
+    if (!lang) return;
+
+    const quality = qRaw ? parseFloat(qRaw) || 0 : 1;
+    candidates.push({ lang, quality, index });
+  });
+
+  if (candidates.length === 0) {
+    return DEFAULT_LOCALE;
+  }
+
+  // Sort by quality (q) desc, then by original order
+  candidates.sort((a, b) => {
+    if (b.quality !== a.quality) return b.quality - a.quality;
+    return a.index - b.index;
+  });
+
+  // Requirement: exact match -> base language -> fallback to en
+  for (const candidate of candidates) {
+    const lang = candidate.lang;
+
+    // Try exact match first (e.g. "en", "ru", "pl", "uk")
+    if (SUPPORTED_LOCALES.includes(lang as any)) {
+      return lang;
+    }
+
+    // Then try by base language (e.g. "en-US" -> "en")
+    const base = lang.split("-")[0];
+    if (SUPPORTED_LOCALES.includes(base as any)) {
+      return base;
+    }
+  }
+
+  return DEFAULT_LOCALE;
+}
 
 export async function proxy(req: NextRequest) {
   // Exclude metadata routes (sitemap.xml, robots.txt, etc.) from locale routing
@@ -24,10 +80,64 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Locale handling:
+  // 1) If URL already contains a locale prefix (/pl, /ru, /uk), keep it as is.
+  // 2) Otherwise:
+  //    - If NEXT_LOCALE cookie is present and valid, use it.
+  //    - Else detect from Accept-Language with our custom algo.
+  //    - If detected locale is not default ("en"), redirect to /{locale}...
+  //    - Always persist the chosen locale in NEXT_LOCALE cookie.
+  const segments = pathname.split('/').filter(Boolean);
+  const firstSegment = segments[0];
+  const hasLocalePrefix = firstSegment && SUPPORTED_LOCALES.includes(firstSegment as any);
+
+  const localeCookie = req.cookies.get('NEXT_LOCALE')?.value;
+  let effectiveLocale = DEFAULT_LOCALE;
+
+  if (localeCookie && SUPPORTED_LOCALES.includes(localeCookie as any)) {
+    effectiveLocale = localeCookie;
+  } else {
+    const acceptLanguage = req.headers.get('accept-language');
+    effectiveLocale = detectLocaleFromAcceptLanguage(acceptLanguage);
+  }
+
+  // If there is no locale prefix in the URL, decide whether we should redirect
+  // to a prefixed path (for non-default locales) or stay on the current path (for EN).
+  if (!hasLocalePrefix) {
+    // For non-default locales, redirect /foo -> /{locale}/foo
+    if (effectiveLocale !== DEFAULT_LOCALE) {
+      const url = req.nextUrl.clone();
+      const cleanPath =
+        pathname === '/' ? '' : pathname; // keep sub-paths for redirect
+      url.pathname =
+        cleanPath === ''
+          ? `/${effectiveLocale}`
+          : `/${effectiveLocale}${cleanPath}`;
+
+      const res = NextResponse.redirect(url);
+      res.cookies.set('NEXT_LOCALE', effectiveLocale, {
+        path: '/',
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: 'lax',
+      });
+      return res;
+    }
+  }
+
   // Let next-intl handle locale routing FIRST
   // This is critical: next-intl needs to rewrite URLs internally for Next.js routing
   // With 'as-needed', / becomes /en internally (URL stays /, but Next.js sees /en)
   const response = intlMiddleware(req);
+
+  // Ensure we persist the resolved locale in cookie, even when URL already
+  // contains a prefix or we decided to stay on default locale.
+  if (!localeCookie && effectiveLocale) {
+    response.cookies.set('NEXT_LOCALE', effectiveLocale, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: 'lax',
+    });
+  }
   
   // If next-intl returned a redirect, return it immediately
   if (response.status === 307 || response.status === 308) {
