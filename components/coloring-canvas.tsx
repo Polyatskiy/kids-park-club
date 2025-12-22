@@ -530,6 +530,10 @@ function ToolButton({ icon, active, onClick, compact = false }: {
           <path d="M8 10H4.5a1.5 1.5 0 0 1 0-3H8" />
           <path d="M8 14H4.5a1.5 1.5 0 0 0 0 3H8" />
           <path d="M14 14v5.5a1.5 1.5 0 0 1-3 0V14" />
+          <path d="M11 14v5.5a1.5 1.5 0 0 1-3 0V14" />
+          <path d="M8 14v5.5a1.5 1.5 0 0 1-3 0V14" />
+          <path d="M5 14v5.5a1.5 1.5 0 0 1-3 0V14" />
+          <path d="M2 18.5c0-1.1.9-2 2-2h16c1.1 0 2 .9 2 2" />
         </svg>
       ) : (
         <img src={`/icons/${icon}.svg`} className={compact ? "w-4 h-4" : "w-6 h-6 md:w-7 md:h-7"} alt={icon} />
@@ -2837,6 +2841,19 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     // Clamp target scale
     const clampedTarget = Math.max(0.5, Math.min(4.0, targetScale));
 
+    // Get viewport center for zoom-from-center calculation
+    const wrapper = wrapperRef.current;
+    const base = baseCanvasRef.current;
+    if (!wrapper || !base) return;
+
+    const viewW = wrapper.clientWidth;
+    const viewH = wrapper.clientHeight;
+    const centerX = viewW / 2;
+    const centerY = viewH / 2;
+
+    // Get current translate
+    const currentTranslate = translate;
+
     function step(currentTime: number) {
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
@@ -2848,10 +2865,14 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
 
       const currentScale = startScale + (clampedTarget - startScale) * eased;
 
-      // Zoom relative to top-left: keep translate at 0,0
-      // The transform wrapper will handle the scaling
+      // Zoom from center: adjust translate so the center point stays fixed
+      // Formula: newTranslate = oldTranslate + (center - oldTranslate) * (1 - newZoom/oldZoom)
+      const scaleRatio = currentScale / startScale;
+      const newTranslateX = currentTranslate.x + (centerX - currentTranslate.x) * (1 - scaleRatio);
+      const newTranslateY = currentTranslate.y + (centerY - currentTranslate.y) * (1 - scaleRatio);
+
       setZoom(currentScale);
-      setTranslate({ x: 0, y: 0 });
+      setTranslate({ x: newTranslateX, y: newTranslateY });
 
       if (progress < 1) {
         requestAnimationFrame(step);
@@ -2859,7 +2880,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     }
 
     requestAnimationFrame(step);
-  }, [zoom]);
+  }, [zoom, translate]);
 
   /* Zoom button handlers */
   const handleZoomIn = useCallback(() => {
@@ -2942,18 +2963,27 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       const dy = e.touches[0].clientY - e.touches[1].clientY;
       const dist = Math.sqrt(dx * dx + dy * dy);
 
-      // Pinch zoom
+      // Calculate pinch center (needed for both zoom and pan)
+      const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+      // Pinch zoom from center of pinch gesture
       if (lastTouchDist.current !== null) {
         const delta = dist - lastTouchDist.current;
         let newScale = zoom + delta * 0.005;
         newScale = Math.max(0.5, Math.min(4, newScale));
+        
+        // Calculate zoom from pinch center
+        const scaleRatio = newScale / zoom;
+        // Adjust translate so the pinch center stays fixed
+        const newTranslateX = translate.x + (centerX - translate.x) * (1 - scaleRatio);
+        const newTranslateY = translate.y + (centerY - translate.y) * (1 - scaleRatio);
+        setTranslate({ x: newTranslateX, y: newTranslateY });
         setZoom(newScale);
       }
       lastTouchDist.current = dist;
 
       // Two-finger pan
-      const centerX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-      const centerY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
       
       if (touchPanRef.current) {
         const panDx = centerX - touchPanRef.current.x;
