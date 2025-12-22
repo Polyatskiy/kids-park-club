@@ -75,7 +75,9 @@
     "toolbar": {
       "zoom": "Powiększenie",
       "brushSize": "Rozmiar Pędzla",
-      "opacity": "Przezroczystość"
+      "opacity": "Przezroczystość",
+      "detectBoundaries": "Wykrywaj Granice",
+      "detectBoundariesTooltip": "Po włączeniu pędzel nie będzie rysował na czarnych konturach, zatrzymując się na granicach, jak narzędzie wypełniania"
     },
     "canvas": {
       "clearDrawingTitle": "Wyczyścić rysunek?",

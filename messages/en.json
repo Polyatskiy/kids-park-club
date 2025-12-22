@@ -75,7 +75,9 @@
     "toolbar": {
       "zoom": "Zoom",
       "brushSize": "Brush Size",
-      "opacity": "Opacity"
+      "opacity": "Opacity",
+      "detectBoundaries": "Detect Boundaries",
+      "detectBoundariesTooltip": "When enabled, the brush will not draw over black outlines, stopping at boundaries like the fill tool"
     },
     "canvas": {
       "clearDrawingTitle": "Clear drawing?",

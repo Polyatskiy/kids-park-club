@@ -19,8 +19,6 @@ function ColoringToolbar({
   setTool,
   color,
   setColor,
-  opacity,
-  setOpacity,
   brushSize,
   setBrushSize,
   zoom,
@@ -28,16 +26,16 @@ function ColoringToolbar({
   onZoomIn,
   onZoomOut,
   undo,
+  redo,
   onClear,
   onDownload,
+  onPrint,
   isMobile,
 }: {
   tool: "brush" | "eraser" | "fill";
   setTool: (t: "brush" | "eraser" | "fill") => void;
   color: string;
   setColor: (c: string) => void;
-  opacity: number;
-  setOpacity: (o: number) => void;
   brushSize: number;
   setBrushSize: (s: number) => void;
   zoom: number;
@@ -45,19 +43,30 @@ function ColoringToolbar({
   onZoomIn: () => void;
   onZoomOut: () => void;
   undo: () => void;
+  redo: () => void;
   onClear: () => void;
   onDownload: () => void;
+  onPrint: () => void;
   isMobile: boolean;
 }) {
   const tToolbar = useTranslations("common.toolbar");
-  // Handle color selection: switch from eraser to brush if needed
+  // Handle color selection: switch from eraser to fill if needed
   const handleColorSelect = (selectedColor: string) => {
-    // If eraser is active, switch to brush
+    // If eraser is active, switch to fill
     if (tool === "eraser") {
-      setTool("brush");
+      setTool("fill");
     }
     // Always apply the chosen color
     setColor(selectedColor);
+  };
+
+  // Handle brush size change: switch from fill to brush if needed
+  const handleBrushSizeChange = (newSize: number) => {
+    // If fill tool is active, switch to brush (brush size only makes sense for brush/eraser)
+    if (tool === "fill") {
+      setTool("brush");
+    }
+    setBrushSize(newSize);
   };
 
   // Desktop: vertical sidebar layout
@@ -80,61 +89,35 @@ function ColoringToolbar({
           overflowY: 'auto',
         }}
       >
-        <div className="flex flex-col gap-3">
-          {/* Tools */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <ToolButton icon="brush" active={tool === "brush"} onClick={() => setTool("brush")} />
-              <ToolButton icon="eraser" active={tool === "eraser"} onClick={() => setTool("eraser")} />
-              <ToolButton icon="fill" active={tool === "fill"} onClick={() => setTool("fill")} />
-            </div>
+        <div className="flex flex-col gap-2">
+          {/* Main Tools: Brush, Eraser, Fill, Clear */}
+          <div className="flex items-center gap-2">
+            <ToolButton icon="brush" active={tool === "brush"} onClick={() => setTool("brush")} />
+            <ToolButton icon="eraser" active={tool === "eraser"} onClick={() => setTool("eraser")} />
+            <ToolButton icon="fill" active={tool === "fill"} onClick={() => setTool("fill")} />
+            <ActionButton type="trash" onClick={onClear} />
           </div>
 
-          {/* Actions */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <ActionButton type="undo" onClick={undo} />
-              <ActionButton type="trash" onClick={onClear} />
-              <ActionButton type="download" onClick={onDownload} />
-            </div>
+          {/* Actions: Undo, Redo, Download, Print */}
+          <div className="flex items-center gap-2">
+            <ActionButton type="undo" onClick={undo} />
+            <ActionButton type="redo" onClick={redo} />
+            <ActionButton type="download" onClick={onDownload} />
+            <ActionButton type="print" onClick={onPrint} />
           </div>
 
-          {/* Zoom Controls */}
-          <div className="flex flex-col gap-2">
-            <ZoomControls zoom={zoom} onZoomIn={onZoomIn} onZoomOut={onZoomOut} />
-          </div>
-
-          {/* Brush Settings */}
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs text-slate-700 whitespace-nowrap">Brush Size</label>
-              <input
-                type="range"
-                min={5}
-                max={120}
-                value={brushSize}
-                onChange={(e) => setBrushSize(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <label className="text-xs text-slate-700 whitespace-nowrap">Opacity</label>
-              <input
-                type="range"
-                min={0.1}
-                max={1}
-                step={0.05}
-                value={opacity}
-                onChange={(e) => setOpacity(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
+          {/* Settings: Zoom, Brush Size, Color Wheel */}
+          <div className="flex items-center gap-2">
+            <CompactZoomButton zoom={zoom} setZoom={setZoom} onZoomIn={onZoomIn} onZoomOut={onZoomOut} />
+            <CompactBrushSizeButton brushSize={brushSize} setBrushSize={handleBrushSizeChange} />
+            <DesktopColorWheelButton color={color} setColor={handleColorSelect} />
           </div>
 
           {/* Full Color Palette (Desktop) */}
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Palette</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Palette</label>
+            </div>
             <FullColorPalette
               color={color}
               setColor={handleColorSelect}
@@ -151,7 +134,6 @@ function ColoringToolbar({
   // Refs for positioning popovers
   const zoomButtonRef = useRef<HTMLButtonElement>(null);
   const brushButtonRef = useRef<HTMLButtonElement>(null);
-  const opacityButtonRef = useRef<HTMLButtonElement>(null);
 
   // Toggle panel (close if same, open if different)
   const togglePanel = (panel: PanelType) => {
@@ -184,40 +166,35 @@ function ColoringToolbar({
         isOpen={openPanel === "brush"}
         onClose={closeAllPanels}
         brushSize={brushSize}
-        setBrushSize={setBrushSize}
+        setBrushSize={handleBrushSizeChange}
         buttonRef={brushButtonRef}
       />
-      <OpacityPopover
-        isOpen={openPanel === "opacity"}
-        onClose={closeAllPanels}
-        opacity={opacity}
-        setOpacity={setOpacity}
-        buttonRef={opacityButtonRef}
-      />
 
-      {/* Row 1: Tools, Actions, Settings Icons */}
+      {/* Row 1: Main Tools, History, Export, Settings */}
       <div className="flex items-center justify-between px-2 py-1.5 gap-1 border-b border-gray-100">
-        {/* Drawing Tools */}
+        {/* Main Tools: Brush, Eraser, Fill, Clear */}
         <div className="flex items-center gap-1">
           <ToolButton icon="brush" active={tool === "brush"} onClick={() => { setTool("brush"); closeAllPanels(); }} compact />
           <ToolButton icon="eraser" active={tool === "eraser"} onClick={() => { setTool("eraser"); closeAllPanels(); }} compact />
           <ToolButton icon="fill" active={tool === "fill"} onClick={() => { setTool("fill"); closeAllPanels(); }} compact />
+          <ActionButton type="trash" onClick={() => { onClear(); closeAllPanels(); }} compact />
         </div>
 
         {/* Divider */}
         <div className="w-px h-6 bg-gray-200" />
 
-        {/* Actions */}
+        {/* Actions: Undo, Redo, Download, Print */}
         <div className="flex items-center gap-1">
           <ActionButton type="undo" onClick={() => { undo(); closeAllPanels(); }} compact />
-          <ActionButton type="trash" onClick={() => { onClear(); closeAllPanels(); }} compact />
+          <ActionButton type="redo" onClick={() => { redo(); closeAllPanels(); }} compact />
           <ActionButton type="download" onClick={() => { onDownload(); closeAllPanels(); }} compact />
+          <ActionButton type="print" onClick={() => { onPrint(); closeAllPanels(); }} compact />
         </div>
 
         {/* Divider */}
         <div className="w-px h-6 bg-gray-200" />
 
-        {/* Settings Buttons (Zoom, Brush, Opacity) */}
+        {/* Settings: Zoom, Brush Size, Color Wheel */}
         <div className="flex items-center gap-1">
           <SettingsButton
             icon="🔍"
@@ -227,29 +204,26 @@ function ColoringToolbar({
             buttonRef={zoomButtonRef}
           />
           <SettingsButton
-            icon="📏"
+            icon="/icons/brush.svg"
+            iconType="svg"
             label={tToolbar("brushSize")}
             isActive={openPanel === "brush"}
             onClick={() => togglePanel("brush")}
             buttonRef={brushButtonRef}
           />
-          <SettingsButton
-            icon="💧"
-            label={tToolbar("opacity")}
-            isActive={openPanel === "opacity"}
-            onClick={() => togglePanel("opacity")}
-            buttonRef={opacityButtonRef}
-          />
+          <MobileColorWheelButton color={color} setColor={handleColorSelect} />
         </div>
       </div>
 
-      {/* Row 2: Color Palette only */}
-      <div className="flex items-center justify-center px-2 py-1.5">
-        <CompactColorPalette
-          color={color}
-          setColor={(c) => { handleColorSelect(c); closeAllPanels(); }}
-          isMobile={isMobile}
-        />
+      {/* Row 2: Color Palette */}
+      <div className="px-2 py-1.5">
+        <div className="flex items-center justify-center">
+          <CompactColorPalette
+            color={color}
+            setColor={(c) => { handleColorSelect(c); closeAllPanels(); }}
+            isMobile={isMobile}
+          />
+        </div>
       </div>
     </div>
   );
@@ -546,16 +520,44 @@ function ToolButton({ icon, active, onClick, compact = false }: {
 }
 
 function ActionButton({ type, onClick, compact = false }: {
-  type: "undo" | "trash" | "download";
+  type: "undo" | "redo" | "trash" | "download" | "print";
   onClick: () => void;
   compact?: boolean;
 }) {
+  // For print, use emoji icon if SVG doesn't exist
+  const useEmoji = type === "print";
+  
+  // For undo and redo, use SVG arrows (both same style, just mirrored)
+  const isArrow = type === "undo" || type === "redo";
+  
   return (
     <button
       onClick={onClick}
       className={`${compact ? "w-7 h-7" : "w-10 h-10 md:w-11 md:h-11"} rounded-full bg-white border border-gray-300 flex items-center justify-center shadow-sm transition-all duration-150 hover:scale-105 active:scale-95 hover:border-gray-400`}
+      title={type === "redo" ? "Redo" : type === "print" ? "Print" : undefined}
     >
-      <img src={`/icons/${type}.svg`} className={compact ? "w-3.5 h-3.5" : "w-5 h-5 md:w-6 md:h-6"} alt={type} />
+      {useEmoji ? (
+        <span className={compact ? "text-base" : "text-lg md:text-xl"}>
+          🖨️
+        </span>
+      ) : isArrow ? (
+        // Both undo and redo use the same arrow style, just mirrored
+        <svg 
+          className={compact ? "w-4 h-4" : "w-5 h-5 md:w-6 md:h-6"} 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2.5" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+          style={{ transform: type === "redo" ? "scaleX(-1)" : "none" }}
+        >
+          <path d="M3 7v6h6" />
+          <path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13" />
+        </svg>
+      ) : (
+        <img src={`/icons/${type}.svg`} className={compact ? "w-3.5 h-3.5" : "w-5 h-5 md:w-6 md:h-6"} alt={type} />
+      )}
     </button>
   );
 }
@@ -590,13 +592,231 @@ function ZoomControls({ zoom, onZoomIn, onZoomOut }: {
 }
 
 /* ============================================================
+    COMPACT ZOOM BUTTON - Desktop compact zoom with popup
+============================================================ */
+function CompactZoomButton({
+  zoom,
+  setZoom,
+  onZoomIn,
+  onZoomOut
+}: {
+  zoom: number;
+  setZoom: (z: number) => void;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+}) {
+  const [showZoomPopup, setShowZoomPopup] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleClick = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPopupPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top,
+      });
+      setShowZoomPopup(true);
+    }
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        onClick={handleClick}
+        className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-300 flex items-center gap-1.5 transition-all duration-150 hover:scale-105 active:scale-95 text-sm font-medium text-slate-700"
+        title="Zoom"
+      >
+        <span>🔍</span>
+        <span>{Math.round(zoom * 100)}%</span>
+      </button>
+      {showZoomPopup && (
+        <ZoomPopover
+          isOpen={showZoomPopup}
+          onClose={() => setShowZoomPopup(false)}
+          zoom={zoom}
+          setZoom={setZoom}
+          buttonRef={buttonRef}
+        />
+      )}
+    </>
+  );
+}
+
+/* ============================================================
+    COMPACT BRUSH SIZE BUTTON - Desktop compact brush size with popup
+============================================================ */
+function CompactBrushSizeButton({
+  brushSize,
+  setBrushSize
+}: {
+  brushSize: number;
+  setBrushSize: (s: number) => void;
+}) {
+  const [showBrushPopup, setShowBrushPopup] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+
+  const handleClick = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPopupPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top,
+      });
+      setShowBrushPopup(true);
+    }
+  };
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        onClick={handleClick}
+        className="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 border border-gray-300 flex items-center gap-1.5 transition-all duration-150 hover:scale-105 active:scale-95 text-sm font-medium text-slate-700"
+        title="Brush Size"
+      >
+        <img src="/icons/brush.svg" className="w-4 h-4" alt="Brush" />
+        <span>{brushSize}px</span>
+      </button>
+      {showBrushPopup && (
+        <BrushPopover
+          isOpen={showBrushPopup}
+          onClose={() => setShowBrushPopup(false)}
+          brushSize={brushSize}
+          setBrushSize={setBrushSize}
+          buttonRef={buttonRef}
+        />
+      )}
+    </>
+  );
+}
+
+/* ============================================================
+    DESKTOP COLOR WHEEL BUTTON
+    - Placed next to zoom controls in desktop toolbar
+    - Opens color wheel popup for unlimited color selection
+============================================================ */
+function DesktopColorWheelButton({
+  color,
+  setColor
+}: {
+  color: string;
+  setColor: (c: string) => void;
+}) {
+  const [showColorWheel, setShowColorWheel] = useState(false);
+  const [wheelPosition, setWheelPosition] = useState({ x: 0, y: 0 });
+  const wheelButtonRef = useRef<HTMLButtonElement>(null);
+
+  const handleColorWheelClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (wheelButtonRef.current) {
+      const rect = wheelButtonRef.current.getBoundingClientRect();
+      setWheelPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top,
+      });
+      setShowColorWheel(true);
+    }
+  };
+
+  return (
+    <>
+      <button
+        ref={wheelButtonRef}
+        onClick={handleColorWheelClick}
+        className="color-wheel-button w-9 h-9 rounded-full transition-all duration-150 hover:scale-105 active:scale-95 border-2 border-gray-300 relative overflow-hidden"
+        aria-label="Color wheel"
+        title="Color picker"
+      />
+      {showColorWheel && (
+        <ColorWheel
+          isOpen={showColorWheel}
+          onClose={() => setShowColorWheel(false)}
+          onSelect={(c) => {
+            setColor(c);
+            setShowColorWheel(false);
+          }}
+          position={wheelPosition}
+          currentColor={color}
+        />
+      )}
+    </>
+  );
+}
+
+/* ============================================================
+    MOBILE COLOR WHEEL BUTTON
+    - Compact version for mobile toolbar
+    - Opens color wheel popup for unlimited color selection
+============================================================ */
+function MobileColorWheelButton({
+  color,
+  setColor
+}: {
+  color: string;
+  setColor: (c: string) => void;
+}) {
+  const [showColorWheel, setShowColorWheel] = useState(false);
+  const [wheelPosition, setWheelPosition] = useState({ x: 0, y: 0 });
+  const wheelButtonRef = useRef<HTMLButtonElement>(null);
+
+  const handleColorWheelClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (wheelButtonRef.current) {
+      const rect = wheelButtonRef.current.getBoundingClientRect();
+      setWheelPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top,
+      });
+      setShowColorWheel(true);
+    }
+  };
+
+  return (
+    <>
+      <button
+        ref={wheelButtonRef}
+        onClick={handleColorWheelClick}
+        className="color-wheel-button w-7 h-7 rounded-full transition-all duration-150 hover:scale-105 active:scale-95 border-2 border-gray-300 relative overflow-hidden"
+        aria-label="Color wheel"
+        title="Color picker"
+      />
+      {showColorWheel && (
+        <ColorWheel
+          isOpen={showColorWheel}
+          onClose={() => setShowColorWheel(false)}
+          onSelect={(c) => {
+            setColor(c);
+            setShowColorWheel(false);
+          }}
+          position={wheelPosition}
+          currentColor={color}
+        />
+      )}
+    </>
+  );
+}
+
+/* ============================================================
     MOBILE SLIDER POPOVER COMPONENTS
     - Each tool has its own popover with a slider
     - Auto-positions to stay within viewport
     - Closes when tapping outside
 ============================================================ */
 
-type PanelType = "zoom" | "brush" | "opacity" | null;
+type PanelType = "zoom" | "brush" | null;
 
 // Generic Popover Container with auto-positioning
 function SliderPopover({ 
@@ -613,7 +833,8 @@ function SliderPopover({
   children: React.ReactNode;
 }) {
   const popoverRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [position, setPosition] = useState<{ x: number; y: number; useBottom?: boolean }>({ x: 0, y: 0 });
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Calculate position when popover opens
   useEffect(() => {
@@ -621,23 +842,132 @@ function SliderPopover({
 
     const button = buttonRef.current;
     const rect = button.getBoundingClientRect();
-    const popoverWidth = 140; // Approximate width
+    const popoverWidth = 180; // Approximate width (wider for brush size popover)
+    const popoverHeight = 240; // Approximate height (for brush size with preview)
     const padding = 8;
+    const gap = 10; // Gap between button and popover
     const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
 
-    // Center above the button
+    // Center horizontally above the button
     let x = rect.left + rect.width / 2 - popoverWidth / 2;
-    const y = rect.top - 10; // 10px above button
-
-    // Boundary checks
+    
+    // Check horizontal boundaries
     if (x < padding) {
       x = padding;
     } else if (x + popoverWidth > viewportWidth - padding) {
       x = viewportWidth - popoverWidth - padding;
     }
 
-    setPosition({ x, y });
+    // Determine vertical position: above or below button
+    const spaceAbove = rect.top;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const popoverNeedsSpace = popoverHeight + gap;
+
+    let y: number;
+    let useBottom = false;
+
+    if (spaceAbove >= popoverNeedsSpace) {
+      // Enough space above - position above button
+      y = rect.top - gap;
+    } else if (spaceBelow >= popoverNeedsSpace) {
+      // Not enough space above, but enough below - position below button
+      y = rect.bottom + gap;
+      useBottom = true;
+    } else {
+      // Not enough space either way - choose the side with more space
+      if (spaceAbove > spaceBelow) {
+        // Position above, but adjust to fit
+        y = padding;
+      } else {
+        // Position below, but adjust to fit
+        y = viewportHeight - padding;
+        useBottom = true;
+      }
+    }
+
+    setPosition({ x, y, useBottom: useBottom });
   }, [isOpen, buttonRef]);
+
+  // Check if mouse is over button or popover
+  const isMouseOverElements = (x: number, y: number) => {
+    const button = buttonRef.current;
+    const popover = popoverRef.current;
+    if (!button || !popover) return false;
+
+    const buttonRect = button.getBoundingClientRect();
+    const popoverRect = popover.getBoundingClientRect();
+
+    const overButton = 
+      x >= buttonRect.left && 
+      x <= buttonRect.right && 
+      y >= buttonRect.top && 
+      y <= buttonRect.bottom;
+
+    const overPopover = 
+      x >= popoverRect.left && 
+      x <= popoverRect.right && 
+      y >= popoverRect.top && 
+      y <= popoverRect.bottom;
+
+    return overButton || overPopover;
+  };
+
+  // Global mouse move handler to check if mouse is still over elements
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isMouseOverElements(e.clientX, e.clientY)) {
+        // Mouse is over button or popover - cancel any pending close
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+      } else {
+        // Mouse is not over either element - start close timer if not already started
+        if (!timeoutRef.current) {
+          timeoutRef.current = setTimeout(() => {
+            onClose();
+          }, 500);
+        }
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [isOpen, onClose]);
+
+  // Handle mouse enter to cancel close
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  // Handle mouse leave from popover - start close timer
+  const handleMouseLeave = () => {
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    // Start close timer - will be cancelled if mouse moves back over elements
+    timeoutRef.current = setTimeout(() => {
+      onClose();
+    }, 500);
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -655,12 +985,17 @@ function SliderPopover({
         className="fixed z-50 bg-white rounded-xl shadow-xl border border-gray-200 p-3 animate-fade-in"
         style={{
           left: `${position.x}px`,
-          bottom: `calc(100vh - ${position.y}px)`,
+          ...(position.useBottom 
+            ? { top: `${position.y}px` }
+            : { bottom: `calc(100vh - ${position.y}px)` }
+          ),
           minWidth: '140px',
         }}
         onClick={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
         onPointerDown={(e) => e.stopPropagation()}
+        onMouseLeave={handleMouseLeave}
+        onMouseEnter={handleMouseEnter}
       >
         <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 text-center">
           {title}
@@ -729,10 +1064,23 @@ function BrushPopover({
 }) {
   return (
     <SliderPopover isOpen={isOpen} onClose={onClose} title="Brush Size" buttonRef={buttonRef}>
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-col items-center gap-3">
+        {/* Visual preview of brush size */}
+        <div className="flex items-center justify-center w-32 h-32 bg-gray-50 rounded-lg border border-gray-200">
+          <div
+            className="rounded-full bg-blue-500 border-2 border-blue-600 shadow-md"
+            style={{
+              width: `${Math.min(brushSize, 100)}px`,
+              height: `${Math.min(brushSize, 100)}px`,
+              minWidth: '2px',
+              minHeight: '2px',
+            }}
+          />
+        </div>
+        
         <input
           type="range"
-          min={5}
+          min={2}
           max={120}
           value={brushSize}
           onChange={(e) => {
@@ -740,11 +1088,26 @@ function BrushPopover({
             setBrushSize(Number(e.target.value));
           }}
           onPointerDown={(e) => e.stopPropagation()}
+          onPointerUp={(e) => {
+            e.stopPropagation();
+            // Close popup after user releases the slider
+            setTimeout(() => onClose(), 100);
+          }}
+          onMouseUp={(e) => {
+            e.stopPropagation();
+            // Close popup after user releases the slider
+            setTimeout(() => onClose(), 100);
+          }}
           onTouchStart={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => {
+            e.stopPropagation();
+            // Close popup after user releases the slider on touch devices
+            setTimeout(() => onClose(), 100);
+          }}
           className="w-full h-2 accent-blue-500 cursor-pointer"
           style={{
             WebkitAppearance: 'none',
-            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((brushSize - 5) / 115) * 100}%, #e5e7eb ${((brushSize - 5) / 115) * 100}%, #e5e7eb 100%)`,
+            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((brushSize - 2) / 118) * 100}%, #e5e7eb ${((brushSize - 2) / 118) * 100}%, #e5e7eb 100%)`,
             borderRadius: '4px',
           }}
         />
@@ -799,17 +1162,22 @@ function OpacityPopover({
 // Settings Button (Zoom, Brush, Opacity triggers)
 function SettingsButton({ 
   icon, 
+  iconType,
   label,
   isActive, 
   onClick,
   buttonRef
 }: {
   icon: string;
+  iconType?: "emoji" | "svg";
   label: string;
   isActive: boolean;
   onClick: () => void;
   buttonRef: React.RefObject<HTMLButtonElement>;
 }) {
+  // Check if icon is an SVG path or emoji
+  const isSvg = iconType === "svg" || icon.startsWith("/") || icon.endsWith(".svg");
+  
   return (
     <button
       ref={buttonRef as React.RefObject<HTMLButtonElement>}
@@ -821,7 +1189,11 @@ function SettingsButton({
       }`}
       aria-label={label}
     >
-      <span className="text-xs">{icon}</span>
+      {isSvg ? (
+        <img src={icon} className="w-4 h-4" alt={label} />
+      ) : (
+        <span className="text-xs">{icon}</span>
+      )}
     </button>
   );
 }
@@ -941,9 +1313,370 @@ function ColorShadePopup({
 }
 
 /* ============================================================
+    COLOR WHEEL COMPONENT
+    - Rainbow color picker with circular gradient
+    - Allows selecting any color from the spectrum
+============================================================ */
+function ColorWheel({
+  isOpen,
+  onClose,
+  onSelect,
+  position,
+  currentColor
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelect: (color: string) => void;
+  position: { x: number; y: number };
+  currentColor: string;
+}) {
+  const wheelRef = useRef<HTMLCanvasElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(currentColor);
+  const wheelSize = 200;
+  const wheelRadius = wheelSize / 2;
+  const [shouldRender, setShouldRender] = useState(false);
+
+  // Draw color wheel on canvas
+  useEffect(() => {
+    if (!wheelRef.current || !shouldRender) return;
+    
+    // Use requestAnimationFrame to ensure canvas is ready
+    requestAnimationFrame(() => {
+      if (!wheelRef.current) return;
+      const canvas = wheelRef.current;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      canvas.width = wheelSize;
+      canvas.height = wheelSize;
+      const centerX = wheelRadius;
+      const centerY = wheelRadius;
+      const imageData = ctx.createImageData(wheelSize, wheelSize);
+      const data = imageData.data;
+
+      // Draw rainbow circle pixel by pixel
+      for (let y = 0; y < wheelSize; y++) {
+        for (let x = 0; x < wheelSize; x++) {
+          const dx = x - centerX;
+          const dy = y - centerY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          const idx = (y * wheelSize + x) * 4;
+
+          if (distance > wheelRadius) {
+            // Outside circle - transparent
+            data[idx] = 0;
+            data[idx + 1] = 0;
+            data[idx + 2] = 0;
+            data[idx + 3] = 0;
+          } else {
+            // Calculate angle and distance
+            const angle = (Math.atan2(dy, dx) * 180) / Math.PI + 180;
+            const normalizedDistance = distance / wheelRadius;
+            
+            // Hue based on angle (0-360)
+            const hue = angle;
+            // Saturation: full at edges, less towards center
+            const saturation = Math.min(normalizedDistance * 1.2, 1) * 100;
+            // Lightness: brighter towards center
+            const lightness = 50 + (1 - normalizedDistance) * 30;
+            
+            // Convert HSL to RGB
+            const h = hue / 360;
+            const s = saturation / 100;
+            const l = lightness / 100;
+            
+            const c = (1 - Math.abs(2 * l - 1)) * s;
+            const x_val = c * (1 - Math.abs(((h * 6) % 2) - 1));
+            const m = l - c / 2;
+            
+            let r = 0, g = 0, b = 0;
+            if (h < 1/6) { r = c; g = x_val; b = 0; }
+            else if (h < 2/6) { r = x_val; g = c; b = 0; }
+            else if (h < 3/6) { r = 0; g = c; b = x_val; }
+            else if (h < 4/6) { r = 0; g = x_val; b = c; }
+            else if (h < 5/6) { r = x_val; g = 0; b = c; }
+            else { r = c; g = 0; b = x_val; }
+            
+            data[idx] = Math.round((r + m) * 255);
+            data[idx + 1] = Math.round((g + m) * 255);
+            data[idx + 2] = Math.round((b + m) * 255);
+            data[idx + 3] = 255;
+          }
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+
+      // Draw white center circle overlay (for brightness control)
+      const centerGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, wheelRadius * 0.35);
+      centerGradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+      centerGradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.3)');
+      centerGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = centerGradient;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, wheelRadius * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }, [shouldRender, wheelSize, wheelRadius]);
+
+  const getColorAtPoint = (clientX: number, clientY: number): string => {
+    if (!wheelRef.current) return currentColor;
+    const canvas = wheelRef.current;
+    const rect = canvas.getBoundingClientRect();
+    
+    // Convert client coordinates to canvas coordinates
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const canvasX = (clientX - rect.left) * scaleX;
+    const canvasY = (clientY - rect.top) * scaleY;
+    
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    
+    const dx = canvasX - centerX;
+    const dy = canvasY - centerY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance > wheelRadius) return currentColor;
+    
+    const angle = (Math.atan2(dy, dx) * 180) / Math.PI + 180;
+    const normalizedDistance = Math.min(distance / wheelRadius, 1);
+    
+    // Calculate HSL
+    const hue = angle;
+    const saturation = Math.min(normalizedDistance * 1.2, 1) * 100;
+    const lightness = 50 + (1 - normalizedDistance) * 30; // Brighter towards center
+    
+    // Convert HSL to RGB
+    const h = hue / 360;
+    const s = saturation / 100;
+    const l = lightness / 100;
+    
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x_val = c * (1 - Math.abs(((h * 6) % 2) - 1));
+    const m = l - c / 2;
+    
+    let r = 0, g = 0, b = 0;
+    if (h < 1/6) { r = c; g = x_val; b = 0; }
+    else if (h < 2/6) { r = x_val; g = c; b = 0; }
+    else if (h < 3/6) { r = 0; g = c; b = x_val; }
+    else if (h < 4/6) { r = 0; g = x_val; b = c; }
+    else if (h < 5/6) { r = x_val; g = 0; b = c; }
+    else { r = c; g = 0; b = x_val; }
+    
+    r = Math.round((r + m) * 255);
+    g = Math.round((g + m) * 255);
+    b = Math.round((b + m) * 255);
+    
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    const color = getColorAtPoint(e.clientX, e.clientY);
+    setSelectedColor(color);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging) {
+      const color = getColorAtPoint(e.clientX, e.clientY);
+      setSelectedColor(color);
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      onSelect(selectedColor);
+      onClose();
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    if (e.touches.length > 0) {
+      setIsDragging(true);
+      const touch = e.touches[0];
+      const color = getColorAtPoint(touch.clientX, touch.clientY);
+      setSelectedColor(color);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    e.preventDefault();
+    if (isDragging && e.touches.length > 0) {
+      const touch = e.touches[0];
+      const color = getColorAtPoint(touch.clientX, touch.clientY);
+      setSelectedColor(color);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (isDragging) {
+      setIsDragging(false);
+      onSelect(selectedColor);
+      onClose();
+    }
+  };
+
+  const popupRef = useRef<HTMLDivElement>(null);
+  const [adjustedPosition, setAdjustedPosition] = useState<{ x: number; y: number; openAbove: boolean } | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true);
+      // Reset animation state when opening
+      setIsAnimating(false);
+    } else {
+      // Start closing animation
+      setIsAnimating(false);
+      // Hide after animation completes
+      const timer = setTimeout(() => {
+        setShouldRender(false);
+        setAdjustedPosition(null);
+      }, 200); // Match transition duration
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  // Calculate position when popup should be rendered
+  useEffect(() => {
+    if (!isOpen || !shouldRender) {
+      return;
+    }
+    
+    // Use requestAnimationFrame to ensure DOM is updated
+    requestAnimationFrame(() => {
+      if (!popupRef.current) return;
+      
+      const popup = popupRef.current;
+      const rect = popup.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const padding = 16; // Minimum distance from screen edges
+      
+      // Calculate popup dimensions
+      // wheelSize (200) + padding (16*2) + selected color block (~80) = ~312px
+      const estimatedPopupWidth = wheelSize + 32; // wheelSize + padding
+      const estimatedPopupHeight = wheelSize + 100; // wheelSize + selected color block + padding
+      const popupWidth = rect.width > 0 ? rect.width : estimatedPopupWidth;
+      const popupHeight = rect.height > 0 ? rect.height : estimatedPopupHeight;
+      const popupHalfWidth = popupWidth / 2;
+      
+      // Adjust X position (horizontal centering with boundary checks)
+      let newX = position.x;
+      if (position.x - popupHalfWidth < padding) {
+        newX = popupHalfWidth + padding;
+      } else if (position.x + popupHalfWidth > viewportWidth - padding) {
+        newX = viewportWidth - popupHalfWidth - padding;
+      }
+      
+      // Calculate Y position - check if there's enough space above
+      const spaceAbove = position.y;
+      const spaceBelow = viewportHeight - position.y;
+      const gap = 10; // Gap between button and popup
+      
+      let newY: number;
+      let openAbove: boolean;
+      
+      // If there's enough space above, open above the button
+      if (spaceAbove >= popupHeight + gap) {
+        newY = position.y - popupHeight - gap;
+        openAbove = true;
+      } 
+      // If not enough space above but enough below, open below
+      else if (spaceBelow >= popupHeight + gap) {
+        newY = position.y + gap;
+        openAbove = false;
+      }
+      // If neither side has enough space, choose the side with more space
+      else if (spaceAbove > spaceBelow) {
+        // Open above, but clamp to viewport top
+        newY = Math.max(padding, position.y - popupHeight - gap);
+        openAbove = true;
+      } else {
+        // Open below, but clamp to viewport bottom
+        newY = Math.min(viewportHeight - popupHeight - padding, position.y + gap);
+        openAbove = false;
+      }
+      
+      setAdjustedPosition({ x: newX, y: newY, openAbove });
+    });
+  }, [isOpen, shouldRender, position, wheelSize]);
+
+  // Trigger animation after position is calculated
+  useEffect(() => {
+    if (adjustedPosition && isOpen && shouldRender) {
+      // Small delay to ensure position is applied before animation
+      const timer = setTimeout(() => {
+        setIsAnimating(true);
+      }, 10);
+      return () => clearTimeout(timer);
+    }
+  }, [adjustedPosition, isOpen, shouldRender]);
+
+  if (!shouldRender) return null;
+
+  const finalX = adjustedPosition?.x ?? position.x;
+  const finalY = adjustedPosition?.y ?? (position.y - wheelSize - 10);
+  
+  // Calculate transform for animation
+  const transformValue = isAnimating 
+    ? 'translateX(-50%) translateY(0) scale(1)' 
+    : `translateX(-50%) translateY(${adjustedPosition?.openAbove ? '-10px' : '10px'}) scale(0.95)`;
+
+  return (
+    <>
+      <div 
+        className="fixed inset-0 z-40 transition-opacity duration-200"
+        style={{
+          opacity: isAnimating ? 1 : 0,
+          pointerEvents: isAnimating ? 'auto' : 'none',
+        }}
+        onClick={onClose} 
+      />
+      <div
+        ref={popupRef}
+        className="fixed z-50 bg-white rounded-xl shadow-2xl p-4 border border-gray-200 transition-all duration-200 ease-out"
+        style={{
+          left: `${finalX}px`,
+          top: `${finalY}px`,
+          transform: transformValue,
+          opacity: isAnimating ? 1 : 0,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <canvas
+          ref={wheelRef}
+          className="cursor-crosshair rounded-full"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{ width: `${wheelSize}px`, height: `${wheelSize}px`, display: 'block' }}
+        />
+        <div className="mt-2 text-center">
+          <div className="text-xs text-gray-600 mb-1">Selected:</div>
+          <div
+            className="w-12 h-12 mx-auto rounded-full border-2 border-gray-300 shadow-md"
+            style={{ backgroundColor: selectedColor }}
+          />
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ============================================================
     FULL COLOR PALETTE (DESKTOP - ALL COLORS)
-    - Grayscale colors first (black to white)
-    - Selection indicated by blue outline (same as tool selection)
+    - Top row: 5 neutral grayscale colors (black to white)
+    - Bright, child-friendly colors below
+    - Selection indicated by blue outline
 ============================================================ */
 function FullColorPalette({ 
   color, 
@@ -952,71 +1685,114 @@ function FullColorPalette({
   color: string;
   setColor: (v: string) => void;
 }) {
-  // Grayscale colors - displayed FIRST
+  // Top row: 5 neutral grayscale colors from dark to light
   const GRAYSCALE_COLORS = [
     "#000000", // Black
     "#4a4a4a", // Dark gray
-    "#7a7a7a", // Medium gray
-    "#bfbfbf", // Light gray
+    "#7a7a7a", // Gray (slightly lighter)
+    "#bfbfbf", // Light gray (even lighter)
     "#ffffff", // White
   ];
 
+  // Bright, child-friendly base colors
   const BASE_COLORS = [
     { name: "red", base: "#FF1744" },
+    { name: "pink", base: "#FF69B4" }, // Added: bright pink
     { name: "orange", base: "#FF6F00" },
-    { name: "yellow", base: "#FFD600" },
+    { name: "yellow", base: "#FFD700" }, // Changed: brighter yellow (#FFD700 instead of #FFD600)
+    { name: "lime", base: "#CDDC39" }, // Added: lime green
     { name: "green", base: "#4CAF50" },
+    { name: "cyan", base: "#00BCD4" }, // Added: cyan
     { name: "blue", base: "#2196F3" },
     { name: "purple", base: "#9C27B0" },
-    { name: "brown", base: "#8B4513" },
+    { name: "brown", base: "#8B4513" }, // Brown (dark brown)
   ];
 
-  const getShades = (baseHex: string): string[] => {
+  // Generate bright shades (no darkening, only lightening)
+  // For brown: generate from dark to light (dark brown -> light brown)
+  const getShades = (baseHex: string, isBrown: boolean = false): string[] => {
     const r = parseInt(baseHex.slice(1, 3), 16);
     const g = parseInt(baseHex.slice(3, 5), 16);
     const b = parseInt(baseHex.slice(5, 7), 16);
 
-    const mix = (c: number, factor: number) =>
-      Math.max(0, Math.min(255, Math.round(c * factor)));
+    // Mix with white to create lighter variants
+    const mixWithWhite = (c: number, factor: number) => {
+      // factor: 0 = original color, 1 = white
+      return Math.round(c * (1 - factor) + 255 * factor);
+    };
 
+    if (isBrown) {
+      // For brown: generate from dark to light (dark brown -> light brown/tan)
+      // Start with darker brown, then progressively lighter
+      return [
+        baseHex, // Dark brown (base)
+        `#${mixWithWhite(r, 0.15).toString(16).padStart(2, "0")}${mixWithWhite(g, 0.15).toString(16).padStart(2, "0")}${mixWithWhite(b, 0.15).toString(16).padStart(2, "0")}`, // Medium-dark brown
+        `#${mixWithWhite(r, 0.3).toString(16).padStart(2, "0")}${mixWithWhite(g, 0.3).toString(16).padStart(2, "0")}${mixWithWhite(b, 0.3).toString(16).padStart(2, "0")}`, // Medium brown
+        `#${mixWithWhite(r, 0.5).toString(16).padStart(2, "0")}${mixWithWhite(g, 0.5).toString(16).padStart(2, "0")}${mixWithWhite(b, 0.5).toString(16).padStart(2, "0")}`, // Light brown
+        `#${mixWithWhite(r, 0.7).toString(16).padStart(2, "0")}${mixWithWhite(g, 0.7).toString(16).padStart(2, "0")}${mixWithWhite(b, 0.7).toString(16).padStart(2, "0")}`, // Very light brown/tan
+      ];
+    }
+
+    // For bright colors, generate lighter shades only (no darkening)
     return [
-      `#${mix(r, 0.5).toString(16).padStart(2, "0")}${mix(g, 0.5).toString(16).padStart(2, "0")}${mix(b, 0.5).toString(16).padStart(2, "0")}`,
-      `#${mix(r, 0.75).toString(16).padStart(2, "0")}${mix(g, 0.75).toString(16).padStart(2, "0")}${mix(b, 0.75).toString(16).padStart(2, "0")}`,
-      baseHex,
-      `#${mix(r, 1.25).toString(16).padStart(2, "0")}${mix(g, 1.25).toString(16).padStart(2, "0")}${mix(b, 1.25).toString(16).padStart(2, "0")}`,
-      `#${mix(r, 1.5).toString(16).padStart(2, "0")}${mix(g, 1.5).toString(16).padStart(2, "0")}${mix(b, 1.5).toString(16).padStart(2, "0")}`,
+      baseHex, // Base color (brightest)
+      `#${mixWithWhite(r, 0.2).toString(16).padStart(2, "0")}${mixWithWhite(g, 0.2).toString(16).padStart(2, "0")}${mixWithWhite(b, 0.2).toString(16).padStart(2, "0")}`, // Slightly lighter
+      `#${mixWithWhite(r, 0.4).toString(16).padStart(2, "0")}${mixWithWhite(g, 0.4).toString(16).padStart(2, "0")}${mixWithWhite(b, 0.4).toString(16).padStart(2, "0")}`, // Lighter
+      `#${mixWithWhite(r, 0.6).toString(16).padStart(2, "0")}${mixWithWhite(g, 0.6).toString(16).padStart(2, "0")}${mixWithWhite(b, 0.6).toString(16).padStart(2, "0")}`, // Very light
+      `#${mixWithWhite(r, 0.8).toString(16).padStart(2, "0")}${mixWithWhite(g, 0.8).toString(16).padStart(2, "0")}${mixWithWhite(b, 0.8).toString(16).padStart(2, "0")}`, // Almost white
     ];
   };
 
-  // Build all colors: grayscale first, then color shades
-  const allColors: string[] = [...GRAYSCALE_COLORS];
-  BASE_COLORS.forEach(({ base }) => {
-    allColors.push(...getShades(base));
+  // Build color shades (excluding grayscale - they're in separate row)
+  const allColors: string[] = [];
+  BASE_COLORS.forEach(({ name, base }) => {
+    allColors.push(...getShades(base, name === "brown"));
   });
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {allColors.map((shade, idx) => (
-        <button
-          key={idx}
-          onClick={() => setColor(shade)}
-          className={`w-8 h-8 rounded-full transition-all duration-150 hover:scale-110 active:scale-95 ${
-            color.toLowerCase() === shade.toLowerCase()
-              ? "border-[3px] border-blue-500 shadow-md ring-2 ring-blue-200 scale-110"
-              : "border-2 border-gray-300"
-          }`}
-          style={{ background: shade }}
-          aria-label={`Color ${idx + 1}`}
-        />
-      ))}
+    <div className="flex flex-col gap-2">
+      {/* Top row: Grayscale colors */}
+      <div className="flex flex-wrap gap-2">
+        {GRAYSCALE_COLORS.map((shade, idx) => (
+          <button
+            key={`gray-${idx}`}
+            onClick={() => setColor(shade)}
+            className={`w-8 h-8 rounded-full transition-all duration-150 hover:scale-110 active:scale-95 ${
+              color.toLowerCase() === shade.toLowerCase()
+                ? "border-[3px] border-blue-500 shadow-md ring-2 ring-blue-200 scale-110"
+                : "border-2 border-gray-300"
+            }`}
+            style={{ background: shade }}
+            aria-label={`Grayscale ${idx + 1}`}
+          />
+        ))}
+      </div>
+      
+      {/* Color shades */}
+      <div className="flex flex-wrap gap-2">
+        {allColors.map((shade, idx) => (
+          <button
+            key={`color-${idx}`}
+            onClick={() => setColor(shade)}
+            className={`w-8 h-8 rounded-full transition-all duration-150 hover:scale-110 active:scale-95 ${
+              color.toLowerCase() === shade.toLowerCase()
+                ? "border-[3px] border-blue-500 shadow-md ring-2 ring-blue-200 scale-110"
+                : "border-2 border-gray-300"
+            }`}
+            style={{ background: shade }}
+            aria-label={`Color ${idx + 1}`}
+          />
+        ))}
+      </div>
     </div>
   );
 }
 
 /* ============================================================
     COMPACT COLOR PALETTE (MOBILE - ALL COLORS WITH POPUP)
-    - Black is a parent color with grayscale shades (black to white)
-    - All color families have shades popup
+    - Black is a parent color with minimal grayscale (black to white only)
+    - All color families have bright shade popups
+    - Color wheel for unlimited color selection
     - Selection indicated by blue outline (same as tool selection)
 ============================================================ */
 function CompactColorPalette({ 
@@ -1029,51 +1805,68 @@ function CompactColorPalette({
   isMobile: boolean;
 }) {
   const [expandedColor, setExpandedColor] = useState<string | null>(null);
+  const [showColorWheel, setShowColorWheel] = useState(false);
   const [popupPosition, setPopupPosition] = useState({ x: 0, y: 0 });
+  const [wheelPosition, setWheelPosition] = useState({ x: 0, y: 0 });
   const colorRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+  const wheelButtonRef = useRef<HTMLButtonElement>(null);
 
-  // All color families - BLACK is first with grayscale shades
+  // All color families - BLACK is first with minimal grayscale, then bright colors
   const ALL_COLORS = [
     { name: "black", base: "#000000" }, // Parent for grayscale shades
     { name: "red", base: "#FF1744" },
+    { name: "pink", base: "#FF69B4" }, // Added: bright pink
     { name: "orange", base: "#FF6F00" },
-    { name: "yellow", base: "#FFD600" },
+    { name: "yellow", base: "#FFD700" }, // Changed: brighter yellow (#FFD700)
+    { name: "lime", base: "#CDDC39" }, // Added: lime green
     { name: "green", base: "#4CAF50" },
+    { name: "cyan", base: "#00BCD4" }, // Added: cyan
     { name: "blue", base: "#2196F3" },
     { name: "purple", base: "#9C27B0" },
-    { name: "brown", base: "#8B4513" },
+    { name: "brown", base: "#8B4513" }, // Brown (dark brown)
   ];
 
-  // Grayscale shades for black parent color
+  // Minimal grayscale shades for black parent color (removed dark grays)
   const GRAYSCALE_SHADES = [
     "#000000", // Black
-    "#4A4A4A", // Dark gray
-    "#7A7A7A", // Medium gray
-    "#BFBFBF", // Light gray
     "#FFFFFF", // White
   ];
 
-  // Get shades for a color - special case for black (grayscale)
-  const getShades = (baseHex: string): string[] => {
-    // Black uses predefined grayscale shades
+  // Get shades for a color - special case for black (grayscale) and brown
+  const getShades = (baseHex: string, isBrown: boolean = false): string[] => {
+    // Black uses minimal grayscale shades
     if (baseHex.toLowerCase() === "#000000") {
       return GRAYSCALE_SHADES;
     }
     
-    // Other colors use computed shades
+    // Other colors use bright shades (lightening only, no darkening)
     const r = parseInt(baseHex.slice(1, 3), 16);
     const g = parseInt(baseHex.slice(3, 5), 16);
     const b = parseInt(baseHex.slice(5, 7), 16);
 
-    const mix = (c: number, factor: number) =>
-      Math.max(0, Math.min(255, Math.round(c * factor)));
+    // Mix with white to create lighter variants (no darkening)
+    const mixWithWhite = (c: number, factor: number) => {
+      // factor: 0 = original color, 1 = white
+      return Math.round(c * (1 - factor) + 255 * factor);
+    };
+
+    if (isBrown) {
+      // For brown: generate from dark to light (dark brown -> light brown/tan)
+      return [
+        baseHex, // Dark brown (base)
+        `#${mixWithWhite(r, 0.15).toString(16).padStart(2, "0")}${mixWithWhite(g, 0.15).toString(16).padStart(2, "0")}${mixWithWhite(b, 0.15).toString(16).padStart(2, "0")}`, // Medium-dark brown
+        `#${mixWithWhite(r, 0.3).toString(16).padStart(2, "0")}${mixWithWhite(g, 0.3).toString(16).padStart(2, "0")}${mixWithWhite(b, 0.3).toString(16).padStart(2, "0")}`, // Medium brown
+        `#${mixWithWhite(r, 0.5).toString(16).padStart(2, "0")}${mixWithWhite(g, 0.5).toString(16).padStart(2, "0")}${mixWithWhite(b, 0.5).toString(16).padStart(2, "0")}`, // Light brown
+        `#${mixWithWhite(r, 0.7).toString(16).padStart(2, "0")}${mixWithWhite(g, 0.7).toString(16).padStart(2, "0")}${mixWithWhite(b, 0.7).toString(16).padStart(2, "0")}`, // Very light brown/tan
+      ];
+    }
 
     return [
-      `#${mix(r, 0.5).toString(16).padStart(2, "0")}${mix(g, 0.5).toString(16).padStart(2, "0")}${mix(b, 0.5).toString(16).padStart(2, "0")}`,
-      `#${mix(r, 0.75).toString(16).padStart(2, "0")}${mix(g, 0.75).toString(16).padStart(2, "0")}${mix(b, 0.75).toString(16).padStart(2, "0")}`,
-      baseHex,
-      `#${mix(r, 1.25).toString(16).padStart(2, "0")}${mix(g, 1.25).toString(16).padStart(2, "0")}${mix(b, 1.25).toString(16).padStart(2, "0")}`,
-      `#${mix(r, 1.5).toString(16).padStart(2, "0")}${mix(g, 1.5).toString(16).padStart(2, "0")}${mix(b, 1.5).toString(16).padStart(2, "0")}`,
+      baseHex, // Base color (brightest)
+      `#${mixWithWhite(r, 0.2).toString(16).padStart(2, "0")}${mixWithWhite(g, 0.2).toString(16).padStart(2, "0")}${mixWithWhite(b, 0.2).toString(16).padStart(2, "0")}`, // Slightly lighter
+      `#${mixWithWhite(r, 0.4).toString(16).padStart(2, "0")}${mixWithWhite(g, 0.4).toString(16).padStart(2, "0")}${mixWithWhite(b, 0.4).toString(16).padStart(2, "0")}`, // Lighter
+      `#${mixWithWhite(r, 0.6).toString(16).padStart(2, "0")}${mixWithWhite(g, 0.6).toString(16).padStart(2, "0")}${mixWithWhite(b, 0.6).toString(16).padStart(2, "0")}`, // Very light
+      `#${mixWithWhite(r, 0.8).toString(16).padStart(2, "0")}${mixWithWhite(g, 0.8).toString(16).padStart(2, "0")}${mixWithWhite(b, 0.8).toString(16).padStart(2, "0")}`, // Almost white
     ];
   };
 
@@ -1100,6 +1893,19 @@ function CompactColorPalette({
     return isColorSelected(baseColor) || getShades(baseColor).some(shade => isColorSelected(shade));
   };
 
+  const handleColorWheelClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (wheelButtonRef.current) {
+      const rect = wheelButtonRef.current.getBoundingClientRect();
+      setWheelPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top,
+      });
+      setShowColorWheel(true);
+      setExpandedColor(null); // Close shade popup if open
+    }
+  };
+
   return (
     <>
       <div className="flex items-center gap-1.5">
@@ -1120,15 +1926,35 @@ function CompactColorPalette({
             aria-label={name}
           />
         ))}
+        {/* Color Wheel Button */}
+        <button
+          ref={wheelButtonRef}
+          onClick={handleColorWheelClick}
+          className="color-wheel-button w-7 h-7 md:w-8 md:h-8 rounded-full transition-all duration-150 hover:scale-110 active:scale-95 border-2 border-gray-300 relative overflow-hidden"
+          aria-label="Color wheel"
+        />
       </div>
 
-      {expandedColor && (
+      {expandedColor && !showColorWheel && (
         <ColorShadePopup
           baseColor={expandedColor}
-          shades={getShades(expandedColor)}
+          shades={getShades(expandedColor, expandedColor.toLowerCase() === "#8b4513")}
           onSelect={setColor}
           onClose={() => setExpandedColor(null)}
           position={popupPosition}
+          currentColor={color}
+        />
+      )}
+
+      {showColorWheel && (
+        <ColorWheel
+          isOpen={showColorWheel}
+          onClose={() => setShowColorWheel(false)}
+          onSelect={(c) => {
+            setColor(c);
+            setShowColorWheel(false);
+          }}
+          position={wheelPosition}
           currentColor={color}
         />
       )}
@@ -1176,6 +2002,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   const tempCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const undoStack = useRef<ImageData[]>([]);
+  const redoStack = useRef<ImageData[]>([]);
   const MAX_UNDO = 40;
 
   /* Drawing state */
@@ -1231,6 +2058,8 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
 
     undoStack.current.push(img);
     if (undoStack.current.length > MAX_UNDO) undoStack.current.shift();
+    // Clear redo stack when new action is performed
+    redoStack.current = [];
   };
 
   const undo = () => {
@@ -1238,10 +2067,34 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     if (!draw) return;
     if (undoStack.current.length <= 1) return;
 
+    const ctx = draw.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return;
+
+    // Save current state to redo stack
+    const current = ctx.getImageData(0, 0, draw.width, draw.height);
+    redoStack.current.push(current);
+
+    // Restore previous state
     undoStack.current.pop();
     const prev = undoStack.current[undoStack.current.length - 1];
+    ctx.putImageData(prev, 0, 0);
+  };
+
+  const redo = () => {
+    const draw = drawCanvasRef.current;
+    if (!draw) return;
+    if (redoStack.current.length === 0) return;
+
     const ctx = draw.getContext("2d", { willReadFrequently: true });
-    if (ctx) ctx.putImageData(prev, 0, 0);
+    if (!ctx) return;
+
+    // Save current state to undo stack
+    const current = ctx.getImageData(0, 0, draw.width, draw.height);
+    undoStack.current.push(current);
+
+    // Restore from redo stack
+    const next = redoStack.current.pop()!;
+    ctx.putImageData(next, 0, 0);
   };
 
   const clearCanvas = () => {
@@ -1297,6 +2150,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
 
   const drawSpline = () => {
     const temp = tempCanvasRef.current;
+    const base = baseCanvasRef.current;
     if (!temp) return;
     const ctx = temp.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
@@ -1312,19 +2166,55 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
         ctx.lineWidth = brushSize;
         
         if (tool === "brush") {
-      ctx.globalCompositeOperation = "source-over";
+          // First draw the brush color
+          ctx.globalCompositeOperation = "source-over";
           const rgb = hexToRgb(color);
           ctx.fillStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
           ctx.globalAlpha = 1;
+          ctx.beginPath();
+          ctx.arc(pts[0].x, pts[0].y, brushSize / 2, 0, Math.PI * 2);
+          ctx.fill();
+          
+          // Then blend with black outlines from base canvas
+          if (base && temp.width === base.width && temp.height === base.height) {
+            const baseCtx = base.getContext("2d", { willReadFrequently: true });
+            if (baseCtx) {
+              const tempData = ctx.getImageData(0, 0, temp.width, temp.height);
+              const baseData = baseCtx.getImageData(0, 0, base.width, base.height);
+              
+              // Blend black outlines with brush color
+              for (let i = 0; i < tempData.data.length; i += 4) {
+                if (tempData.data[i + 3] > 0) { // If brush pixel exists
+                  const baseR = baseData.data[i];
+                  const baseG = baseData.data[i + 1];
+                  const baseB = baseData.data[i + 2];
+                  const baseA = baseData.data[i + 3];
+                  
+                  // Check if this is a black outline pixel
+                  const isBlackOutline = baseA > 200 && baseR < 80 && baseG < 80 && baseB < 80;
+                  
+                  if (isBlackOutline) {
+                    // Mix black outline with brush color
+                    const outlineStrength = 0.4;
+                    tempData.data[i] = Math.min(255, Math.round(tempData.data[i] * (1 - outlineStrength) + baseR * outlineStrength));
+                    tempData.data[i + 1] = Math.min(255, Math.round(tempData.data[i + 1] * (1 - outlineStrength) + baseG * outlineStrength));
+                    tempData.data[i + 2] = Math.min(255, Math.round(tempData.data[i + 2] * (1 - outlineStrength) + baseB * outlineStrength));
+                    tempData.data[i + 3] = Math.max(tempData.data[i + 3], Math.min(255, baseA * 0.3));
+                  }
+                }
+              }
+              
+              ctx.putImageData(tempData, 0, 0);
+            }
+          }
         } else if (tool === "eraser") {
           ctx.globalCompositeOperation = "destination-out";
           ctx.fillStyle = "rgba(0, 0, 0, 1)";
           ctx.globalAlpha = 1;
+          ctx.beginPath();
+          ctx.arc(pts[0].x, pts[0].y, brushSize / 2, 0, Math.PI * 2);
+          ctx.fill();
         }
-
-        ctx.beginPath();
-        ctx.arc(pts[0].x, pts[0].y, brushSize / 2, 0, Math.PI * 2);
-        ctx.fill();
       }
       return;
     }
@@ -1334,38 +2224,93 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     ctx.lineWidth = brushSize;
 
     if (tool === "brush") {
+      // First draw the brush stroke
       ctx.globalCompositeOperation = "source-over";
       const rgb = hexToRgb(color);
       ctx.strokeStyle = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
       ctx.globalAlpha = 1;
+
+      ctx.beginPath();
+
+      for (let i = 0; i < pts.length - 3; i++) {
+        const p0 = pts[i];
+        const p1 = pts[i + 1];
+        const p2 = pts[i + 2];
+        const p3 = pts[i + 3];
+
+        for (let t = 0; t <= 1; t += 0.15) {
+          const p = catmullRom(p0, p1, p2, p3, t);
+
+          if (i === 0 && t === 0) {
+            ctx.moveTo(p.x, p.y);
+          } else {
+            ctx.lineTo(p.x, p.y);
+          }
+        }
+      }
+
+      ctx.stroke();
+      
+      // Process brush stroke: blend with black outlines
+      if (base && temp.width === base.width && temp.height === base.height) {
+        const baseCtx = base.getContext("2d", { willReadFrequently: true });
+        if (baseCtx) {
+          const tempData = ctx.getImageData(0, 0, temp.width, temp.height);
+          const baseDataForBlend = baseCtx.getImageData(0, 0, base.width, base.height);
+          
+          // Blend black outlines with brush color
+          for (let i = 0; i < tempData.data.length; i += 4) {
+            if (tempData.data[i + 3] > 0) { // If brush pixel exists
+              const baseR = baseDataForBlend.data[i];
+              const baseG = baseDataForBlend.data[i + 1];
+              const baseB = baseDataForBlend.data[i + 2];
+              const baseA = baseDataForBlend.data[i + 3];
+              
+              // Check if this is a black outline pixel
+              const isBlackOutline = baseA > 200 && baseR < 80 && baseG < 80 && baseB < 80;
+              
+              if (isBlackOutline) {
+                // Mix black outline with brush color
+                const outlineStrength = 0.4;
+                tempData.data[i] = Math.min(255, Math.round(tempData.data[i] * (1 - outlineStrength) + baseR * outlineStrength));
+                tempData.data[i + 1] = Math.min(255, Math.round(tempData.data[i + 1] * (1 - outlineStrength) + baseG * outlineStrength));
+                tempData.data[i + 2] = Math.min(255, Math.round(tempData.data[i + 2] * (1 - outlineStrength) + baseB * outlineStrength));
+                tempData.data[i + 3] = Math.max(tempData.data[i + 3], Math.min(255, baseA * 0.3));
+              }
+            }
+          }
+          
+          ctx.putImageData(tempData, 0, 0);
+        }
+      }
     } else if (tool === "eraser") {
       // For eraser, draw a solid stroke on tempCanvas
       // This will be used with destination-out when merging to drawCanvas
       ctx.globalCompositeOperation = "source-over";
       ctx.strokeStyle = "rgba(0, 0, 0, 1)";
       ctx.globalAlpha = 1;
-    }
 
-    ctx.beginPath();
+      ctx.beginPath();
 
-    for (let i = 0; i < pts.length - 3; i++) {
-      const p0 = pts[i];
-      const p1 = pts[i + 1];
-      const p2 = pts[i + 2];
-      const p3 = pts[i + 3];
+      for (let i = 0; i < pts.length - 3; i++) {
+        const p0 = pts[i];
+        const p1 = pts[i + 1];
+        const p2 = pts[i + 2];
+        const p3 = pts[i + 3];
 
-      for (let t = 0; t <= 1; t += 0.15) {
-        const p = catmullRom(p0, p1, p2, p3, t);
+        for (let t = 0; t <= 1; t += 0.15) {
+          const p = catmullRom(p0, p1, p2, p3, t);
 
-        if (i === 0 && t === 0) {
-          ctx.moveTo(p.x, p.y);
-        } else {
-          ctx.lineTo(p.x, p.y);
+          if (i === 0 && t === 0) {
+            ctx.moveTo(p.x, p.y);
+          } else {
+            ctx.lineTo(p.x, p.y);
+          }
         }
       }
-    }
 
-    ctx.stroke();
+      ctx.stroke();
+    }
   };
 
   /* ============================================================
@@ -1375,6 +2320,7 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   const commitStroke = () => {
     const temp = tempCanvasRef.current;
     const draw = drawCanvasRef.current;
+    const base = baseCanvasRef.current;
     if (!temp || !draw) return;
 
     const ctx = draw.getContext("2d", { willReadFrequently: true });
@@ -1386,8 +2332,127 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       ctx.globalCompositeOperation = "destination-out";
       ctx.drawImage(temp, 0, 0);
       ctx.restore();
+    } else if (tool === "brush" && base) {
+      // For brush, preserve black outlines from base canvas
+      // Read pixels from base, temp, and draw canvases
+      const baseCtx = base.getContext("2d", { willReadFrequently: true });
+      const tempCtx = temp.getContext("2d", { willReadFrequently: true });
+      
+      if (baseCtx && tempCtx && draw.width === base.width && draw.height === base.height) {
+        const baseData = baseCtx.getImageData(0, 0, base.width, base.height);
+        const tempData = tempCtx.getImageData(0, 0, temp.width, temp.height);
+        const drawData = ctx.getImageData(0, 0, draw.width, draw.height);
+        const w = draw.width;
+        const h = draw.height;
+        
+        // First, expand the brush stroke area by 1 pixel to cover anti-aliasing gaps
+        const expandedArea = new Uint8Array(w * h);
+        
+        // Mark all pixels that are part of the brush stroke (tempA > 0)
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            const idx = (y * w + x) * 4;
+            if (tempData.data[idx + 3] > 0) {
+              expandedArea[y * w + x] = 1;
+              // Also mark neighbors to expand the area
+              if (x > 0) expandedArea[y * w + (x - 1)] = 1;
+              if (x < w - 1) expandedArea[y * w + (x + 1)] = 1;
+              if (y > 0) expandedArea[(y - 1) * w + x] = 1;
+              if (y < h - 1) expandedArea[(y + 1) * w + x] = 1;
+            }
+          }
+        }
+        
+        // Merge temp (new brush stroke) with draw, preserving black outlines from base
+        // Use expanded area to ensure complete coverage
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            const idx = (y * w + x) * 4;
+            
+            // Check if this pixel is in the expanded brush area
+            if (expandedArea[y * w + x] > 0) {
+              const baseR = baseData.data[idx];
+              const baseG = baseData.data[idx + 1];
+              const baseB = baseData.data[idx + 2];
+              const baseA = baseData.data[idx + 3];
+              
+              // Check if this is a black outline pixel (dark pixel from base canvas)
+              const isBlackOutline = baseA > 200 && baseR < 80 && baseG < 80 && baseB < 80;
+              
+              const tempR = tempData.data[idx];
+              const tempG = tempData.data[idx + 1];
+              const tempB = tempData.data[idx + 2];
+              const tempA = tempData.data[idx + 3];
+              
+              // If there's a brush pixel, use it; otherwise use the color from nearby brush pixels
+              if (tempA > 0) {
+                // New brush stroke pixel
+                if (isBlackOutline) {
+                  // Preserve black outline by mixing it with brush color
+                  const outlineStrength = 0.4; // How much black outline to show (0-1)
+                  drawData.data[idx] = Math.min(255, Math.round(tempR * (1 - outlineStrength) + baseR * outlineStrength));
+                  drawData.data[idx + 1] = Math.min(255, Math.round(tempG * (1 - outlineStrength) + baseG * outlineStrength));
+                  drawData.data[idx + 2] = Math.min(255, Math.round(tempB * (1 - outlineStrength) + baseB * outlineStrength));
+                  drawData.data[idx + 3] = 255; // Always use full opacity to prevent white gaps
+                } else {
+                  // Normal area - use brush color with full opacity
+                  drawData.data[idx] = tempR;
+                  drawData.data[idx + 1] = tempG;
+                  drawData.data[idx + 2] = tempB;
+                  drawData.data[idx + 3] = 255; // Always use full opacity to prevent white gaps
+                }
+              } else {
+                // This is an expanded pixel (neighbor of brush stroke)
+                // Use the brush color from the original stroke, but with full opacity
+                // Find nearest brush pixel color
+                let nearestR = tempR;
+                let nearestG = tempG;
+                let nearestB = tempB;
+                let found = false;
+                
+                // Check 8 neighbors for brush color
+                for (let dy = -1; dy <= 1 && !found; dy++) {
+                  for (let dx = -1; dx <= 1 && !found; dx++) {
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+                      const nIdx = (ny * w + nx) * 4;
+                      if (tempData.data[nIdx + 3] > 0) {
+                        nearestR = tempData.data[nIdx];
+                        nearestG = tempData.data[nIdx + 1];
+                        nearestB = tempData.data[nIdx + 2];
+                        found = true;
+                      }
+                    }
+                  }
+                }
+                
+                if (found) {
+                  if (isBlackOutline) {
+                    const outlineStrength = 0.4;
+                    drawData.data[idx] = Math.min(255, Math.round(nearestR * (1 - outlineStrength) + baseR * outlineStrength));
+                    drawData.data[idx + 1] = Math.min(255, Math.round(nearestG * (1 - outlineStrength) + baseG * outlineStrength));
+                    drawData.data[idx + 2] = Math.min(255, Math.round(nearestB * (1 - outlineStrength) + baseB * outlineStrength));
+                    drawData.data[idx + 3] = 255;
+                  } else {
+                    drawData.data[idx] = nearestR;
+                    drawData.data[idx + 1] = nearestG;
+                    drawData.data[idx + 2] = nearestB;
+                    drawData.data[idx + 3] = 255; // Always use full opacity to prevent white gaps
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        ctx.putImageData(drawData, 0, 0);
+      } else {
+        // Fallback: normal source-over if dimensions don't match
+        ctx.drawImage(temp, 0, 0);
+      }
     } else {
-      // For brush, use normal source-over
+      // For other tools or if base canvas not available, use normal source-over
       ctx.drawImage(temp, 0, 0);
     }
 
@@ -1448,6 +2513,12 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
       const r = data[idx];
       const g = data[idx + 1];
       const b = data[idx + 2];
+      const a = data[idx + 3];
+      
+      // Skip fully transparent pixels
+      if (a === 0) return false;
+      
+      // Check color match with tolerance
       return (
         Math.abs(r - tr) < TOLERANCE &&
         Math.abs(g - tg) < TOLERANCE &&
@@ -1507,10 +2578,11 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
 
       // Write absolute RGBA values (no blending) - matches brush behavior
       // This ensures the fill color is exactly correct on first click
+      // Use full opacity to prevent white gaps
       drawData.data[pixelIdx] = finalR;
       drawData.data[pixelIdx + 1] = finalG;
       drawData.data[pixelIdx + 2] = finalB;
-      drawData.data[pixelIdx + 3] = finalA;
+      drawData.data[pixelIdx + 3] = 255; // Always use full opacity for fill to prevent white gaps
 
       // Add neighbors
       if (x > 0) queue.push({ x: x - 1, y });
@@ -1607,11 +2679,11 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
           visited[nIdx] = 1;
           expansionPixels.push({ x: n.x, y: n.y });
 
-          // Paint the expansion pixel
+          // Paint the expansion pixel with full opacity to prevent white gaps
           drawData.data[pixelIdx] = finalR;
           drawData.data[pixelIdx + 1] = finalG;
           drawData.data[pixelIdx + 2] = finalB;
-          drawData.data[pixelIdx + 3] = finalA;
+          drawData.data[pixelIdx + 3] = 255; // Always use full opacity for expansion to prevent white gaps
         }
       }
 
@@ -2221,6 +3293,56 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
     a.click();
   };
 
+  const printResult = () => {
+    const base = baseCanvasRef.current;
+    const draw = drawCanvasRef.current;
+    if (!base || !draw) return;
+
+    const merged = document.createElement("canvas");
+    merged.width = base.width;
+    merged.height = base.height;
+
+    const ctx = merged.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return;
+    ctx.drawImage(base, 0, 0);
+    ctx.drawImage(draw, 0, 0);
+
+    const dataUrl = merged.toDataURL("image/png");
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print Coloring</title>
+          <style>
+            body {
+              margin: 0;
+              padding: 20px;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+            }
+            img {
+              max-width: 100%;
+              height: auto;
+            }
+          </style>
+        </head>
+        <body>
+          <img src="${dataUrl}" alt="Coloring" />
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   /* ============================================================
       RENDER
   ============================================================= */
@@ -2338,8 +3460,6 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
             setTool={setTool}
             color={color}
             setColor={setColor}
-            opacity={opacity}
-            setOpacity={setOpacity}
             brushSize={brushSize}
             setBrushSize={setBrushSize}
             zoom={zoom}
@@ -2347,8 +3467,10 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
             onZoomIn={handleZoomIn}
             onZoomOut={handleZoomOut}
             undo={undo}
+            redo={redo}
             onClear={() => setShowClearModal(true)}
             onDownload={downloadResult}
+            onPrint={printResult}
             isMobile={false}
           />
         </div>
@@ -2466,8 +3588,6 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
             setTool={setTool}
             color={color}
             setColor={setColor}
-            opacity={opacity}
-            setOpacity={setOpacity}
             brushSize={brushSize}
             setBrushSize={setBrushSize}
             zoom={zoom}
@@ -2475,8 +3595,10 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
             onZoomIn={handleZoomIn}
             onZoomOut={handleZoomOut}
             undo={undo}
+            redo={redo}
             onClear={() => setShowClearModal(true)}
             onDownload={downloadResult}
+            onPrint={printResult}
             isMobile={true}
           />
         </div>
