@@ -8,6 +8,17 @@ import {
 import { getLocalizedUrl } from "@/lib/seo-utils";
 
 export const revalidate = 3600; // Revalidate every hour
+export const runtime = 'nodejs'; // Ensure Node.js runtime for database access
+
+// Validate URL format
+function isValidUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' && parsed.hostname.includes('kids-park.club');
+  } catch {
+    return false;
+  }
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = "https://www.kids-park.club";
@@ -35,20 +46,33 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let puzzleCategories: any[] = [];
 
   try {
-    // Set timeout for database queries to prevent hanging
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Sitemap generation timeout')), 10000)
-    );
-
-    const dataPromise = Promise.allSettled([
+    // Fetch data with timeout protection
+    const dataPromises = [
       getItems('coloring', { locale: null }),
       getItems('puzzles', { locale: null }),
       getCategories('coloring', null),
       getCategories('puzzles', null),
-    ]);
+    ];
 
-    const results = await Promise.race([dataPromise, timeoutPromise]) as PromiseSettledResult<any>[];
+    // Create a timeout that resolves to empty arrays instead of rejecting
+    const timeoutPromise = new Promise<PromiseSettledResult<any>[]>((resolve) => 
+      setTimeout(() => {
+        // Return all rejected promises to indicate timeout
+        resolve([
+          { status: 'rejected' as const, reason: 'timeout' },
+          { status: 'rejected' as const, reason: 'timeout' },
+          { status: 'rejected' as const, reason: 'timeout' },
+          { status: 'rejected' as const, reason: 'timeout' },
+        ]);
+      }, 8000)
+    );
 
+    const dataPromise = Promise.allSettled(dataPromises);
+    
+    // Race between data fetch and timeout
+    const results = await Promise.race([dataPromise, timeoutPromise]);
+
+    // Process results
     if (results[0]?.status === 'fulfilled') coloringItems = results[0].value || [];
     if (results[1]?.status === 'fulfilled') puzzleItems = results[1].value || [];
     if (results[2]?.status === 'fulfilled') coloringCategories = results[2].value || [];
@@ -63,6 +87,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     staticRoutes.forEach((route) => {
       const url = getLocalizedUrl(route === "" ? "/" : route, locale);
       
+      // Validate URL before adding
+      if (!isValidUrl(url)) {
+        console.warn(`Invalid URL in sitemap: ${url}`);
+        return;
+      }
+      
       entries.push({
         url,
         lastModified: now,
@@ -75,6 +105,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     coloringCategories.forEach((category) => {
       if (!category?.id) return; // Skip invalid categories
       const categoryUrl = `${getLocalizedUrl("/coloring", locale)}?category=${encodeURIComponent(category.id)}`;
+      
+      // Validate URL before adding
+      if (!isValidUrl(categoryUrl)) {
+        console.warn(`Invalid category URL in sitemap: ${categoryUrl}`);
+        return;
+      }
+      
       entries.push({
         url: categoryUrl,
         lastModified: (category.createdAt instanceof Date ? category.createdAt : now),
@@ -87,6 +124,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     puzzleCategories.forEach((category) => {
       if (!category?.id) return; // Skip invalid categories
       const categoryUrl = `${getLocalizedUrl("/games/jigsaw/gallery", locale)}?category=${encodeURIComponent(category.id)}`;
+      
+      // Validate URL before adding
+      if (!isValidUrl(categoryUrl)) {
+        console.warn(`Invalid puzzle category URL in sitemap: ${categoryUrl}`);
+        return;
+      }
+      
       entries.push({
         url: categoryUrl,
         lastModified: (category.createdAt instanceof Date ? category.createdAt : now),
@@ -105,8 +149,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         ? item.updatedAt 
         : (item.createdAt instanceof Date ? item.createdAt : now);
       
+      const itemUrl = getLocalizedUrl(`/coloring/${encodeURIComponent(slug)}`, locale);
+      
+      // Validate URL before adding
+      if (!isValidUrl(itemUrl)) {
+        console.warn(`Invalid coloring item URL in sitemap: ${itemUrl}`);
+        return;
+      }
+      
       entries.push({
-        url: getLocalizedUrl(`/coloring/${encodeURIComponent(slug)}`, locale),
+        url: itemUrl,
         lastModified: itemDate,
         changeFrequency: "monthly" as const,
         priority: 0.7,
