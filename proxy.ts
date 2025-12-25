@@ -79,6 +79,14 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Explicitly redirect /en/ and /en to / (root) to prevent duplicate content issues
+  // This ensures Google always sees the same canonical URL for the default locale
+  if (pathname === '/en' || pathname === '/en/') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/';
+    return NextResponse.redirect(url, 301); // Permanent redirect
+  }
+
   // Locale handling:
   // 1) If URL already contains a locale prefix (/pl, /ru, /uk), keep it as is.
   // 2) Otherwise:

@@ -18,8 +18,12 @@ export async function generateMetadata({
   const t = await getTranslations({ locale: validLocale, namespace: "common" });
   
   const path = "/";
+  // For homepage, ensure canonical always points to the correct locale-specific URL
+  // For default locale (en), this will be https://www.kids-park.club/ (unprefixed)
+  // For other locales, this will be https://www.kids-park.club/{locale}/
   const url = getCanonicalUrl(path, validLocale);
   const alternateUrls = getHreflangUrls(path);
+  const defaultLocaleUrl = getCanonicalUrl(path, routing.defaultLocale);
   
   // Localized titles and descriptions for better SEO
   const titles: Record<string, string> = {
@@ -46,10 +50,12 @@ export async function generateMetadata({
       ? "coloring pages, kids games, puzzles, printable activities, children entertainment, educational games"
       : undefined,
     alternates: {
+      // Use locale-specific canonical URL
+      // This ensures each locale version has its own canonical, preventing duplicate content issues
       canonical: url,
       languages: {
         ...alternateUrls,
-        'x-default': getCanonicalUrl(path, routing.defaultLocale),
+        'x-default': defaultLocaleUrl, // Default locale (en) for x-default
       },
     },
     openGraph: {
