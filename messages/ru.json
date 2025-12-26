@@ -98,6 +98,10 @@
       "expandDescription": "Развернуть описание",
       "collapseDescription": "Свернуть описание"
     },
+    "similarItems": {
+      "coloringPages": "Похожие Раскраски",
+      "puzzles": "Похожие Пазлы"
+    },
     "gameDetails": {
       "reaction": {
         "title": "Игра на Реакцию",

@@ -243,7 +243,7 @@ export default async function ColoringPage({ params }: Props) {
       />
       
       {/* SEO Content Overlay - компактный оверлей, не мешает игре */}
-      <div className="relative w-full" style={{ minHeight: '100vh' }}>
+      <div className="relative w-full flex flex-col" style={{ minHeight: '100vh', height: '100vh' }}>
         <SeoContentOverlay
           title={item.title}
           description={item.description || `${item.title} - Free printable coloring page for kids. Download and print this fun coloring activity.`}
@@ -252,13 +252,13 @@ export default async function ColoringPage({ params }: Props) {
           topOffset="8px"
         />
         
-        <div className="flex flex-col w-full overflow-hidden coloring-page-container" style={{ 
-          height: '100vh', 
-          minHeight: '100vh',
-          maxHeight: '100vh'
+        {/* Canvas - занимает оставшееся место, оставляя место для SimilarItems */}
+        <div className="flex-1 flex flex-col w-full overflow-hidden coloring-page-container" style={{ 
+          minHeight: 0,
+          maxHeight: '100%'
         }}>
           <Suspense fallback={
-            <div className="flex items-center justify-center w-full h-screen bg-sky-100">
+            <div className="flex items-center justify-center w-full h-full bg-sky-100">
               <div className="text-center">
                 <div className="inline-block w-12 h-12 border-4 border-slate-300 border-t-slate-800 rounded-full animate-spin mb-4"></div>
                 <p className="text-slate-700">Loading coloring page...</p>
@@ -268,18 +268,18 @@ export default async function ColoringPage({ params }: Props) {
             <ColoringCanvas src={imageUrl} closeHref="/coloring" />
           </Suspense>
         </div>
-      </div>
 
-      {/* Similar Items - visible in HTML, positioned at bottom, компактная высота */}
-      {/* Скрываем на мобильных, чтобы не перекрывать toolbar */}
-      <div className="hidden md:block absolute bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-slate-200/50 max-h-[160px] overflow-hidden pointer-events-auto">
-        <div className="max-w-7xl mx-auto px-3 py-2">
-          <SimilarItems
-            items={similarItems}
-            type="coloring"
-            currentItemId={item.id}
-            locale={validLocale}
-          />
+        {/* Similar Items - всегда виден снизу, не перекрывается canvas */}
+        {/* Скрываем на мобильных, чтобы не перекрывать toolbar */}
+        <div className="hidden md:block flex-shrink-0 z-40 bg-white/95 backdrop-blur-sm border-t border-slate-200/50 pointer-events-auto" style={{ maxHeight: '160px', overflow: 'visible' }}>
+          <div className="max-w-7xl mx-auto px-3 py-2">
+            <SimilarItems
+              items={similarItems}
+              type="coloring"
+              currentItemId={item.id}
+              locale={validLocale}
+            />
+          </div>
         </div>
       </div>
     </>

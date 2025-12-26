@@ -98,6 +98,10 @@
       "expandDescription": "Expand description",
       "collapseDescription": "Collapse description"
     },
+    "similarItems": {
+      "coloringPages": "Similar Coloring Pages",
+      "puzzles": "Similar Puzzles"
+    },
     "gameDetails": {
       "reaction": {
         "title": "Reaction Game",

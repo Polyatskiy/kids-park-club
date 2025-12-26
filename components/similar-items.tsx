@@ -3,6 +3,7 @@
 import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import { useRef } from "react";
+import { useTranslations } from "next-intl";
 import type { Item } from "@/types/content";
 
 interface SimilarItemsProps {
@@ -14,6 +15,7 @@ interface SimilarItemsProps {
 
 export function SimilarItems({ items, type, currentItemId, locale }: SimilarItemsProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations("common.similarItems");
   
   // Filter out current item and limit to 12 для лучшего скролла
   const similarItems = items
@@ -53,7 +55,7 @@ export function SimilarItems({ items, type, currentItemId, locale }: SimilarItem
   return (
     <div className="mt-2 p-2 md:p-3 bg-white/50 backdrop-blur-sm rounded-lg border border-white/30 shadow-soft">
       <h2 className="text-xs md:text-sm font-bold mb-1.5 md:mb-2 text-slate-900">
-        {type === "coloring" ? "Similar Coloring Pages" : "Similar Puzzles"}
+        {type === "coloring" ? t("coloringPages") : t("puzzles")}
       </h2>
       {/* Горизонтальный скролл с маленькими карточками */}
       <div 
@@ -61,7 +63,7 @@ export function SimilarItems({ items, type, currentItemId, locale }: SimilarItem
         className="similar-items-scroll overflow-x-auto overflow-y-hidden -mx-2 md:-mx-3 px-2 md:px-3"
         style={{
           scrollbarWidth: 'thin',
-          scrollbarColor: '#cbd5e1 transparent',
+          scrollbarColor: '#cbd5e1 #f1f5f9',
           WebkitOverflowScrolling: 'touch', // Плавный скролл на мобильных
         }}
         onWheel={handleWheel}
@@ -81,8 +83,6 @@ export function SimilarItems({ items, type, currentItemId, locale }: SimilarItem
                   className="object-cover"
                   sizes="96px"
                   loading="lazy"
-                  quality={85}
-                  unoptimized={false}
                 />
               </div>
               <div className="text-center text-[8px] md:text-[9px] font-medium text-slate-800 line-clamp-2 leading-tight min-h-[2em]">

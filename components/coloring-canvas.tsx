@@ -85,7 +85,7 @@ function ColoringToolbar({
           gap: '12px',
           position: 'sticky',
           top: '20px',
-          maxHeight: 'calc(100vh - 40px)',
+          maxHeight: '100%',
           overflowY: 'auto',
         }}
       >
@@ -3400,9 +3400,9 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-[#f7f7f7] select-none" style={{ 
-      height: isMobile ? '100dvh' : '100vh', 
-      minHeight: isMobile ? '100dvh' : '100vh',
-      maxHeight: isMobile ? '100dvh' : '100vh'
+      height: '100%',
+      minHeight: 0,
+      maxHeight: '100%'
     }}>
       {/* CONFIRM MODAL */}
       <ConfirmModal

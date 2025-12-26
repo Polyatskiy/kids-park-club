@@ -137,12 +137,14 @@ body.coloring-page-active main {
 }
 
 /* Coloring page container - responsive height */
+/* Removed fixed height to allow flex layout with SimilarItems */
 .coloring-page-container {
-  height: calc(100vh - 64px);
+  /* Height is now controlled by flex-1 in parent container */
 }
 
 @media (max-width: 899px) {
   .coloring-page-container {
+    /* On mobile, SimilarItems is hidden, so we can use full height */
     height: 100dvh !important;
     min-height: 100dvh !important;
     max-height: 100dvh !important;
@@ -419,16 +421,17 @@ canvas {
 ============================================================ */
 
 .similar-items-scroll::-webkit-scrollbar {
-  height: 6px;
+  height: 8px;
 }
 
 .similar-items-scroll::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f1f5f9;
+  border-radius: 4px;
 }
 
 .similar-items-scroll::-webkit-scrollbar-thumb {
   background-color: #cbd5e1;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .similar-items-scroll::-webkit-scrollbar-thumb:hover {

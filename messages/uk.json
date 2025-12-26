@@ -98,6 +98,10 @@
       "expandDescription": "Розгорнути опис",
       "collapseDescription": "Згорнути опис"
     },
+    "similarItems": {
+      "coloringPages": "Схожі Розмальовки",
+      "puzzles": "Схожі Пазли"
+    },
     "gameDetails": {
       "reaction": {
         "title": "Гра на Реакцію",

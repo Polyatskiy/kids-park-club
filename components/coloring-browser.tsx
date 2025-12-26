@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
 import { getItems, getCategories } from "@/lib/content-repository";
 import { MoreCard } from "@/components/more-card";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { Item, Category, Subcategory } from "@/types/content";
 
 interface ColoringBrowserProps {
@@ -60,18 +60,21 @@ export default function ColoringBrowser({
     );
   }
 
-  // Group items by category
-  const itemsByCategory = new Map<string, Item[]>();
-  items.forEach((item) => {
-    const catId = item.categoryId;
-    if (!itemsByCategory.has(catId)) {
-      itemsByCategory.set(catId, []);
-    }
-    itemsByCategory.get(catId)!.push(item);
-  });
+  // Group items by category - memoized to avoid recalculation on every render
+  const itemsByCategory = useMemo(() => {
+    const map = new Map<string, Item[]>();
+    items.forEach((item) => {
+      const catId = item.categoryId;
+      if (!map.has(catId)) {
+        map.set(catId, []);
+      }
+      map.get(catId)!.push(item);
+    });
+    return map;
+  }, [items]);
 
-  // Get category details
-  const categoryMap = new Map(categories.map(cat => [cat.id, cat]));
+  // Get category details - memoized
+  const categoryMap = useMemo(() => new Map(categories.map(cat => [cat.id, cat])), [categories]);
 
   return (
     <div className="p-4 max-w-5xl mx-auto">
