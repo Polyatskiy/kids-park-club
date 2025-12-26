@@ -13,10 +13,17 @@ const nextConfig = {
         pathname: "/storage/v1/object/public/**",
       },
     ],
-    formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 60,
+    // Reduced formats: only webp to minimize transformations
+    formats: ['image/webp'],
+    // Optimized device sizes for common breakpoints (reduced from 8 to 5 sizes)
+    deviceSizes: [640, 828, 1200, 1920, 2048],
+    // Optimized image sizes for thumbnails and icons (reduced from 8 to 5 sizes)
+    imageSizes: [32, 64, 96, 128, 256],
+    // Cache for 31 days (2678400 seconds) to reduce transformations and cache writes
+    minimumCacheTTL: 2678400,
+    // Quality allowlist to reduce possible transformations
+    // Lower quality = smaller files = fewer cache reads/writes
+    quality: 80,
   },
   // Increase body size limit for Server Actions to support bulk file uploads (20-30 files)
   // Note: Using experimental.serverActions as some Next.js versions require it
