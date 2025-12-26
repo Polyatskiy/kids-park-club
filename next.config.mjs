@@ -21,9 +21,6 @@ const nextConfig = {
     imageSizes: [32, 64, 96, 128, 256],
     // Cache for 31 days (2678400 seconds) to reduce transformations and cache writes
     minimumCacheTTL: 2678400,
-    // Quality allowlist to reduce possible transformations
-    // Lower quality = smaller files = fewer cache reads/writes
-    quality: 80,
   },
   // Increase body size limit for Server Actions to support bulk file uploads (20-30 files)
   // Note: Using experimental.serverActions as some Next.js versions require it
