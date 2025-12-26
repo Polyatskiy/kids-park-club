@@ -94,6 +94,10 @@
       "moves": "Ruchy",
       "pieces": "Elementy"
     },
+    "seoOverlay": {
+      "expandDescription": "Rozwiń opis",
+      "collapseDescription": "Zwiń opis"
+    },
     "gameDetails": {
       "reaction": {
         "title": "Gra na Reakcję",

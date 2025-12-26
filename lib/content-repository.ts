@@ -57,7 +57,10 @@ export async function getCategories(
     .order("sort_order", { ascending: true });
 
   if (error) {
-    console.error("getCategories error", error);
+    // Only log errors in development mode to avoid noise during build
+    if (process.env.NODE_ENV === 'development') {
+      console.error("getCategories error", error);
+    }
     return [];
   }
 
@@ -119,7 +122,10 @@ export async function getCategoryById(
     .single();
 
   if (error || !data) {
-    console.error("getCategoryById error", error);
+    // Only log errors in development mode to avoid noise during build
+    if (process.env.NODE_ENV === 'development') {
+      console.error("getCategoryById error", error);
+    }
     return null;
   }
 
@@ -169,7 +175,10 @@ export async function getCategoryByIdWithAllTranslations(
     .single();
 
   if (error || !data) {
-    console.error("getCategoryByIdWithAllTranslations error", error);
+    // Only log errors in development mode to avoid noise during build
+    if (process.env.NODE_ENV === 'development') {
+      console.error("getCategoryByIdWithAllTranslations error", error);
+    }
     return null;
   }
 
@@ -234,7 +243,10 @@ export async function getSubcategories(
     .order("sort_order", { ascending: true });
 
   if (error) {
-    console.error("getSubcategories error", error);
+    // Only log errors in development mode to avoid noise during build
+    if (process.env.NODE_ENV === 'development') {
+      console.error("getSubcategories error", error);
+    }
     return [];
   }
 
@@ -349,7 +361,10 @@ export async function getSubcategoryById(
     .single();
 
   if (error || !data) {
-    console.error("getSubcategoryById error", error);
+    // Only log errors in development mode to avoid noise during build
+    if (process.env.NODE_ENV === 'development') {
+      console.error("getSubcategoryById error", error);
+    }
     return null;
   }
 
@@ -457,7 +472,10 @@ export async function getItems(
   const { data, error } = await query;
 
   if (error) {
-    console.error("getItems error", error);
+    // Only log errors in development mode to avoid noise during build
+    if (process.env.NODE_ENV === 'development') {
+      console.error("getItems error", error);
+    }
     return [];
   }
 
@@ -547,7 +565,10 @@ export async function getItemById(
     .single();
 
   if (error || !data) {
-    console.error("getItemById error", error);
+    // Only log errors in development mode to avoid noise during build
+    if (process.env.NODE_ENV === 'development') {
+      console.error("getItemById error", error);
+    }
     return null;
   }
 
@@ -618,7 +639,10 @@ export async function getItemByIdWithAllTranslations(
     .single();
 
   if (error || !data) {
-    console.error("getItemByIdWithAllTranslations error", error);
+    // Only log errors in development mode to avoid noise during build
+    if (process.env.NODE_ENV === 'development') {
+      console.error("getItemByIdWithAllTranslations error", error);
+    }
     return null;
   }
 

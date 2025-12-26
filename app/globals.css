@@ -405,13 +405,34 @@ canvas {
 .animate-fade-in input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   background: #3b82f6;
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* ============================================================
+   SIMILAR ITEMS HORIZONTAL SCROLL
+============================================================ */
+
+.similar-items-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.similar-items-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.similar-items-scroll::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 3px;
+}
+
+.similar-items-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
 }
 
 .animate-fade-in input[type="range"]::-moz-range-thumb {

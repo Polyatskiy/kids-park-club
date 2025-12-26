@@ -1984,10 +1984,10 @@ export default function ColoringCanvas({ src, closeHref }: ColoringCanvasProps) 
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false); /* Mobile navigation menu */
 
-  /* Close handler - uses replace to avoid history loop */
+  /* Close handler - uses push to properly update browser history */
   const handleClose = useCallback(() => {
     if (closeHref) {
-      router.replace(closeHref);
+      router.push(closeHref);
     } else {
       router.back();
     }

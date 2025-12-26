@@ -94,6 +94,10 @@
       "moves": "Ходы",
       "pieces": "Детали"
     },
+    "seoOverlay": {
+      "expandDescription": "Развернуть описание",
+      "collapseDescription": "Свернуть описание"
+    },
     "gameDetails": {
       "reaction": {
         "title": "Игра на Реакцию",

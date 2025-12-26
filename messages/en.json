@@ -94,6 +94,10 @@
       "moves": "Moves",
       "pieces": "Pieces"
     },
+    "seoOverlay": {
+      "expandDescription": "Expand description",
+      "collapseDescription": "Collapse description"
+    },
     "gameDetails": {
       "reaction": {
         "title": "Reaction Game",
