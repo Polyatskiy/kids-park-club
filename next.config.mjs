@@ -6,6 +6,9 @@ const withNextIntl = createNextIntlPlugin('./i18n.ts');
 const nextConfig = {
   // App Router включен по умолчанию, experimental.appDir больше не нужен
   images: {
+    // DISABLED: Completely disable Vercel Image Optimization to avoid transformation costs
+    // All images will be served directly from their source URLs without any optimization
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
@@ -13,13 +16,10 @@ const nextConfig = {
         pathname: "/storage/v1/object/public/**",
       },
     ],
-    // Reduced formats: only webp to minimize transformations
+    // These settings are ignored when unoptimized: true, but kept for reference
     formats: ['image/webp'],
-    // Optimized device sizes for common breakpoints (reduced from 8 to 5 sizes)
     deviceSizes: [640, 828, 1200, 1920, 2048],
-    // Optimized image sizes for thumbnails and icons (reduced from 8 to 5 sizes)
     imageSizes: [32, 64, 96, 128, 256],
-    // Cache for 31 days (2678400 seconds) to reduce transformations and cache writes
     minimumCacheTTL: 2678400,
   },
   // Increase body size limit for Server Actions to support bulk file uploads (20-30 files)
