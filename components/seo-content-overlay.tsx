@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 
@@ -42,27 +42,36 @@ export function SeoContentOverlay({
   const rightOffsetForButtons = '56px'; // Отступ справа, чтобы не перекрывать burger button
 
   // Позиционирование с учетом кнопок игры
+  // На мобильных устройствах всегда по центру между кнопками (через CSS класс в className)
   const getPositionStyle = () => {
     const baseStyle: React.CSSProperties = { top: topOffset };
     
+    // На десктопе используем переданное position
     switch (position) {
       case 'top-left':
-        return { ...baseStyle, left: leftOffsetForButtons, right: 'auto' };
+        return { ...baseStyle };
       case 'top-center':
-        return { ...baseStyle, left: '50%', transform: 'translateX(-50%)' };
+        return { ...baseStyle };
       case 'top-right':
-        return { ...baseStyle, right: rightOffsetForButtons, left: 'auto' };
+        return { ...baseStyle };
       default:
-        return { ...baseStyle, left: leftOffsetForButtons, right: 'auto' };
+        return { ...baseStyle };
     }
   };
 
   // Максимальная ширина: по умолчанию адаптивная, но можно ограничить (для пазлов)
   const overlayMaxWidth = maxWidth || 'max-w-[calc(100vw-3rem)] md:max-w-md';
 
+  // На мобильных всегда по центру, на десктопе используем position
+  const positionClasses = position === 'top-left' 
+    ? 'md:left-[80px] md:right-auto' 
+    : position === 'top-right'
+    ? 'md:right-[56px] md:left-auto'
+    : 'md:left-1/2 md:-translate-x-1/2';
+  
   return (
     <div 
-      className={`absolute z-50 pointer-events-none ${overlayMaxWidth}`}
+      className={`absolute z-50 pointer-events-none ${overlayMaxWidth} left-1/2 -translate-x-1/2 ${positionClasses}`}
       style={getPositionStyle()}
     >
       <div className="bg-white/95 backdrop-blur-md rounded-lg border border-slate-200/80 shadow-lg p-1.5 md:p-2 pointer-events-auto">
