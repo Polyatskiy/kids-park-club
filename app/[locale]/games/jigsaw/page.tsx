@@ -310,9 +310,10 @@ export default async function JigsawPage({ params, searchParams }: JigsawPagePro
       </div>
 
       {/* Similar Items - visible in HTML, positioned at bottom, компактная высота */}
+      {/* Скрываем на мобильных, чтобы не перекрывать toolbar */}
       {similarItems.length > 0 && (
-        <div className="absolute bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-slate-200/50 max-h-[140px] md:max-h-[160px] overflow-hidden pointer-events-auto">
-          <div className="max-w-7xl mx-auto px-2 md:px-3 py-2">
+        <div className="hidden md:block absolute bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-slate-200/50 max-h-[160px] overflow-hidden pointer-events-auto">
+          <div className="max-w-7xl mx-auto px-3 py-2">
             <SimilarItems
               items={similarItems}
               type="puzzles"

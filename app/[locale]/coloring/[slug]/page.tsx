@@ -271,9 +271,9 @@ export default async function ColoringPage({ params }: Props) {
       </div>
 
       {/* Similar Items - visible in HTML, positioned at bottom, компактная высота */}
-      {/* На мобильных поднимаем над toolbar (примерно 80px от низа) */}
-      <div className="absolute bottom-[80px] md:bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-slate-200/50 max-h-[140px] md:max-h-[160px] overflow-hidden pointer-events-auto">
-        <div className="max-w-7xl mx-auto px-2 md:px-3 py-2">
+      {/* Скрываем на мобильных, чтобы не перекрывать toolbar */}
+      <div className="hidden md:block absolute bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-sm border-t border-slate-200/50 max-h-[160px] overflow-hidden pointer-events-auto">
+        <div className="max-w-7xl mx-auto px-3 py-2">
           <SimilarItems
             items={similarItems}
             type="coloring"
