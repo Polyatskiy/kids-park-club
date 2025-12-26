@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
 import { getItems, getCategories } from "@/lib/content-repository";
 import { JIGSAW_OPTIONS } from "@/app/[locale]/games/jigsaw/jigsawConfig";
-import { CarouselRow } from "@/components/carousel-row";
+import { MoreCard } from "@/components/more-card";
 import { useState, useEffect } from "react";
 import type { Item, Category, Subcategory } from "@/types/content";
 
@@ -163,11 +163,75 @@ function SubcategoryBlock({
   items: Item[];
   isFirst?: boolean;
 }) {
-  const carouselItems = items.map((item, index) => (
-    <PuzzleCard key={item.id} item={item} priority={isFirst && index === 0} />
-  ));
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  return <CarouselRow title={title} items={carouselItems} />;
+  // Desktop: show 7 items + "More" card (if > 7) in 4 columns × 2 rows grid
+  // Mobile: show 3 items + "More" card (if > 3) in 2 columns × 2 rows grid
+  const desktopLimit = 7;
+  const mobileLimit = 3;
+  const hasMoreDesktop = items.length > desktopLimit;
+  const hasMoreMobile = items.length > mobileLimit;
+
+  const handleMoreClick = () => {
+    setIsExpanded(true);
+  };
+
+  // Calculate visible items based on expansion state
+  // Mobile: show first 3 items + More card (if > 3)
+  // Desktop: show first 7 items + More card (if > 7)
+  // When expanded, show all items in the main grid
+  const visibleItemsMobile = isExpanded ? items : items.slice(0, mobileLimit);
+  const visibleItemsDesktop = isExpanded ? items : items.slice(0, desktopLimit);
+
+  const showMoreCardMobile = !isExpanded && hasMoreMobile;
+  const showMoreCardDesktop = !isExpanded && hasMoreDesktop;
+
+  return (
+    <div className="mb-6">
+      {/* Subcategory Title */}
+      <h3 className="inline-block text-xl font-semibold mb-3 px-3 py-1 rounded-lg bg-white/30 backdrop-blur-[10px] text-[#222] shadow-[0_2px_6px_rgba(0,0,0,0.15)]">
+        {title}
+      </h3>
+
+      {/* Grid Container - Mobile: 2 columns, Desktop: 4 columns */}
+      <div className="px-4 md:px-0">
+        {/* Mobile grid: 2 columns × 2 rows (3 items + More card) */}
+        <div className="grid grid-cols-2 gap-4 md:hidden">
+          {visibleItemsMobile.map((item, index) => (
+            <PuzzleCard 
+              key={item.id} 
+              item={item} 
+              priority={isFirst && index === 0} 
+            />
+          ))}
+          {showMoreCardMobile && (
+            <MoreCard 
+              onClick={handleMoreClick} 
+              isExpanded={isExpanded}
+            />
+          )}
+        </div>
+
+        {/* Desktop grid: 4 columns × 2 rows (7 items + More card) */}
+        <div className="hidden md:grid md:grid-cols-4 gap-4">
+          {visibleItemsDesktop.map((item, index) => (
+            <PuzzleCard 
+              key={item.id} 
+              item={item} 
+              priority={isFirst && index === 0} 
+            />
+          ))}
+          {showMoreCardDesktop && (
+            <MoreCard 
+              onClick={handleMoreClick} 
+              isExpanded={isExpanded}
+            />
+          )}
+        </div>
+
+      </div>
+    </div>
+  );
 }
 
 function PuzzleCard({ item, priority = false }: { item: Item; priority?: boolean }) {

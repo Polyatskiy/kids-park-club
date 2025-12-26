@@ -4,7 +4,7 @@ import { Link } from "@/i18n/routing";
 import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
 import { getItems, getCategories } from "@/lib/content-repository";
-import { CarouselRow } from "@/components/carousel-row";
+import { MoreCard } from "@/components/more-card";
 import { useState, useEffect } from "react";
 import type { Item, Category, Subcategory } from "@/types/content";
 
@@ -154,7 +154,20 @@ function SubcategoryBlock({
   title: string;
   items: Item[];
 }) {
-  const carouselItems = items.map((item) => (
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Desktop: show 7 items + "More" card (if > 7) in 4 columns × 2 rows grid
+  // Mobile: show 3 items + "More" card (if > 3) in 2 columns × 2 rows grid
+  const desktopLimit = 7;
+  const mobileLimit = 3;
+  const hasMoreDesktop = items.length > desktopLimit;
+  const hasMoreMobile = items.length > mobileLimit;
+
+  const handleMoreClick = () => {
+    setIsExpanded(true);
+  };
+
+  const renderItem = (item: Item) => (
     <Link
       key={item.id}
       href={`/coloring/${item.slug || item.id}`}
@@ -166,7 +179,7 @@ function SubcategoryBlock({
           alt={item.title}
           fill
           className="object-cover"
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 25vw"
           loading="lazy"
           fetchPriority="auto"
         />
@@ -176,7 +189,50 @@ function SubcategoryBlock({
         {item.title}
       </div>
     </Link>
-  ));
+  );
 
-  return <CarouselRow title={title} items={carouselItems} />;
+  // Calculate visible items based on expansion state
+  // Mobile: show first 3 items + More card (if > 3)
+  // Desktop: show first 7 items + More card (if > 7)
+  // When expanded, show all items in the main grid
+  const visibleItemsMobile = isExpanded ? items : items.slice(0, mobileLimit);
+  const visibleItemsDesktop = isExpanded ? items : items.slice(0, desktopLimit);
+
+  const showMoreCardMobile = !isExpanded && hasMoreMobile;
+  const showMoreCardDesktop = !isExpanded && hasMoreDesktop;
+
+  return (
+    <div className="mb-6">
+      {/* Subcategory Title */}
+      <h3 className="inline-block text-xl font-semibold mb-3 px-3 py-1 rounded-lg bg-white/30 backdrop-blur-[10px] text-[#222] shadow-[0_2px_6px_rgba(0,0,0,0.15)]">
+        {title}
+      </h3>
+
+      {/* Grid Container - Mobile: 2 columns, Desktop: 4 columns */}
+      <div className="px-4 md:px-0">
+        {/* Mobile grid: 2 columns × 2 rows (3 items + More card) */}
+        <div className="grid grid-cols-2 gap-4 md:hidden">
+          {visibleItemsMobile.map(renderItem)}
+          {showMoreCardMobile && (
+            <MoreCard 
+              onClick={handleMoreClick} 
+              isExpanded={isExpanded}
+            />
+          )}
+        </div>
+
+        {/* Desktop grid: 4 columns × 2 rows (7 items + More card) */}
+        <div className="hidden md:grid md:grid-cols-4 gap-4">
+          {visibleItemsDesktop.map(renderItem)}
+          {showMoreCardDesktop && (
+            <MoreCard 
+              onClick={handleMoreClick} 
+              isExpanded={isExpanded}
+            />
+          )}
+        </div>
+
+      </div>
+    </div>
+  );
 }
