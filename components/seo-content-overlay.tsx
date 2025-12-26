@@ -27,7 +27,17 @@ export function SeoContentOverlay({
   topOffset: customTopOffset,
 }: SeoContentOverlayProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const t = useTranslations("common.seoOverlay");
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   const hasDescription = Boolean(description && description.trim());
   const shortDescription = description 
@@ -36,42 +46,38 @@ export function SeoContentOverlay({
 
   // Безопасная зона: учитываем высоту кнопок игры (back button слева, burger справа)
   // Back button: top 16-20px, высота ~40px
-  // Поднимаем выше, чтобы было напротив кнопок и не налаживало
-  const topOffset = customTopOffset || '20px'; // По умолчанию чуть ниже кнопок, чтобы не налаживать
-  const leftOffsetForButtons = '80px'; // Отступ слева, чтобы не перекрывать back button (16px + 40px кнопка + большой отступ для безопасности)
+  const topOffset = customTopOffset || '20px';
+  const leftOffsetForButtons = '80px'; // Отступ слева, чтобы не перекрывать back button
   const rightOffsetForButtons = '56px'; // Отступ справа, чтобы не перекрывать burger button
 
-  // Позиционирование с учетом кнопок игры
-  // На мобильных устройствах всегда по центру между кнопками (через CSS класс в className)
-  const getPositionStyle = () => {
+  // Позиционирование: на мобильных всегда по центру, на десктопе используем position
+  const getPositionStyle = (): React.CSSProperties => {
     const baseStyle: React.CSSProperties = { top: topOffset };
     
-    // На десктопе используем переданное position
+    // На мобильных всегда по центру между кнопками
+    if (isMobile) {
+      return { ...baseStyle, left: '50%', transform: 'translateX(-50%)' };
+    }
+    
+    // На десктопе используем переданный position
     switch (position) {
       case 'top-left':
-        return { ...baseStyle };
+        return { ...baseStyle, left: leftOffsetForButtons, right: 'auto', transform: 'none' };
       case 'top-center':
-        return { ...baseStyle };
+        return { ...baseStyle, left: '50%', right: 'auto', transform: 'translateX(-50%)' };
       case 'top-right':
-        return { ...baseStyle };
+        return { ...baseStyle, right: rightOffsetForButtons, left: 'auto', transform: 'none' };
       default:
-        return { ...baseStyle };
+        return { ...baseStyle, left: leftOffsetForButtons, right: 'auto', transform: 'none' };
     }
   };
 
   // Максимальная ширина: по умолчанию адаптивная, но можно ограничить (для пазлов)
   const overlayMaxWidth = maxWidth || 'max-w-[calc(100vw-3rem)] md:max-w-md';
 
-  // На мобильных всегда по центру, на десктопе используем position
-  const positionClasses = position === 'top-left' 
-    ? 'md:left-[80px] md:right-auto' 
-    : position === 'top-right'
-    ? 'md:right-[56px] md:left-auto'
-    : 'md:left-1/2 md:-translate-x-1/2';
-  
   return (
     <div 
-      className={`absolute z-50 pointer-events-none ${overlayMaxWidth} left-1/2 -translate-x-1/2 ${positionClasses}`}
+      className={`absolute z-50 pointer-events-none ${overlayMaxWidth}`}
       style={getPositionStyle()}
     >
       <div className="bg-white/95 backdrop-blur-md rounded-lg border border-slate-200/80 shadow-lg p-1.5 md:p-2 pointer-events-auto">
