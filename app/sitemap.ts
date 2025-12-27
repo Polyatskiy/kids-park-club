@@ -44,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // Generate sitemap entries for all locales
-  const entries: MetadataRoute.Sitemap = [];
+  let entries: MetadataRoute.Sitemap = [];
 
   // Fetch dynamic content with error handling
   // If any fetch fails, we'll still return static routes
