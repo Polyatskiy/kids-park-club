@@ -6,14 +6,16 @@ import { routing } from "@/i18n/routing";
 import type { Metadata } from "next";
 import { getCanonicalUrl, getHreflangUrls } from "@/lib/seo-utils";
 
+export const revalidate = 3600; // Revalidate every hour
+
 export async function generateMetadata({
   params
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const validLocale = routing.locales.includes(locale as any)
-    ? locale
+  const validLocale = routing.locales.includes(locale as any) 
+    ? locale 
     : routing.defaultLocale;
   
   setRequestLocale(validLocale);
@@ -21,12 +23,12 @@ export async function generateMetadata({
   
   const path = "/games";
   const url = getCanonicalUrl(path, validLocale);
+  const title = t("miniGames") || "Mini Games";
+  const description = t("miniGamesDescription") || "Simple games to warm up attention and memory.";
+  
   const alternateUrls = getHreflangUrls(path);
   
-  const title = t("miniGames") || "Mini Games for Kids";
-  const description = t("miniGamesDescription") || "Fun and educational mini games for children. Interactive games to develop creativity and skills.";
-  
-  return {
+  const metadata: Metadata = {
     title,
     description,
     alternates: {
@@ -45,34 +47,44 @@ export async function generateMetadata({
       alternateLocale: routing.locales.filter(l => l !== validLocale),
     },
   };
+  
+  return metadata;
 }
 
-export default async function GamesPage({
-  params
-}: {
+type Props = {
   params: Promise<{ locale: string }>;
-}) {
+};
+
+export default async function GamesPage({ params }: Props) {
   const { locale } = await params;
   const validLocale = routing.locales.includes(locale as any) 
     ? locale 
     : routing.defaultLocale;
-  setRequestLocale(validLocale);
   
+  setRequestLocale(validLocale);
   const games = await getGames();
   const t = await getTranslations({ locale: validLocale, namespace: "common.pages" });
+
   return (
-    <Container className="pt-20 md:pt-24 pb-8 space-y-6">
-        <div className="inline-flex flex-col gap-1 px-4 py-3 rounded-2xl bg-white/30 backdrop-blur-[14px] shadow-[0_10px_28px_rgba(0,0,0,0.16)]">
-          <h1 className="text-2xl md:text-3xl font-bold text-[#222]">{t("miniGames")}</h1>
-          <p className="text-sm md:text-base text-[#333]">
+    <Container className="pt-16 md:pt-20 pb-12">
+      <div className="w-full max-w-6xl mx-auto p-4 sm:p-6">
+        {/* Header */}
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-3 sm:mb-4">
+            {t("miniGames")}
+          </h1>
+          <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
             {t("miniGamesDescription")}
           </p>
         </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {games.map((g: any) => (
-            <GameCard key={g.id} game={g} />
+
+        {/* Games Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+          {games.map((game: any) => (
+            <GameCard key={game.id} game={game} />
           ))}
         </div>
-      </Container>
+      </div>
+    </Container>
   );
 }

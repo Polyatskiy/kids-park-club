@@ -21,5 +21,12 @@ export const gamesSeed: GameMeta[] = [
     slug: "jigsaw/gallery",
     description: "Assemble puzzles from pictures.",
     type: "jigsaw"
+  },
+  {
+    id: "4",
+    title: "Checkers",
+    slug: "checkers",
+    description: "Play checkers against the computer.",
+    type: "checkers"
   }
 ];
