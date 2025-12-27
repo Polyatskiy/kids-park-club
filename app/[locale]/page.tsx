@@ -18,12 +18,11 @@ export async function generateMetadata({
   const t = await getTranslations({ locale: validLocale, namespace: "common" });
   
   const path = "/";
-  // For homepage, ensure canonical always points to the correct locale-specific URL
-  // For default locale (en), this will be https://www.kids-park.club/ (unprefixed)
-  // For other locales, this will be https://www.kids-park.club/{locale}/
-  const url = getCanonicalUrl(path, validLocale);
+  // For homepage, use a single canonical URL (English version) to prevent duplicate content issues
+  // All locale versions of the homepage should point to the English version as canonical
+  const canonicalUrl = getCanonicalUrl(path, routing.defaultLocale); // Always use English version
+  const localeUrl = getCanonicalUrl(path, validLocale); // For OpenGraph and structured data
   const alternateUrls = getHreflangUrls(path);
-  const defaultLocaleUrl = getCanonicalUrl(path, routing.defaultLocale);
   
   // Localized titles and descriptions for better SEO
   const titles: Record<string, string> = {
@@ -50,18 +49,18 @@ export async function generateMetadata({
       ? "coloring pages, kids games, puzzles, printable activities, children entertainment, educational games"
       : undefined,
     alternates: {
-      // Use locale-specific canonical URL
-      // This ensures each locale version has its own canonical, preventing duplicate content issues
-      canonical: url,
+      // Use single canonical URL (English version) for all locales to prevent duplicate content
+      // This tells Google that all locale versions should be treated as variations of the same page
+      canonical: canonicalUrl,
       languages: {
         ...alternateUrls,
-        'x-default': defaultLocaleUrl, // Default locale (en) for x-default
+        'x-default': canonicalUrl, // Default locale (en) for x-default
       },
     },
     openGraph: {
       title,
       description,
-      url,
+      url: localeUrl, // Use locale-specific URL for OpenGraph
       type: "website",
       locale: validLocale,
       alternateLocale: routing.locales.filter(l => l !== validLocale),
@@ -93,7 +92,7 @@ export default async function HomePage({
   // Explicitly pass locale to ensure correct translations are loaded
   const t = await getTranslations({ locale: validLocale, namespace: "common" });
   
-  // Calculate URL for structured data
+  // Calculate URL for structured data (use locale-specific URL for structured data)
   const path = "/";
   const url = getCanonicalUrl(path, validLocale);
   
