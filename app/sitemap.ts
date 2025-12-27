@@ -10,11 +10,19 @@ import { getLocalizedUrl } from "@/lib/seo-utils";
 export const revalidate = 3600; // Revalidate every hour
 export const runtime = 'nodejs'; // Ensure Node.js runtime for database access
 
-// Validate URL format
+// Allowed hostnames for sitemap URLs (canonical domain)
+const ALLOWED_HOSTNAMES = ['www.kids-park.club', 'kids-park.club'];
+
+// Validate URL format - strict validation to prevent invalid domains
 function isValidUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
-    return parsed.protocol === 'https:' && parsed.hostname.includes('kids-park.club');
+    // Strict check: only https and only allowed hostnames
+    return (
+      parsed.protocol === 'https:' &&
+      ALLOWED_HOSTNAMES.includes(parsed.hostname) &&
+      parsed.hostname.endsWith('kids-park.club') // Additional safety check
+    );
   } catch {
     return false;
   }
@@ -55,6 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ];
 
     // Create a timeout that resolves to empty arrays instead of rejecting
+    // Increased to 15 seconds to allow more time for database queries, especially under load
     const timeoutPromise = new Promise<PromiseSettledResult<any>[]>((resolve) => 
       setTimeout(() => {
         // Return all rejected promises to indicate timeout
@@ -64,7 +73,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           { status: 'rejected' as const, reason: 'timeout' },
           { status: 'rejected' as const, reason: 'timeout' },
         ]);
-      }, 8000)
+      }, 15000) // Increased from 8000ms to 15000ms
     );
 
     const dataPromise = Promise.allSettled(dataPromises);
@@ -78,8 +87,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (results[2]?.status === 'fulfilled') coloringCategories = results[2].value || [];
     if (results[3]?.status === 'fulfilled') puzzleCategories = results[3].value || [];
   } catch (error) {
-    console.error('Error fetching sitemap data:', error);
+    // Log detailed error information for debugging
+    console.error('Error fetching sitemap data:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+    });
     // Continue with static routes only - ensure we always return something
+    // This is critical: empty sitemap causes "Couldn't fetch" errors
   }
 
   routing.locales.forEach((locale) => {
@@ -194,6 +209,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1.0,
     });
   }
+
+  // Check Google sitemap limits (50,000 URLs, 50MB uncompressed)
+  // If exceeded, log warning and truncate (prioritize static routes)
+  const MAX_URLS = 50000;
+  if (entries.length > MAX_URLS) {
+    console.warn(
+      `Sitemap exceeds URL limit: ${entries.length} > ${MAX_URLS}. ` +
+      `Consider splitting into multiple sitemaps. Truncating to ${MAX_URLS} entries.`
+    );
+    // Truncate to limit (static routes are added first, so they're preserved)
+    entries = entries.slice(0, MAX_URLS);
+  }
+
+  // Note: Size check in bytes would require XML serialization, which is expensive.
+  // Google recommends splitting into multiple sitemaps when >10MB.
+  // For current project (~468 URLs), this is not critical, but we keep the URL limit check.
 
   return entries;
 }
