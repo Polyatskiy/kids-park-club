@@ -716,15 +716,15 @@ export default function RunnerPage() {
         ctx.fillStyle = "rgba(255,255,255,0.9)";
         ctx.font = "16px system-ui";
         ctx.textAlign = "center";
-        ctx.fillText("Нажми Space или тапни, чтобы начать!", world.width / 2, world.height / 2);
+        ctx.fillText(t("pressToStart", { defaultValue: "Press Space or tap to start!" }), world.width / 2, world.height / 2);
         ctx.textAlign = "left";
       } else if (statusRef.current === "gameover") {
         ctx.fillStyle = "rgba(255,255,255,0.95)";
         ctx.font = "bold 24px system-ui";
         ctx.textAlign = "center";
-        ctx.fillText("Game Over!", world.width / 2, world.height / 2 - 20);
+        ctx.fillText(t("gameOver", { defaultValue: "Game Over!" }), world.width / 2, world.height / 2 - 20);
         ctx.font = "16px system-ui";
-        ctx.fillText("Нажми R для перезапуска", world.width / 2, world.height / 2 + 20);
+        ctx.fillText(t("pressRToRestart", { defaultValue: "Press R to restart" }), world.width / 2, world.height / 2 + 20);
         ctx.textAlign = "left";
       }
     };

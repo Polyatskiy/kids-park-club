@@ -243,7 +243,7 @@ function PuzzleCard({ item, priority = false }: { item: Item; priority?: boolean
   const minPieces = JIGSAW_OPTIONS[0]?.pieces ?? 9;
   const maxPieces = JIGSAW_OPTIONS[JIGSAW_OPTIONS.length - 1]?.pieces ?? minPieces;
   const defaultOption =
-    JIGSAW_OPTIONS.find((o) => o.pieces === 25) ?? JIGSAW_OPTIONS[Math.floor(JIGSAW_OPTIONS.length / 2)];
+    JIGSAW_OPTIONS.find((o) => o.pieces === 9) ?? JIGSAW_OPTIONS[0];
   const defaultHref = `/games/jigsaw?imageId=${item.id}&size=${defaultOption?.pieces ?? minPieces}`;
 
   const toggleOpen = () => setIsOpen((prev) => !prev);
@@ -254,7 +254,7 @@ function PuzzleCard({ item, priority = false }: { item: Item; priority?: boolean
       className="relative rounded-2xl bg-card border border-border shadow-soft overflow-hidden group focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-transparent w-[110%] md:w-full transition-all duration-300"
       onMouseLeave={closeMenu}
     >
-      <div className="relative aspect-[25/24] md:aspect-[25/24] md:group-hover:aspect-[125/144] bg-surface-muted transition-all duration-300">
+      <div className="relative aspect-[25/24] md:aspect-[25/24] bg-surface-muted transition-all duration-300">
         {/* Quick start: click on image/overlay goes straight to default puzzle size */}
         <Link
           href={defaultHref}

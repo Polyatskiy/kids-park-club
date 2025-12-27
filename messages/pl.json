@@ -142,6 +142,9 @@
         "pageTitle": "Biegacz",
         "pageDescription": "Zbieraj gwiazdki, unikaj przeszkód!",
         "changeSkin": "Zmień Skórkę",
+        "pressToStart": "Naciśnij Spację lub dotknij, aby zacząć!",
+        "gameOver": "Koniec gry!",
+        "pressRToRestart": "Naciśnij R, aby rozpocząć ponownie",
         "controls": "Sterowanie: Space/↑/Dotknięcie — skok | R — restart"
       },
       "checkers": {

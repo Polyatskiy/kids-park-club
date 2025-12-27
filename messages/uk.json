@@ -142,6 +142,9 @@
         "pageTitle": "Бігун",
         "pageDescription": "Збирай зірки, уникай перешкод!",
         "changeSkin": "Змінити скін",
+        "pressToStart": "Натисни Space або тапни, щоб почати!",
+        "gameOver": "Гра закінчена!",
+        "pressRToRestart": "Натисни R для перезапуску",
         "controls": "Управління: Space/↑/Тап — стрибок | R — перезапуск"
       },
       "checkers": {

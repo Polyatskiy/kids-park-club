@@ -142,6 +142,9 @@
         "pageTitle": "Runner",
         "pageDescription": "Collect stars, avoid obstacles!",
         "changeSkin": "Change Skin",
+        "pressToStart": "Press Space or tap to start!",
+        "gameOver": "Game Over!",
+        "pressRToRestart": "Press R to restart",
         "controls": "Controls: Space/↑/Tap — jump | R — restart"
       },
       "checkers": {

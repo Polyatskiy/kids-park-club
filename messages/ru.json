@@ -142,6 +142,9 @@
         "pageTitle": "Бегущий Игрок",
         "pageDescription": "Собирай звёзды, избегай препятствий!",
         "changeSkin": "Сменить скин",
+        "pressToStart": "Нажми Space или тапни, чтобы начать!",
+        "gameOver": "Игра окончена!",
+        "pressRToRestart": "Нажми R для перезапуска",
         "controls": "Управление: Space/↑/Тап — прыжок | R — перезапуск"
       },
       "checkers": {
