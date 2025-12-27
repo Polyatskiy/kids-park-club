@@ -86,5 +86,5 @@ export type GameMeta = {
   title: string;
   slug: string;
   description: string;
-  type: "reaction" | "puzzle" | "jigsaw" | "checkers";
+  type: "reaction" | "puzzle" | "jigsaw" | "checkers" | "runner";
 };

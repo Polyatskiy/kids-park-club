@@ -28,5 +28,12 @@ export const gamesSeed: GameMeta[] = [
     slug: "checkers",
     description: "Play checkers against the computer.",
     type: "checkers"
+  },
+  {
+    id: "5",
+    title: "Runner",
+    slug: "runner",
+    description: "Run, jump, and collect stars!",
+    type: "runner"
   }
 ];

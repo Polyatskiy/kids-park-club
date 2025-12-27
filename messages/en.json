@@ -136,6 +136,14 @@
         "title": "Puzzles",
         "description": "Assemble puzzles from pictures."
       },
+      "runner": {
+        "title": "Runner",
+        "description": "Run, jump, and collect stars!",
+        "pageTitle": "Runner",
+        "pageDescription": "Collect stars, avoid obstacles!",
+        "changeSkin": "Change Skin",
+        "controls": "Controls: Space/↑/Tap — jump | R — restart"
+      },
       "checkers": {
         "title": "Checkers",
         "description": "Play checkers against the computer.",

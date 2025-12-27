@@ -136,6 +136,14 @@
         "title": "Puzzle",
         "description": "Ułóż puzzle z obrazków."
       },
+      "runner": {
+        "title": "Biegacz",
+        "description": "Biegnij, skacz i zbieraj gwiazdki!",
+        "pageTitle": "Biegacz",
+        "pageDescription": "Zbieraj gwiazdki, unikaj przeszkód!",
+        "changeSkin": "Zmień Skórkę",
+        "controls": "Sterowanie: Space/↑/Dotknięcie — skok | R — restart"
+      },
       "checkers": {
         "title": "Warcaby",
         "description": "Graj w warcaby przeciwko komputerowi.",

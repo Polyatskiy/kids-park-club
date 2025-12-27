@@ -10,6 +10,7 @@ const gameIcons: Record<string, string> = {
   puzzle: "🧩",
   jigsaw: "🧩",
   checkers: "♟️",
+  runner: "🏃",
 };
 
 // Game gradient colors
@@ -18,6 +19,7 @@ const gameGradients: Record<string, string> = {
   puzzle: "from-purple-400 via-pink-500 to-rose-500",
   jigsaw: "from-blue-400 via-indigo-500 to-purple-500",
   checkers: "from-emerald-400 via-teal-500 to-cyan-500",
+  runner: "from-sky-400 via-cyan-500 to-blue-600",
 };
 
 export function GameCard({ game }: { game: GameMeta }) {
@@ -29,6 +31,7 @@ export function GameCard({ game }: { game: GameMeta }) {
     if (game.type === "puzzle") return t("puzzle.title");
     if (game.type === "jigsaw") return t("jigsaw.title");
     if (game.type === "checkers") return t("checkers.title");
+    if (game.type === "runner") return t("runner.title");
     return game.title;
   };
 
@@ -37,6 +40,7 @@ export function GameCard({ game }: { game: GameMeta }) {
     if (game.type === "puzzle") return t("puzzle.description");
     if (game.type === "jigsaw") return t("jigsaw.description");
     if (game.type === "checkers") return t("checkers.description");
+    if (game.type === "runner") return t("runner.description");
     return game.description;
   };
 
